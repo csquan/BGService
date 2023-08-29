@@ -1,0 +1,23 @@
+db:
+  name: postgres
+  password: 12345
+  ip: 127.0.0.1
+  port: 5432
+  database: postgres
+server:
+  port: 8010
+log:
+  stdout:
+    enable: true
+    level: 5
+  file:
+    enable: true
+    path: "./log/app.log"
+    level: 4
+  kafka:
+    enable: false
+    topic: "spb"
+    kafka_servers:
+      - "kafka-1.spb.com:9092"
+    level: 3
+
