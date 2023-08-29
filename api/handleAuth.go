@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"github.com/ethereum/api-in/types"
 	"github.com/ethereum/api-in/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -11,7 +10,6 @@ import (
 
 func (a *ApiService) email(c *gin.Context) {
 	email := c.Query("email")
-	fmt.Println(email)
 	// 构建电子邮件内容
 	to := []string{email}
 	subject := "BG verifyCode!"
@@ -19,13 +17,13 @@ func (a *ApiService) email(c *gin.Context) {
 	body := fmt.Sprintf("verifyCode :%s", verifyCode)
 	err := util.SendEmail(a.config, to, subject, body)
 	if err != nil {
+		res := util.ResponseMsg(0, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	logrus.Info("邮件发送成功", verifyCode)
-	res := types.HttpRes{}
-	res.Code = 1
-	res.Message = "success"
-	res.Data = ""
+	msg := fmt.Sprintf("to: %s, send: %s", email, verifyCode)
+	logrus.Info(msg)
+	res := util.ResponseMsg(1, "success", "")
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
