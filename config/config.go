@@ -41,6 +41,12 @@ type Config struct {
 		File   file   `mapstructure:"file"`
 		Kafka  kafka  `mapstructure:"kafka"`
 	}
+	Email struct {
+		SmtpServer   string `yaml:"smtpServer"`
+		SmtpPort     string `yaml:"smtpPort"`
+		SmtpUsername string `yaml:"smtpUsername"`
+		SmtpPassword string `yaml:"smtpPassword"`
+	}
 }
 
 var Conf Config

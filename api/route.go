@@ -45,14 +45,14 @@ func (a *ApiService) Run() {
 
 	//验证token--先不验证token
 	//r.Use(auth.MustExtractUser())
-
-	//r.POST("/init", a.init)
-	//下单
-	r.POST("/order", a.order)
-	//增加一条记录到users中
-	r.POST("/enroll", a.enroll)
-
-	r.GET("/query", a.query)
+	v1 := r.Group("/api/auth")
+	{
+		////下单
+		//v1.POST("/order", a.order)
+		////增加一条记录到users中
+		//v1.POST("/enroll", a.enroll)
+		v1.GET("/email", a.email)
+	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
 
