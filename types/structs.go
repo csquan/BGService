@@ -104,8 +104,8 @@ type TxRes struct {
 
 type HttpRes struct {
 	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Message string      `json:"msg"`
+	Data    interface{} `json:"body"`
 }
 
 type CoinData struct {

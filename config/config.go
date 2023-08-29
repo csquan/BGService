@@ -43,7 +43,7 @@ type Config struct {
 	}
 	Email struct {
 		SmtpServer   string `yaml:"smtpServer"`
-		SmtpPort     string `yaml:"smtpPort"`
+		SmtpPort     int    `yaml:"smtpPort"`
 		SmtpUsername string `yaml:"smtpUsername"`
 		SmtpPassword string `yaml:"smtpPassword"`
 	}
