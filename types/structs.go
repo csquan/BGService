@@ -6,6 +6,7 @@ type Users struct {
 	Uid            string `xorm:"f_uid"`
 	Password       string `xorm:"f_password"`
 	InvitationCode string `xorm:"f_invitationCode"`
+	Secret         string `xorm:"f_secret"`
 }
 
 type Balance_Erc20 struct {

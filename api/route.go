@@ -52,6 +52,8 @@ func (a *ApiService) Run() {
 		////增加一条记录到users中
 		//v1.POST("/enroll", a.enroll)
 		v1.GET("/email", a.email)
+		v1.GET("/generateSecret", a.generateSecret)
+		v1.GET("/verifyCode", a.verifyCode)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
