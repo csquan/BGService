@@ -4,6 +4,7 @@ import "math/big"
 
 type Users struct {
 	Uid                 string `xorm:"f_uid"`
+	UserName            string `xorm:"f_userName"`
 	Password            string `xorm:"f_password"`
 	InvitationCode      string `xorm:"f_invitationCode"`
 	InvitatedCode       string `xorm:"f_invitatedCode"`
@@ -13,7 +14,6 @@ type Users struct {
 	Secret              string `xorm:"f_secret"`
 	IsIDVerify          string `xorm:"f_isIDVerify "`
 	Mobile              string `xorm:"f_mobile"`
-	IsApiBind           bool   `xorm:"f_isApiBind"`
 	InviteNumber        int    `xorm:"f_inviteNumber"`
 	ClaimRewardNumber   int    `xorm:"f_claimRewardNumber "`
 	ConcernCoinList     string `xorm:"f_concernCoinList"`

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ethereum/api-in/types"
 	_ "github.com/go-sql-driver/mysql"
@@ -9,17 +10,18 @@ import (
 )
 
 // 插入
-func InsertUser(engine *xorm.Engine, user *types.Users) {
+func InsertUser(engine *xorm.Engine, user *types.Users) error {
 	rows, err := engine.Table("users").Insert(user)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	if rows == 0 {
 		fmt.Println("插入失败")
-		return
+		return errors.New("insert null")
 	}
 	fmt.Println("插入成功")
+	return nil
 }
 
 /*
