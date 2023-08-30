@@ -38,3 +38,30 @@ func QueryInviteCode(engine *xorm.Engine, InviteCode string) *types.Users {
 	fmt.Println(user)
 	return &user
 }
+
+func GetUser(engine *xorm.Engine, uid string) *types.Users {
+	var user types.Users
+	_, err := engine.Where("users.uid=?", uid).Get(user)
+	if err != nil {
+		return nil
+	}
+	return &user
+}
+
+func GetUserExperience(engine *xorm.Engine, uid string) *types.UserExperience {
+	var userExperience types.UserExperience
+	_, err := engine.Where("uid=?", uid).Get(userExperience)
+	if err != nil {
+		return nil
+	}
+	return &userExperience
+}
+
+func GetTotalRevenue(engine *xorm.Engine) *types.TotalRevenueInfo {
+	var totalRevenueInfo types.TotalRevenueInfo
+	_, err := engine.Get(totalRevenueInfo)
+	if err != nil {
+		return nil
+	}
+	return &totalRevenueInfo
+}
