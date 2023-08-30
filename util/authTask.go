@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/ethereum/api-in/api"
+	"github.com/ethereum/api-in/db"
 	"github.com/ethereum/api-in/types"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -40,8 +40,8 @@ func ResponseMsg(Code int, Message string, Data interface{}) types.HttpRes {
 	return res
 }
 
-func CheckVerifyCode(c *gin.Context, a *api.ApiService, key string, value string) bool {
-	storedCode, err := a.RedisEngine.Get(c, key).Result()
+func CheckVerifyCode(c *gin.Context, a db.CustomizedRedis, key string, value string) bool {
+	storedCode, err := a.Get(c, key).Result()
 	if err == redis.Nil {
 		// Key does not exist in Redis
 		return false

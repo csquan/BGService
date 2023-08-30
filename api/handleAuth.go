@@ -53,7 +53,7 @@ func (a *ApiService) register(c *gin.Context) {
 		return
 	}
 	// 校验验证码
-	if !util.CheckVerifyCode(c, a, payload.Email, payload.VerifyCode) {
+	if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
 		res := util.ResponseMsg(0, "fail", "Wrong code!")
 		c.SecureJSON(http.StatusOK, res)
 		return
