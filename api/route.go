@@ -56,6 +56,18 @@ func (a *ApiService) Run() {
 		v1.GET("/verifyCode", a.verifyCode)
 	}
 
+	v6 := r.Group("/api/experienceActivity")
+	{
+		//检查领取体验金资格
+		v6.GET("/checkoutQualification", a.checkoutQualification)
+		//领取体验金
+		v6.GET("/getExperienceFund", a.getExperienceFund)
+
+		//获得用户的体验金收益率
+		v6.GET("/getUserExperience", a.getUserExperience)
+		//获取平台的体验金收益率
+		v6.GET("/getPlatformExperience", a.getPlatformExperience)
+	}
 	logrus.Info("BGService un at " + a.config.Server.Port)
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))

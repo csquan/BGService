@@ -3,12 +3,48 @@ package types
 import "math/big"
 
 type Users struct {
-	Uid            string `xorm:"f_uid"`
-	Password       string `xorm:"f_password"`
-	InvitationCode string `xorm:"f_invitationCode"`
-	Secret         string `xorm:"f_secret"`
+	Uid                 string `xorm:"f_uid"`
+	Password            string `xorm:"f_password"`
+	InvitationCode      string `xorm:"f_invitationCode"`
+	InvitatedCode       string `xorm:"f_invitatedCode"`
+	MailBox             string `xorm:"f_mailBox"`
+	CreateTime          string `xorm:"f_createTime"`
+	IsBindGoogle        bool   `xorm:"f_isBindGoogle "`
+	Secret              string `xorm:"f_secret"`
+	IsIDVerify          string `xorm:"f_isIDVerify "`
+	Mobile              string `xorm:"f_mobile"`
+	IsApiBind           bool   `xorm:"f_isApiBind"`
+	InviteNumber        int    `xorm:"f_inviteNumber"`
+	ClaimRewardNumber   int    `xorm:"f_claimRewardNumber "`
+	ConcernCoinList     string `xorm:"f_concernCoinList"`
+	CollectStragetyList string `xorm:"f_collectStragetyList"`
+	JoinStrageyList     string `xorm:"f_joinStrageList"`
 }
 
+// 用户体验金
+type UserExperience struct {
+	Uid          string `xorm:"f_uid"`
+	ReceiveSum   string `xorm:"f_receiveSum"`
+	BenefitSum   string `xorm:"f_benefitSum"`
+	BenefitRatio string `xorm:"f_BenefitRatio"`
+	ReceiveDays  string `xorm:"f_ReceiveDays"`
+}
+
+// 平台体验金信息
+type TotalRevenueInfo struct {
+	TotalSum       int64 `xorm:"f_totalSum"`
+	PerSum         int64 `xorm:"f_perSum"`
+	ReceivePersons int64 `xorm:"f_receivePersons"`
+	RecyclePersons int64 `xorm:"f_recyclePersons"`
+}
+
+// 平台体验金收益
+type PlatformExperienceRevenue struct {
+	Sid          string `xorm:"f_sid"`
+	InvestSum    string `xorm:"f_investSum"`
+	BenefitSum   string `xorm:"f_benefitSum"`
+	BenefitRatio string `xorm:"f_benefitRatio"`
+}
 type Balance_Erc20 struct {
 	Id             string `xorm:"id"`
 	Addr           string `xorm:"addr"`
