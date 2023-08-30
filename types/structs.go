@@ -9,7 +9,7 @@ type Users struct {
 	Uid                 string    `xorm:"f_uid"`
 	UserName            string    `xorm:"f_userName"`
 	Password            string    `xorm:"f_password"`
-	InvitationCode      string    `xorm:"f_invitationcode"`
+	InvitationCode      string    `xorm:"f_invitationCode"`
 	InvitatedCode       string    `xorm:"f_invitatedCode"`
 	MailBox             string    `xorm:"f_mailBox"`
 	CreateTime          time.Time `xorm:"f_createTime"`

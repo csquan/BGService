@@ -53,7 +53,7 @@ func (a *ApiService) register(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	if has {
+	if has != nil {
 		res := util.ResponseMsg(0, "fail", "Email has already been registered.")
 		c.SecureJSON(http.StatusOK, res)
 		return
