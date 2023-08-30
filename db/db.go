@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/BGService/config"
 	"github.com/go-xorm/xorm"
 
 	_ "github.com/lib/pq"

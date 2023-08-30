@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/BGService/config"
 
 	"github.com/sirupsen/logrus"
 )

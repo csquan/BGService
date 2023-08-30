@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
-	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/BGService/config"
 	"github.com/go-redis/redis/v8"
 )
 

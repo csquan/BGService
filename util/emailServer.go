@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/BGService/config"
 	"github.com/jordan-wright/email"
 	"net/smtp"
 )

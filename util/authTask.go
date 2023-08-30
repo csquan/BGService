@@ -1,8 +1,8 @@
 package util
 
 import (
-	"github.com/ethereum/api-in/db"
-	"github.com/ethereum/api-in/types"
+	"github.com/ethereum/BGService/db"
+	"github.com/ethereum/BGService/types"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"math/rand"

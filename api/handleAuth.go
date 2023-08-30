@@ -2,9 +2,9 @@ package api
 
 import (
 	"fmt"
-	"github.com/ethereum/api-in/db"
-	"github.com/ethereum/api-in/types"
-	"github.com/ethereum/api-in/util"
+	"github.com/ethereum/BGService/db"
+	"github.com/ethereum/BGService/types"
+	"github.com/ethereum/BGService/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"

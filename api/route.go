@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	"github.com/ethereum/api-in/config"
-	"github.com/ethereum/api-in/db"
+	"github.com/ethereum/BGService/config"
+	"github.com/ethereum/BGService/db"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"

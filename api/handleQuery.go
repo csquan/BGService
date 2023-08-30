@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/ethereum/api-in/types"
+	"github.com/ethereum/BGService/types"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

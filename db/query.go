@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/ethereum/api-in/types"
+	"github.com/ethereum/BGService/types"
 	"github.com/go-xorm/xorm"
 )
 
@@ -39,29 +39,51 @@ func QueryInviteCode(engine *xorm.Engine, InviteCode string) *types.Users {
 	return &user
 }
 
-func GetUser(engine *xorm.Engine, uid string) *types.Users {
+func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 	var user types.Users
-	_, err := engine.Where("users.uid=?", uid).Get(user)
+	has, err := engine.Where("f_uid=?", uid).Get(&user)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &user
+	if has {
+		return &user, nil
+	}
+	return nil, nil
 }
 
-func GetUserExperience(engine *xorm.Engine, uid string) *types.UserExperience {
+func GetUserBindInfos(engine *xorm.Engine, uid string) (*types.UserBindInfos, error) {
+	var userBindInfos types.UserBindInfos
+	has, err := engine.Table("userBindInfos").Where("f_uid=?", uid).Get(&userBindInfos)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userBindInfos, nil
+	}
+
+	return nil, nil
+}
+
+func GetUserExperience(engine *xorm.Engine, uid string) (*types.UserExperience, error) {
 	var userExperience types.UserExperience
-	_, err := engine.Where("uid=?", uid).Get(userExperience)
+	has, err := engine.Table("userExperience").Where("f_uid=?", uid).Get(&userExperience)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &userExperience
+	if has {
+		return &userExperience, nil
+	}
+	return nil, nil
 }
 
-func GetTotalRevenue(engine *xorm.Engine) *types.TotalRevenueInfo {
-	var totalRevenueInfo types.TotalRevenueInfo
-	_, err := engine.Get(totalRevenueInfo)
+func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, error) {
+	var platformExperience types.PlatformExperience
+	has, err := engine.Table("platformExperience").Get(&platformExperience)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &totalRevenueInfo
+	if has {
+		return &platformExperience, nil
+	}
+	return nil, nil
 }

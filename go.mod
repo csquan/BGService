@@ -1,4 +1,4 @@
-module github.com/ethereum/api-in
+module github.com/ethereum/BGService
 
 go 1.19
 
@@ -24,6 +24,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.4.0
 	github.com/rs/zerolog v1.29.0
+	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.15.0
 	github.com/suiguo/hwlib v1.7.4

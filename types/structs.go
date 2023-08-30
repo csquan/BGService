@@ -1,6 +1,9 @@
 package types
 
-import "math/big"
+import (
+	"github.com/shopspring/decimal"
+	"math/big"
+)
 
 type Users struct {
 	Uid                 string `xorm:"f_uid"`
@@ -10,7 +13,7 @@ type Users struct {
 	InvitatedCode       string `xorm:"f_invitatedCode"`
 	MailBox             string `xorm:"f_mailBox"`
 	CreateTime          string `xorm:"f_createTime"`
-	IsBindGoogle        bool   `xorm:"f_isBindGoogle "`
+	IsBindGoogle        bool   `xorm:"f_isBindGoogle"`
 	Secret              string `xorm:"f_secret"`
 	IsIDVerify          string `xorm:"f_isIDVerify "`
 	Mobile              string `xorm:"f_mobile"`
@@ -19,6 +22,13 @@ type Users struct {
 	ConcernCoinList     string `xorm:"f_concernCoinList"`
 	CollectStragetyList string `xorm:"f_collectStragetyList"`
 	JoinStrageyList     string `xorm:"f_joinStrageList"`
+}
+
+type UserBindInfos struct {
+	Uid       string `xorm:"f_uid"`
+	Cex       string `xorm:"f_cex"`
+	ApiKey    string `xorm:"f_apiKey"`
+	ApiSecret string `xorm:"f_apiSecret"`
 }
 
 type UserInput struct {
@@ -33,15 +43,15 @@ type UserInput struct {
 
 // 用户体验金
 type UserExperience struct {
-	Uid          string `xorm:"f_uid"`
-	ReceiveSum   string `xorm:"f_receiveSum"`
-	BenefitSum   string `xorm:"f_benefitSum"`
-	BenefitRatio string `xorm:"f_BenefitRatio"`
-	ReceiveDays  string `xorm:"f_ReceiveDays"`
+	Uid          string          `xorm:"f_uid"`
+	ReceiveSum   int64           `xorm:"f_receiveSum"`
+	BenefitSum   decimal.Decimal `xorm:"f_benefitSum"`
+	BenefitRatio decimal.Decimal `xorm:"f_benefitRatio"`
+	ReceiveDays  int             `xorm:"f_receiveDays"`
 }
 
 // 平台体验金信息
-type TotalRevenueInfo struct {
+type PlatformExperience struct {
 	TotalSum       int64 `xorm:"f_totalSum"`
 	PerSum         int64 `xorm:"f_perSum"`
 	ReceivePersons int64 `xorm:"f_receivePersons"`

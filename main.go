@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/ethereum/api-in/api"
-	"github.com/ethereum/api-in/config"
-	"github.com/ethereum/api-in/db"
-	"github.com/ethereum/api-in/log"
+	"github.com/ethereum/BGService/api"
+	"github.com/ethereum/BGService/config"
+	"github.com/ethereum/BGService/db"
+	"github.com/ethereum/BGService/log"
 	"github.com/sirupsen/logrus"
 	"os"
 )
