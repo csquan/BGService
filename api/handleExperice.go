@@ -18,9 +18,9 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 	if user.IsBindGoogle == false {
 		logrus.Info("条件不满足，google未绑定", user.IsBindGoogle)
 	}
-	if user.IsApiBind == false {
-		logrus.Info("条件不满足，API未绑定", user.IsApiBind)
-	}
+	//if user.IsApiBind == false {
+	//	logrus.Info("条件不满足，API未绑定", user.IsApiBind)
+	//}
 	if user.InviteNumber < 1 {
 		logrus.Info("条件不满足，当前未邀请人", user.InviteNumber)
 	}
@@ -49,12 +49,12 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 		res.Message = "领取体验金失败"
 		c.SecureJSON(http.StatusOK, res)
 	}
-	if user.IsApiBind == false {
-		logrus.Info("条件不满足，API未绑定", user.IsApiBind)
-		res.Code = -1
-		res.Message = "领取体验金失败"
-		c.SecureJSON(http.StatusOK, res)
-	}
+	//if user.IsApiBind == false {
+	//	logrus.Info("条件不满足，API未绑定", user.IsApiBind)
+	//	res.Code = -1
+	//	res.Message = "领取体验金失败"
+	//	c.SecureJSON(http.StatusOK, res)
+	//}
 	if user.InviteNumber < 1 {
 		logrus.Info("条件不满足，当前未邀请人", user.InviteNumber)
 		res.Code = -1

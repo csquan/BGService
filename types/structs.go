@@ -1,24 +1,28 @@
 package types
 
-import "math/big"
+import (
+	"math/big"
+	"time"
+)
 
 type Users struct {
-	Uid                 string `xorm:"f_uid"`
-	UserName            string `xorm:"f_userName"`
-	Password            string `xorm:"f_password"`
-	InvitationCode      string `xorm:"f_invitationCode"`
-	InvitatedCode       string `xorm:"f_invitatedCode"`
-	MailBox             string `xorm:"f_mailBox"`
-	CreateTime          string `xorm:"f_createTime"`
-	IsBindGoogle        bool   `xorm:"f_isBindGoogle "`
-	Secret              string `xorm:"f_secret"`
-	IsIDVerify          string `xorm:"f_isIDVerify "`
-	Mobile              string `xorm:"f_mobile"`
-	InviteNumber        int    `xorm:"f_inviteNumber"`
-	ClaimRewardNumber   int    `xorm:"f_claimRewardNumber "`
-	ConcernCoinList     string `xorm:"f_concernCoinList"`
-	CollectStragetyList string `xorm:"f_collectStragetyList"`
-	JoinStrageyList     string `xorm:"f_joinStrageList"`
+	Uid                 string    `xorm:"f_uid"`
+	UserName            string    `xorm:"f_userName"`
+	Password            string    `xorm:"f_password"`
+	InvitationCode      string    `xorm:"f_invitationcode"`
+	InvitatedCode       string    `xorm:"f_invitatedCode"`
+	MailBox             string    `xorm:"f_mailBox"`
+	CreateTime          time.Time `xorm:"f_createTime"`
+	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
+	Secret              string    `xorm:"f_secret"`
+	IsIDVerify          bool      `xorm:"f_isIDVerify "`
+	Mobile              string    `xorm:"f_mobile"`
+	InviteNumber        int       `xorm:"f_inviteNumber"`
+	ClaimRewardNumber   int       `xorm:"f_claimeRewardNumber "`
+	ConcernCoinList     string    `xorm:"f_concernCoinList"`
+	CollectStragetyList string    `xorm:"f_collectStragetyList"`
+	JoinStrageyList     string    `xorm:"f_joinStrageList"`
+	UpdateTime          time.Time `xorm:"f_updateTime"`
 }
 
 type UserInput struct {
