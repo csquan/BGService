@@ -47,6 +47,11 @@ type Config struct {
 		SmtpUsername string `yaml:"smtpUsername"`
 		SmtpPassword string `yaml:"smtpPassword"`
 	}
+	Redis struct {
+		Addr     string `yaml:"addr"`
+		Password string `yaml:"password"`
+		DB       int    `yaml:"db"`
+	}
 }
 
 var Conf Config

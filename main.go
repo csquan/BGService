@@ -36,9 +36,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dbEngine := db.GetDBEngine(&config.Conf)
 
-	apiService := api.NewApiService(dbEngine, &config.Conf)
+	dbEngine := db.GetDBEngine(&config.Conf)
+	RedisEngine := db.GetRedisEngine(&config.Conf)
+
+	apiService := api.NewApiService(dbEngine, RedisEngine, &config.Conf)
 	go apiService.Run()
 
 	//listen kill signal

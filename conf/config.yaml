@@ -21,7 +21,11 @@ log:
       - "kafka-1.spb.com:9092"
     level: 3
 email:
-  smtpServer : "smtp.163.com"
-  smtpPort : 25
-  smtpUsername : "liuzhiyuhx@163.com"
-  smtpPassword : "NERIXXVATXQCGBLH"
+  smtpServer: "smtp.163.com"
+  smtpPort: 25
+  smtpUsername: "liuzhiyuhx@163.com"
+  smtpPassword: "NERIXXVATXQCGBLH"
+Redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0

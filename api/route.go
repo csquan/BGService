@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/ethereum/api-in/config"
+	"github.com/ethereum/api-in/db"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
@@ -11,14 +12,16 @@ import (
 )
 
 type ApiService struct {
-	dbEngine *xorm.Engine
-	config   *config.Config
+	dbEngine    *xorm.Engine
+	config      *config.Config
+	RedisEngine db.CustomizedRedis
 }
 
-func NewApiService(dbEngine *xorm.Engine, cfg *config.Config) *ApiService {
+func NewApiService(dbEngine *xorm.Engine, RedisEngine db.CustomizedRedis, cfg *config.Config) *ApiService {
 	return &ApiService{
-		dbEngine: dbEngine,
-		config:   cfg,
+		dbEngine:    dbEngine,
+		config:      cfg,
+		RedisEngine: RedisEngine,
 	}
 }
 
@@ -52,6 +55,7 @@ func (a *ApiService) Run() {
 		////增加一条记录到users中
 		//v1.POST("/enroll", a.enroll)
 		v1.GET("/email", a.email)
+		v1.POST("/register", a.register)
 		v1.GET("/generateSecret", a.generateSecret)
 		v1.GET("/verifyCode", a.verifyCode)
 	}

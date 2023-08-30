@@ -3,10 +3,32 @@ package types
 import "math/big"
 
 type Users struct {
-	Uid            string `xorm:"f_uid"`
-	Password       string `xorm:"f_password"`
-	InvitationCode string `xorm:"f_invitationCode"`
-	Secret         string `xorm:"f_secret"`
+	Uid                 string `xorm:"f_uid"`
+	Password            string `xorm:"f_password"`
+	InvitationCode      string `xorm:"f_invitationCode"`
+	InvitatedCode       string `xorm:"f_invitatedCode"`
+	MailBox             string `xorm:"f_mailBox"`
+	CreateTime          string `xorm:"f_createTime"`
+	IsBindGoogle        bool   `xorm:"f_isBindGoogle "`
+	Secret              string `xorm:"f_secret"`
+	IsIDVerify          string `xorm:"f_isIDVerify "`
+	Mobile              string `xorm:"f_mobile"`
+	IsApiBind           bool   `xorm:"f_isApiBind"`
+	InviteNumber        int    `xorm:"f_inviteNumber"`
+	ClaimRewardNumber   int    `xorm:"f_claimRewardNumber "`
+	ConcernCoinList     string `xorm:"f_concernCoinList"`
+	CollectStragetyList string `xorm:"f_collectStragetyList"`
+	JoinStrageyList     string `xorm:"f_joinStrageList"`
+}
+
+type UserInput struct {
+	UserName string `json:"username"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required,min=8"`
+	//PasswordConfirm string `json:"passwordConfirm" binding:"required"`
+	// Photo           string `json:"photo" binding:"required"`
+	VerifyCode string `json:"verifyCode" binding:"required"`
+	InviteCode string `json:"inviteCode"`
 }
 
 type Balance_Erc20 struct {
