@@ -32,18 +32,17 @@ func NewApiService(dbEngine *xorm.Engine, RedisEngine db.CustomizedRedis, cfg *c
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// todo 登录校验
-		//session := sessions.Default(c)
-		//Uid := session.Get("mysession")
-		//
-		//if Uid == nil {
-		//	c.JSON(http.StatusUnauthorized, gin.H{
-		//		"error": "Unauthorized",
-		//	})
-		//	c.Abort()
-		//	return
-		//}
-		//// 用户已登录，将用户 ID 传递给后续的处理函数
-		//c.Set("Uid", Uid)
+		session := sessions.Default(c)
+		Uid := session.Get("mysession")
+		if Uid == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			c.Abort()
+			return
+		}
+		// 用户已登录，将用户 ID 传递给后续的处理函数
+		c.Set("Uid", Uid)
 		c.Next()
 	}
 }
@@ -84,6 +83,7 @@ func (a *ApiService) Run() {
 		v1.POST("/register", a.register)
 		v1.POST("/login", a.login)
 		v1.POST("/logout", authMiddleware(), a.logout)
+		v1.POST("/forgotPassword", authMiddleware(), a.forgotPassword)
 		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
 		v1.GET("/verifyCode", authMiddleware(), a.verifyCode)
 	}

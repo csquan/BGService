@@ -201,3 +201,43 @@ func (a *ApiService) logout(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) forgotPassword(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	var payload *types.ForgotPasswordInput
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(0, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	uidFormatted := fmt.Sprintf("%s", uid)
+	err, user := db.QuerySecret(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(0, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user.Password == payload.Password {
+		res := util.ResponseMsg(0, "fail", "New password cannot be the same as the old password")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	body := map[string]int{
+		"status": 1,
+	}
+	if user.IsBindGoogle {
+		res := util.ResponseMsg(1, "fail", body)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	user.Password = payload.Password
+	err = db.UpdateUserPass(a.dbEngine, uidFormatted, user)
+	if err != nil {
+		return
+	}
+	body["status"] = 0
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}

@@ -49,6 +49,12 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type ForgotPasswordInput struct {
+	Email      string `json:"email" binding:"required"`
+	VerifyCode string `json:"verifyCode" binding:"required"`
+	Password   string `json:"password" binding:"required,min=8"`
+}
+
 // 用户体验金
 type UserExperience struct {
 	Uid          string          `xorm:"f_uid"`
