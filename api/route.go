@@ -57,10 +57,14 @@ func (a *ApiService) Run() {
 		v1.POST("/verifyCode", a.verifyCode)
 	}
 
-	/*v4 := r.Group("/api/market")
+	v4 := r.Group("/api/market")
 	{
-		v4.GET("/list", a.list)
-	}*/
+		//获取binance价格
+		v4.GET("/getPrice", a.getBinancePrice)
+		//获取24小时信息--包括涨跌幅，日交易量
+		v4.GET("/getBinance24hInfos", a.getBinance24hInfos)
+
+	}
 
 	v6 := r.Group("/api/experienceActivity")
 	{
