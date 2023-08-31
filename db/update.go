@@ -15,3 +15,12 @@ func UpdateUser(engine *xorm.Engine, uid string) error {
 	}
 	return nil
 }
+
+func UpdateUserSecret(engine *xorm.Engine, uid string, user *types.Users) error {
+	_, err := engine.Table("users").Where("f_uid=?", uid).Update(user)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+	return nil
+}

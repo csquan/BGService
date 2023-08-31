@@ -114,40 +114,75 @@ func (a *ApiService) enroll(c *gin.Context) {
 
 // 引导下载google时调用，产生secret，保存进db
 func (a *ApiService) generateSecret(c *gin.Context) {
-	secret := GetSecret()
+	uid := c.Query("uid")
 	res := types.HttpRes{}
-	user := types.Users{
-		Secret: secret,
+
+	//首先查询出这个用户
+	user, err := db.GetUser(a.dbEngine, uid)
+
+	if err != nil {
+		logrus.Info("查询db发生错误", err)
+
+		res.Code = -1
+		res.Message = "查询db发生错误"
+		res.Data = err
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
-	db.InsertUser(a.dbEngine, &user)
+	if user == nil {
+		logrus.Info("未找到用户记录", uid)
+
+		res.Code = -1
+		res.Message = "未找到用户记录"
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//产生secret
+	user.Secret = GetSecret()
+
+	err = db.UpdateUserSecret(a.dbEngine, uid, user)
+	if err != nil {
+		return
+	}
 	//下面将信息存入db
 	res.Code = 0
 	res.Message = "success"
-	res.Data = secret
+	res.Data = user.Secret
 
 	c.SecureJSON(http.StatusOK, res)
 }
 
 // 输入google验证码，确认后触发后端验证
 func (a *ApiService) verifyCode(c *gin.Context) {
-	uid := c.Param("uid")
-	code := c.Param("code")
+	uid := c.Query("uid")
+	code := c.Query("code")
 	res := types.HttpRes{}
 	_, secret := db.QuerySecret(a.dbEngine, uid)
 
 	codeint, err := strconv.ParseInt(code, 10, 64)
 
 	if err != nil {
+		logrus.Info("输入的动态码不是合法数字，请检查", code)
 
+		res.Code = -1
+		res.Message = "输入的动态码不是合法数字，请检查"
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
-	VerifyCode(secret.Secret, int32(codeint))
+	isTrue := VerifyCode(secret.Secret, int32(codeint))
+
 	res.Code = 0
-	res.Message = "success"
-	res.Data = secret
+	if isTrue {
+		res.Message = "校验成功"
+	} else {
+		res.Message = "校验失败"
+	}
 
 	c.SecureJSON(http.StatusOK, res)
+	return
 }
 
 // 为了考虑时间误差，判断前当前时间及前后30秒时间

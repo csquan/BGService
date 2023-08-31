@@ -50,12 +50,9 @@ func (a *ApiService) Run() {
 	//r.Use(auth.MustExtractUser())
 	v1 := r.Group("/api/auth")
 	{
-		////下单
-		//v1.POST("/order", a.order)
-		////增加一条记录到users中
-		//v1.POST("/enroll", a.enroll)
 		v1.GET("/email", a.email)
 		v1.POST("/register", a.register)
+		//google验证相关
 		v1.GET("/generateSecret", a.generateSecret)
 		v1.GET("/verifyCode", a.verifyCode)
 	}
@@ -72,6 +69,7 @@ func (a *ApiService) Run() {
 		//获取平台的体验金收益率
 		v6.GET("/getPlatformExperience", a.getPlatformExperience)
 	}
+
 	logrus.Info("BGService un at " + a.config.Server.Port)
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
