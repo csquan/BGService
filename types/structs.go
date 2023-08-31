@@ -33,6 +33,11 @@ type UserBindInfos struct {
 	ApiSecret string `xorm:"f_apiSecret"`
 }
 
+type UserCodeInfos struct {
+	Uid  string `json:"uid"`
+	Code string `json:"code"`
+}
+
 type UserInput struct {
 	UserName string `json:"username"`
 	Email    string `json:"email" binding:"required"`

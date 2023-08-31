@@ -54,8 +54,13 @@ func (a *ApiService) Run() {
 		v1.POST("/register", a.register)
 		//google验证相关
 		v1.GET("/generateSecret", a.generateSecret)
-		v1.GET("/verifyCode", a.verifyCode)
+		v1.POST("/verifyCode", a.verifyCode)
 	}
+
+	/*v4 := r.Group("/api/market")
+	{
+		v4.GET("/list", a.list)
+	}*/
 
 	v6 := r.Group("/api/experienceActivity")
 	{

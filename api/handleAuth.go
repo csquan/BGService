@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha1"
 	"encoding/base32"
 	"fmt"
@@ -196,9 +197,23 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 
 // 输入google验证码，确认后触发后端验证
 func (a *ApiService) verifyCode(c *gin.Context) {
-	uid := c.Query("uid")
-	code := c.Query("code")
 	res := types.HttpRes{}
+
+	var userCode types.UserCodeInfos
+
+	err := c.BindJSON(&userCode)
+	if err != nil {
+		logrus.Info("传递的不是合法的json参数")
+
+		res.Code = -1
+		res.Message = "传递的不是合法的json参数"
+		res.Data = err
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	uid := userCode.Uid
+	code := userCode.Code
+
 	_, secret := db.QuerySecret(a.dbEngine, uid)
 
 	codeint, err := strconv.ParseInt(code, 10, 64)
