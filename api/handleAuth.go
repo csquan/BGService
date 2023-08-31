@@ -53,17 +53,17 @@ func (a *ApiService) register(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	if has {
+	if has != nil {
 		res := util.ResponseMsg(0, "fail", "Email has already been registered.")
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	// 校验验证码
-	//if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
-	//	res := util.ResponseMsg(0, "fail", "Wrong verifyCode!")
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
+	if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
+		res := util.ResponseMsg(0, "fail", "Wrong verifyCode!")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	// 删除验证码key
 	a.RedisEngine.Del(c, payload.Email)
 	// 生成8位随机邀请码
