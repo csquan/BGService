@@ -134,7 +134,7 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 	uid := c.Param("uid")
 	code := c.Param("code")
 	res := types.HttpRes{}
-	secret := db.QuerySecret(a.dbEngine, uid)
+	_, secret := db.QuerySecret(a.dbEngine, uid)
 
 	codeint, err := strconv.ParseInt(code, 10, 64)
 

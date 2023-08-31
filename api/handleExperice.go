@@ -42,7 +42,6 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-
 	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uid)
 
 	if err != nil {
@@ -142,7 +141,6 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 		res.Message = "领取体验金失败：找到该用户的绑定记录，但是其中有一项apikey或者apiSecret为空"
 		c.SecureJSON(http.StatusOK, res)
 	}
-
 	if user.InviteNumber < 1 {
 		logrus.Info("条件不满足，当前未邀请人", user.InviteNumber)
 		res.Code = -1
