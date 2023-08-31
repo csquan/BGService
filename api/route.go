@@ -60,10 +60,13 @@ func (a *ApiService) Run() {
 	v4 := r.Group("/api/market")
 	{
 		//获取binance价格
-		v4.GET("/getPrice", a.getBinancePrice)
+		v4.GET("/getBinancePrice", a.getBinancePrice)
+		//获取OK价格
+		//v4.GET("/getOKPrice", a.getOKPrice)
 		//获取24小时信息--包括涨跌幅，日交易量
 		v4.GET("/getBinance24hInfos", a.getBinance24hInfos)
-
+		//目前缺少获取总市值接口
+		v4.GET("/getCoinInfos", a.getCoinInfos)
 	}
 
 	v6 := r.Group("/api/experienceActivity")
