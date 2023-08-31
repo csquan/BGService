@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -138,6 +139,60 @@ func (a *ApiService) register(c *gin.Context) {
 		JoinStrageyList:     "{}",
 	}
 	if err := db.InsertUser(a.dbEngine, &newUser); err != nil {
+		res := util.ResponseMsg(0, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	res := util.ResponseMsg(1, "success", "")
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) login(c *gin.Context) {
+	var payload *types.LoginInput
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(0, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var passWord string
+	// 获取数据库中的密码
+	err, has := db.QueryEmail(a.dbEngine, payload.Email)
+	if err != nil {
+		res := util.ResponseMsg(0, "fail", "User does not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if has != nil {
+		passWord = has.Password
+	}
+	if payload.Password == passWord {
+		//set session
+		session := sessions.Default(c)
+		session.Set(payload.Email, has.Uid)
+		err = session.Save()
+		if err != nil {
+			res := util.ResponseMsg(0, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	} else {
+		res := util.ResponseMsg(0, "fail", "Incorrect password.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	res := util.ResponseMsg(1, "success", "")
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) logout(c *gin.Context) {
+	//clear session
+	session := sessions.Default(c)
+	session.Clear()
+	err := session.Save()
+	if err != nil {
 		res := util.ResponseMsg(0, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return

@@ -2,9 +2,13 @@ package api
 
 import (
 	"fmt"
+	// 导入session包
+	"github.com/gin-contrib/sessions"
+	// 导入session存储引擎
 	"github.com/ethereum/BGService/config"
 	"github.com/ethereum/BGService/db"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
@@ -22,6 +26,25 @@ func NewApiService(dbEngine *xorm.Engine, RedisEngine db.CustomizedRedis, cfg *c
 		dbEngine:    dbEngine,
 		config:      cfg,
 		RedisEngine: RedisEngine,
+	}
+}
+
+func authMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// todo 登录校验
+		//session := sessions.Default(c)
+		//Uid := session.Get("mysession")
+		//
+		//if Uid == nil {
+		//	c.JSON(http.StatusUnauthorized, gin.H{
+		//		"error": "Unauthorized",
+		//	})
+		//	c.Abort()
+		//	return
+		//}
+		//// 用户已登录，将用户 ID 传递给后续的处理函数
+		//c.Set("Uid", Uid)
+		c.Next()
 	}
 }
 
@@ -45,6 +68,9 @@ func (a *ApiService) Run() {
 		}
 		ctx.Next()
 	})
+	store := cookie.NewStore([]byte("secret123456"))
+	//session中间件生效，参数mysession，是浏览器端cookie的名字
+	r.Use(sessions.Sessions("mysession", store))
 
 	//验证token--先不验证token
 	//r.Use(auth.MustExtractUser())
@@ -56,8 +82,10 @@ func (a *ApiService) Run() {
 		//v1.POST("/enroll", a.enroll)
 		v1.GET("/email", a.email)
 		v1.POST("/register", a.register)
-		v1.GET("/generateSecret", a.generateSecret)
-		v1.GET("/verifyCode", a.verifyCode)
+		v1.POST("/login", a.login)
+		v1.POST("/logout", authMiddleware(), a.logout)
+		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
+		v1.GET("/verifyCode", authMiddleware(), a.verifyCode)
 	}
 
 	v6 := r.Group("/api/experienceActivity")

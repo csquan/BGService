@@ -8,7 +8,7 @@ import (
 
 func UpdateUser(engine *xorm.Engine, uid string) error {
 	var user types.Users
-	_, err := engine.Table("users").Where("f_uid=?", uid).Incr("f_inviteNumber").Update(&user)
+	_, err := engine.Table("users").Where("f_uid=?", uid).Incr("`f_inviteNumber`").Update(&user)
 	if err != nil {
 		logrus.Error(err)
 		return err

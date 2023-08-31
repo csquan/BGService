@@ -33,6 +33,7 @@ type UserBindInfos struct {
 	ApiSecret string `xorm:"f_apiSecret"`
 }
 
+// 注册
 type UserInput struct {
 	UserName string `json:"username"`
 	Email    string `json:"email" binding:"required"`
@@ -41,6 +42,11 @@ type UserInput struct {
 	// Photo           string `json:"photo" binding:"required"`
 	VerifyCode string `json:"verifyCode" binding:"required"`
 	InviteCode string `json:"inviteCode"`
+}
+
+type LoginInput struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 // 用户体验金
