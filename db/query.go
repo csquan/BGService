@@ -58,6 +58,16 @@ func QueryInviteCode(engine *xorm.Engine, InviteCode string) (error, *types.User
 	return nil, nil
 }
 
+func QueryInviteNum(engine *xorm.Engine, InviteCode string) (error, []types.Users) {
+	var users []types.Users
+	err := engine.Table("users").Where("`f_invitatedCode`=?", InviteCode).Find(&users)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, users
+}
+
 func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 	var user types.Users
 	has, err := engine.Where("f_uid=?", uid).Get(&user)

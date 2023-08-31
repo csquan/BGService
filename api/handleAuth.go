@@ -21,20 +21,20 @@ func (a *ApiService) email(c *gin.Context) {
 	body := fmt.Sprintf("verifyCode :%s", verifyCode)
 	err := util.SendEmail(a.config, to, subject, body)
 	if err != nil {
-		res := util.ResponseMsg(0, "fail", err)
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	err = a.RedisEngine.Set(c, email, verifyCode, 1*time.Minute).Err()
 	if err != nil {
 		logrus.Error("设置值失败:", err)
-		res := util.ResponseMsg(0, "fail", err)
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	msg := fmt.Sprintf("to: %s, send: %s", email, verifyCode)
 	logrus.Info(msg)
-	res := util.ResponseMsg(1, "success", "")
+	res := util.ResponseMsg(0, "success", "")
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -43,28 +43,28 @@ func (a *ApiService) register(c *gin.Context) {
 	var payload *types.UserInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
-		res := util.ResponseMsg(0, "fail", err.Error())
+		res := util.ResponseMsg(-1, "fail", err.Error())
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	// 校验邮箱是否被注册
 	err, has := db.QueryEmail(a.dbEngine, payload.Email)
 	if err != nil {
-		res := util.ResponseMsg(0, "fail", err)
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	if has != nil {
-		res := util.ResponseMsg(0, "fail", "Email has already been registered.")
+		res := util.ResponseMsg(-1, "fail", "Email has already been registered.")
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	// 校验验证码
-	if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
-		res := util.ResponseMsg(0, "fail", "Wrong verifyCode!")
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
+	//if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
+	//	res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
+	//	c.SecureJSON(http.StatusOK, res)
+	//	return
+	//}
 	// 删除验证码key
 	a.RedisEngine.Del(c, payload.Email)
 	// 生成8位随机邀请码
@@ -73,7 +73,7 @@ func (a *ApiService) register(c *gin.Context) {
 		err, user := db.QueryInviteCode(a.dbEngine, inviteCode)
 		if err != nil {
 			// 处理错误
-			res := util.ResponseMsg(0, "fail", err)
+			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
@@ -90,7 +90,7 @@ func (a *ApiService) register(c *gin.Context) {
 		err, user := db.QuerySecret(a.dbEngine, uid)
 		if err != nil {
 			// 处理错误
-			res := util.ResponseMsg(0, "fail", err)
+			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
@@ -111,18 +111,18 @@ func (a *ApiService) register(c *gin.Context) {
 		err, user := db.QueryInviteCode(a.dbEngine, payload.InviteCode)
 		if err != nil {
 			// 处理错误
-			res := util.ResponseMsg(0, "fail", err)
+			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
 		if user != nil {
 			if err := db.UpdateUser(a.dbEngine, user.Uid); err != nil {
-				res := util.ResponseMsg(0, "fail", err)
+				res := util.ResponseMsg(-1, "fail", err)
 				c.SecureJSON(http.StatusOK, res)
 				return
 			}
 		} else {
-			res := util.ResponseMsg(0, "fail", "Incorrect invitation code")
+			res := util.ResponseMsg(-1, "fail", "Incorrect invitation code")
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
@@ -139,11 +139,11 @@ func (a *ApiService) register(c *gin.Context) {
 		JoinStrageyList:     "{}",
 	}
 	if err := db.InsertUser(a.dbEngine, &newUser); err != nil {
-		res := util.ResponseMsg(0, "fail", err)
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res := util.ResponseMsg(1, "success", "")
+	res := util.ResponseMsg(0, "success", "")
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -152,7 +152,7 @@ func (a *ApiService) login(c *gin.Context) {
 	var payload *types.LoginInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
-		res := util.ResponseMsg(0, "fail", err.Error())
+		res := util.ResponseMsg(-1, "fail", err.Error())
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -160,7 +160,7 @@ func (a *ApiService) login(c *gin.Context) {
 	// 获取数据库中的密码
 	err, has := db.QueryEmail(a.dbEngine, payload.Email)
 	if err != nil {
-		res := util.ResponseMsg(0, "fail", "User does not exist.")
+		res := util.ResponseMsg(-1, "fail", "User does not exist.")
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -173,16 +173,16 @@ func (a *ApiService) login(c *gin.Context) {
 		session.Set(payload.Email, has.Uid)
 		err = session.Save()
 		if err != nil {
-			res := util.ResponseMsg(0, "fail", err)
+			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
 	} else {
-		res := util.ResponseMsg(0, "fail", "Incorrect password.")
+		res := util.ResponseMsg(-1, "fail", "Incorrect password.")
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res := util.ResponseMsg(1, "success", "")
+	res := util.ResponseMsg(0, "success", "")
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -193,11 +193,11 @@ func (a *ApiService) logout(c *gin.Context) {
 	session.Clear()
 	err := session.Save()
 	if err != nil {
-		res := util.ResponseMsg(0, "fail", err)
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res := util.ResponseMsg(1, "success", "")
+	res := util.ResponseMsg(0, "success", "")
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -207,37 +207,91 @@ func (a *ApiService) forgotPassword(c *gin.Context) {
 	var payload *types.ForgotPasswordInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
-		res := util.ResponseMsg(0, "fail", err.Error())
+		res := util.ResponseMsg(-1, "fail", err.Error())
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	// 校验验证码
+	if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
+		res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
 	err, user := db.QuerySecret(a.dbEngine, uidFormatted)
 	if err != nil {
-		res := util.ResponseMsg(0, "fail", err)
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	// 验证新密码和老密码是否一致
 	if user.Password == payload.Password {
-		res := util.ResponseMsg(0, "fail", "New password cannot be the same as the old password")
+		res := util.ResponseMsg(-1, "fail", "New password cannot be the same as the old password")
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	body := map[string]int{
 		"status": 1,
 	}
+	// 是否谷歌验证
 	if user.IsBindGoogle {
 		res := util.ResponseMsg(1, "fail", body)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	// 修改密码
 	user.Password = payload.Password
 	err = db.UpdateUserPass(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		return
 	}
 	body["status"] = 0
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) resetPassword(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	var payload *types.ForgotPasswordInput
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 校验验证码
+	//if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
+	//	res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
+	//	c.SecureJSON(http.StatusOK, res)
+	//	return
+	//}
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", uid)
+	err, user := db.QuerySecret(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 验证新密码和老密码是否一致
+	if user.Password == payload.Password {
+		res := util.ResponseMsg(-1, "fail", "New password cannot be the same as the old password")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	body := map[string]int{
+		"status": 1,
+	}
+	// 修改密码
+	user.Password = payload.Password
+	err = db.UpdateUserPass(a.dbEngine, uidFormatted, user)
+	if err != nil {
+		return
+	}
+	body["status"] = 0
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
