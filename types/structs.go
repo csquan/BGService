@@ -27,10 +27,18 @@ type Users struct {
 }
 
 type UserBindInfos struct {
-	Uid       string `xorm:"f_uid"`
-	Cex       string `xorm:"f_cex"`
-	ApiKey    string `xorm:"f_apiKey"`
-	ApiSecret string `xorm:"f_apiSecret"`
+	ID              string    `xorm:"f_id"`
+	Uid             string    `xorm:"f_uid"`
+	Cex             string    `xorm:"f_cex"`
+	ApiKey          string    `xorm:"f_apiKey"`
+	ApiSecret       string    `xorm:"f_apiSecret"`
+	Passphrase      string    `xorm:"f_passphrase"`
+	Alias           string    `xorm:"f_alias"`
+	Account         string    `xorm:"f_account"`
+	CreateTime      time.Time `xorm:"f_createTime"`
+	UpdateTime      time.Time `xorm:"f_updateTime"`
+	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
+	Permission      bool      `xorm:"f_permission"`
 }
 
 type UserCodeInfos struct {
