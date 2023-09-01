@@ -19,7 +19,7 @@ type Users struct {
 	IsIDVerify          bool      `xorm:"f_isIDVerify "`
 	Mobile              string    `xorm:"f_mobile"`
 	InviteNumber        int       `xorm:"f_inviteNumber"`
-	ClaimRewardNumber   int       `xorm:"f_claimeRewardNumber "`
+	ClaimRewardNumber   int       `xorm:"f_claimRewardNumber "`
 	ConcernCoinList     string    `xorm:"f_concernCoinList"`
 	CollectStragetyList string    `xorm:"f_collectStragetyList"`
 	JoinStrageyList     string    `xorm:"f_joinStrageList"`
@@ -33,7 +33,11 @@ type UserBindInfos struct {
 	ApiSecret string `xorm:"f_apiSecret"`
 }
 
-// 注册
+type UserCodeInfos struct {
+	Uid  string `json:"uid"`
+	Code string `json:"code"`
+}
+
 type UserInput struct {
 	UserName string `json:"username"`
 	Email    string `json:"email" binding:"required"`
