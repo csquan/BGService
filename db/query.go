@@ -76,8 +76,16 @@ func GetUserBindInfos(engine *xorm.Engine, uid string) (*types.UserBindInfos, er
 	if has {
 		return &userBindInfos, nil
 	}
-
 	return nil, nil
+}
+
+func GetAllUserBindInfos(engine *xorm.Engine, uid string) ([]types.UserBindInfos, error) {
+	var userBindInfos []types.UserBindInfos
+	err := engine.Table("userBindInfos").Where("f_uid=?", uid).Find(&userBindInfos)
+	if err != nil {
+		return nil, err
+	}
+	return userBindInfos, nil
 }
 
 func GetUserExperience(engine *xorm.Engine, uid string) (*types.UserExperience, error) {
