@@ -83,14 +83,11 @@ func (a *ApiService) Run() {
 		v1.POST("/forgotPassword", authMiddleware(), a.forgotPassword)
 		v1.POST("/resetPassword", authMiddleware(), a.resetPassword)
 		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
-		v1.GET("/verifyCode", authMiddleware(), a.verifyCode)
+		v1.POST("/verifyCode", a.verifyCode)
 	}
 	v2 := r.Group("/api/user")
 	{
 		v2.GET("info", authMiddleware(), a.info)
-		//google验证相关
-		v1.GET("/generateSecret", a.generateSecret)
-		v1.POST("/verifyCode", a.verifyCode)
 	}
 
 	v4 := r.Group("/api/market")
