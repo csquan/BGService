@@ -2,13 +2,13 @@ package api
 
 import (
 	"fmt"
-	// 导入session包
 	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
+
 	// 导入session存储引擎
 	"github.com/ethereum/BGService/config"
 	"github.com/ethereum/BGService/db"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
@@ -88,21 +88,12 @@ func (a *ApiService) Run() {
 	v2 := r.Group("/api/user")
 	{
 		v2.GET("info", authMiddleware(), a.info)
-		//google验证相关
-		v1.GET("/generateSecret", a.generateSecret)
-		v1.POST("/verifyCode", a.verifyCode)
 	}
 
 	v4 := r.Group("/api/market")
 	{
-		//获取binance价格
-		v4.GET("/getBinancePrice", a.getBinancePrice)
-		//获取OK价格
-		//v4.GET("/getOKPrice", a.getOKPrice)
-		//获取24小时信息--包括涨跌幅，日交易量
-		v4.GET("/getBinance24hInfos", a.getBinance24hInfos)
-		//目前缺少获取总市值接口
-		v4.GET("/getCoinInfos", a.getCoinInfos)
+		//添加/移除自选
+		v4.POST("/addConcern", a.addConcern)
 	}
 
 	v6 := r.Group("/api/experienceActivity")

@@ -103,3 +103,19 @@ func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, erro
 	}
 	return nil, nil
 }
+
+func GetConcernList(engine *xorm.Engine, uid string) (tags []string) {
+	// the select query, returning 1 column of array type
+	url := "SELECT 'f_concernCoinList' FROM users WHERE f_uid=$1"
+
+	ret, err := engine.Query(url, uid)
+	// wrap the output parameter in pq.Array for receiving into it
+	//has, err := engine.SQL(url, uid).Get(pq.Array(&foo.concernCoinList))
+
+	if err != nil {
+		logrus.Info(ret)
+		logrus.Info(err)
+	}
+	logrus.Info(ret)
+	return
+}
