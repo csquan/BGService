@@ -90,7 +90,7 @@ func (a *ApiService) Run() {
 		v2.GET("info", authMiddleware(), a.info)
 		v2.GET("myApi", authMiddleware(), a.myApi)
 		v2.POST("bindingApi", authMiddleware(), a.bindingApi)
-		v2.POST("unbindingApi", authMiddleware(), a.unbindingApi)
+		v2.GET("unbindingApi", authMiddleware(), a.unbindingApi)
 	}
 
 	v4 := r.Group("/api/market")

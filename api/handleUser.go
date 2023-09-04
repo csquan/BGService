@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -156,6 +157,12 @@ func (a *ApiService) unbindingApi(c *gin.Context) {
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
 	apiId := c.Query("id")
+	id, err := strconv.Atoi(apiId)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 
 	userBindInfos, err := db.GetIdUserBindInfos(a.dbEngine, uidFormatted, apiId)
 	if err != nil {
@@ -163,9 +170,15 @@ func (a *ApiService) unbindingApi(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// 校验apikey是否存在已绑定
-	if userBindInfos != nil {
+	// 校验apikey是否存在
+	if userBindInfos == nil {
 		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	err = db.DeleteUserBindInfo(a.dbEngine, id)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}

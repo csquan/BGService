@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/BGService/types"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	"github.com/sirupsen/logrus"
 	"log"
 )
 
@@ -35,6 +36,20 @@ func InsertUserBindInfo(engine *xorm.Engine, UserBindInfo *types.InsertUserBindI
 		return errors.New("insert null")
 	}
 	fmt.Println("插入成功")
+	return nil
+}
+
+func DeleteUserBindInfo(engine *xorm.Engine, id int) error {
+	user := types.UserBindInfos{ID: id}
+	rows, err := engine.Table("userBindInfos").Delete(&user)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+	if rows == 0 {
+		logrus.Error("删除失败")
+		return errors.New("delete fail")
+	}
 	return nil
 }
 
