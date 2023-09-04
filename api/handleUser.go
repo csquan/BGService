@@ -176,7 +176,7 @@ func (a *ApiService) unbindingApi(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) myStrategy(c *gin.Context) {
+func (a *ApiService) getStrategy(c *gin.Context) {
 	uid := c.Query("uid")
 
 	user, err := db.GetUser(a.dbEngine, uid)

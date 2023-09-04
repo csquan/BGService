@@ -128,6 +128,37 @@ type PlatformExperienceRevenue struct {
 	BenefitSum   string `xorm:"f_benefitSum"`
 	BenefitRatio string `xorm:"f_benefitRatio"`
 }
+
+// 策略表
+type Strategy struct {
+	StrategyID      string `xorm:"f_strategyID"`
+	StrategyName    string `xorm:"f_strategyName"`
+	Source          string `xorm:"f_source"`
+	Type            string `xorm:"f_type"`
+	CreateTime      string `xorm:"f_createTime"`
+	ExpectedBefenit string `xorm:"f_expectedBefenit"`
+	MaxDrawDown     string `xorm:"f_maxDrawDown"`
+	Cap             string `xorm:"f_cap"`
+	LeverageRatio   string `xorm:"f_leverageRatio"`
+	ControlLine     string `xorm:"f_controlLine"`
+	WinChance       string `xorm:"f_winChance"`
+	SharpRatio      string `xorm:"f_sharpRatio"`
+	TradableAssets  string `xorm:"f_tradableAssets"`
+	ShareRatio      string `xorm:"f_shareRatio"`
+	DividePeriod    string `xorm:"f_dividePeriod"`
+	AgreementPeriod string `xorm:"f_agreementPeriod"`
+	HostPlatform    string `xorm:"f_hostPlatform"`
+	MinInvest       string `xorm:"f_minInvest"`
+	ActualInvest    string `xorm:"f_actualInvest"`
+	CoinName        string `xorm:"f_coinName"`
+	UpdateTime      string `xorm:"f_updateTime"`
+}
+
+type TradeDetails struct {
+	AccountTotalAssets map[string]string
+	InitAssets         map[string]string
+}
+
 type Balance_Erc20 struct {
 	Id             string `xorm:"id"`
 	Addr           string `xorm:"addr"`

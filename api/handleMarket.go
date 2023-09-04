@@ -13,7 +13,9 @@ import (
 
 var base_binance_url = "https://api.binance.com/"
 
-//var base_ok_url = "https://api.binance.com/"
+// var base_ok_url = "https://api.binance.com/"
+
+//var base_future_binance_url = "https://fapi.binance.com"
 
 var base_cmc_url = "https://pro-api.coinmarketcap.com/"
 
@@ -223,6 +225,87 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	res.Code = 0
 	res.Message = "add or remove concern success"
 
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到交易账户详情
+func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
+	accountTotalAssets := make(map[string]string)
+	initAssets := make(map[string]string)
+
+	var tradeDetails types.TradeDetails
+
+	//首先得到我的策略
+	uid := c.Query("uid")
+
+	user, err := db.GetUser(a.dbEngine, uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if user == nil {
+		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//其次得到我的仓位
+	userData, err := util.GetBinanceUserData()
+
+	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//通过策略ID查询策略表
+
+	strageys := strings.Split(user.JoinStrageyList[1:len(user.JoinStrageyList)-1], ",")
+	logrus.Info(strageys)
+
+	//一个稳定币只可能存在一个策略
+	for _, strageyID := range strageys {
+
+		//strageyID 查询策列表
+		strageyInfo, err := db.GetStrategy(a.dbEngine, strageyID)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+		}
+
+		if strings.Contains(strings.ToLower(strageyInfo.StrategyName), "usdt") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "usdt" || asset.Asset == "USDT" {
+					accountTotalAssets["usdt"] = asset.MarginBalance
+					initAssets["usdt"] = strageyInfo.ActualInvest
+				}
+			}
+		}
+		if strings.Contains(strings.ToLower(strageyInfo.StrategyName), "usdc") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "usdc" || asset.Asset == "USDC" {
+					accountTotalAssets["usdc"] = asset.MarginBalance
+					initAssets["usdc"] = strageyInfo.ActualInvest
+				}
+			}
+		}
+		if strings.Contains(strings.ToLower(strageyInfo.StrategyName), "busd") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "busd" || asset.Asset == "BUSD" {
+					accountTotalAssets["busd"] = asset.MarginBalance
+					initAssets["busd"] = strageyInfo.ActualInvest
+				}
+			}
+		}
+	}
+
+	tradeDetails.AccountTotalAssets = accountTotalAssets
+	tradeDetails.InitAssets = initAssets
+
+	res := util.ResponseMsg(0, "getTradeDetails success", tradeDetails)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

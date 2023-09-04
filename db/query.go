@@ -152,3 +152,15 @@ func GetConcernList(engine *xorm.Engine, uid string) (tags []string) {
 	logrus.Info(ret)
 	return
 }
+
+func GetStrategy(engine *xorm.Engine, uid string) (*types.Strategy, error) {
+	var strategy types.Strategy
+	has, err := engine.Where("'f_strategyID'=?", uid).Get(&strategy)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &strategy, nil
+	}
+	return nil, nil
+}
