@@ -55,6 +55,26 @@ func QueryInviteNum(engine *xorm.Engine, InviteCode string) (error, []types.User
 	return nil, users
 }
 
+func QueryInviteNumLimit(engine *xorm.Engine, InviteCode string, total int) (error, []types.Users) {
+	var users []types.Users
+	err := engine.Table("users").Where("`f_invitatedCode`=?", InviteCode).Limit(total).Find(&users)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, users
+}
+
+func QueryClaimRewardNumber(engine *xorm.Engine) (error, []types.Users) {
+	var users []types.Users
+	err := engine.Table("users").Where("`f_claimRewardNumber` > ?", 0).Desc("`f_claimRewardNumber`").Find(&users)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, users
+}
+
 func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 	var user types.Users
 	has, err := engine.Where("f_uid=?", uid).Get(&user)

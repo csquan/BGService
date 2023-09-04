@@ -175,7 +175,8 @@ func (a *ApiService) login(c *gin.Context) {
 	if payload.Password == passWord {
 		//set session
 		session := sessions.Default(c)
-		session.Set(payload.Email, has.Uid)
+		session.Set("Uid", has.Uid)
+		session.Set("invitationCode", has.InvitationCode)
 		err = session.Save()
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)

@@ -44,6 +44,7 @@ func authMiddleware() gin.HandlerFunc {
 		//// 用户已登录，将用户 ID 传递给后续的处理函数
 		//c.Set("Uid", Uid)
 		c.Set("Uid", "24670980929080")
+		c.Set("invitationCode", "VCZ34Z71")
 		c.Next()
 	}
 }
@@ -91,6 +92,8 @@ func (a *ApiService) Run() {
 		v2.GET("myApi", authMiddleware(), a.myApi)
 		v2.POST("bindingApi", authMiddleware(), a.bindingApi)
 		v2.GET("unbindingApi", authMiddleware(), a.unbindingApi)
+		v2.GET("invite", authMiddleware(), a.invite)
+		v2.GET("inviteRanking", authMiddleware(), a.inviteRanking)
 	}
 
 	v4 := r.Group("/api/market")
