@@ -42,6 +42,18 @@ type UserBindInfos struct {
 	Permission      bool      `xorm:"f_permission"`
 }
 
+type News struct {
+	ID         string    `xorm:"f_id"`
+	Type       string    `xorm:"f_type"`
+	Title      string    `xorm:"f_title"`
+	Content    string    `xorm:"f_content"`
+	Source     string    `xorm:"f_source"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+	Hotspot    bool      `xorm:"f_hotspot "`
+	Cover      string    `xorm:"f_cover "`
+}
+
 type InsertUserBindInfo struct {
 	Uid             string    `xorm:"f_uid"`
 	Cex             string    `xorm:"f_cex"`

@@ -1,11 +1,11 @@
 package db
 
 import (
-	"errors"
 	"fmt"
 	"github.com/ethereum/BGService/types"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"log"
 )

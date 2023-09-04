@@ -33,7 +33,6 @@ func GenerateInviteCode(length int) string {
 
 func ResponseMsg(Code int, Message string, Data interface{}) types.HttpRes {
 	res := types.HttpRes{}
-
 	res.Code = Code
 	res.Message = Message
 	res.Data = Data

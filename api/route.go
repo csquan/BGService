@@ -96,6 +96,12 @@ func (a *ApiService) Run() {
 		v2.GET("inviteRanking", authMiddleware(), a.inviteRanking)
 	}
 
+	v3 := r.Group("/api/info")
+	{
+		v3.GET("/list", a.list)
+		v3.GET("/hotSpotList ", a.hotSpotList)
+	}
+
 	v4 := r.Group("/api/market")
 	{
 		//添加/移除自选

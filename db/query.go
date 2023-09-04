@@ -157,6 +157,15 @@ func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, erro
 	return nil, nil
 }
 
+func GetMsg(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, Type string) ([]types.News, error) {
+	var news []types.News
+	err := engine.Table("news").Where("f_type=?", Type).Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&news)
+	if err != nil {
+		return nil, err
+	}
+	return news, nil
+}
+
 func GetConcernList(engine *xorm.Engine, uid string) (tags []string) {
 	// the select query, returning 1 column of array type
 	url := "SELECT 'f_concernCoinList' FROM users WHERE f_uid=$1"
