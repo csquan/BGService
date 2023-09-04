@@ -27,7 +27,21 @@ type Users struct {
 }
 
 type UserBindInfos struct {
-	ID              string    `xorm:"f_id"`
+	ID              int       `xorm:"f_id"`
+	Uid             string    `xorm:"f_uid"`
+	Cex             string    `xorm:"f_cex"`
+	ApiKey          string    `xorm:"f_apiKey"`
+	ApiSecret       string    `xorm:"f_apiSecret"`
+	Passphrase      string    `xorm:"f_passphrase"`
+	Alias           string    `xorm:"f_alias"`
+	Account         string    `xorm:"f_account"`
+	CreateTime      time.Time `xorm:"f_createTime"`
+	UpdateTime      time.Time `xorm:"f_updateTime"`
+	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
+	Permission      bool      `xorm:"f_permission"`
+}
+
+type InsertUserBindInfo struct {
 	Uid             string    `xorm:"f_uid"`
 	Cex             string    `xorm:"f_cex"`
 	ApiKey          string    `xorm:"f_apiKey"`
@@ -54,6 +68,22 @@ type UserInput struct {
 	// Photo           string `json:"photo" binding:"required"`
 	VerifyCode string `json:"verifyCode" binding:"required"`
 	InviteCode string `json:"inviteCode"`
+}
+
+type UserBindInfoInput struct {
+	Cex        string `json:"cex" binding:"required"`
+	ApiKey     string `json:"apiKey" binding:"required"`
+	ApiSecret  string `json:"secretKey" binding:"required"`
+	Passphrase string `json:"passphrase" binding:"required"`
+	Alias      string `json:"alias"`
+	Account    string `json:"account" binding:"required"`
+}
+
+type UnbindingApiInput struct {
+	Cex        string `json:"cex" binding:"required"`
+	ApiKey     string `json:"apiKey" binding:"required"`
+	ApiSecret  string `json:"secretKey" binding:"required"`
+	Passphrase string `json:"passphrase" binding:"required"`
 }
 
 type LoginInput struct {

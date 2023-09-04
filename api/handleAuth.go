@@ -24,8 +24,8 @@ func (a *ApiService) email(c *gin.Context) {
 	to := []string{email}
 	subject := "BG verifyCode!"
 	verifyCode := util.GenerateCode(6)
-	body := fmt.Sprintf("verifyCode :%s", verifyCode)
-	err := util.SendEmail(a.config, to, subject, body)
+	sendBody := fmt.Sprintf("verifyCode :%s", verifyCode)
+	err := util.SendEmail(a.config, to, subject, sendBody)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -38,9 +38,10 @@ func (a *ApiService) email(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	body := make(map[string]interface{})
 	msg := fmt.Sprintf("to: %s, send: %s", email, verifyCode)
 	logrus.Info(msg)
-	res := util.ResponseMsg(0, "success", "")
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -149,7 +150,8 @@ func (a *ApiService) register(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res := util.ResponseMsg(0, "success", "")
+	body := make(map[string]interface{})
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -188,7 +190,9 @@ func (a *ApiService) login(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res := util.ResponseMsg(0, "success", "")
+	body := make(map[string]interface{})
+
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -203,7 +207,9 @@ func (a *ApiService) logout(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res := util.ResponseMsg(0, "success", "")
+	body := make(map[string]interface{})
+
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -295,8 +301,9 @@ func (a *ApiService) resetPassword(c *gin.Context) {
 	err = db.UpdateUserPass(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		return
+	} else {
+		body["status"] = 0
 	}
-	body["status"] = 0
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return

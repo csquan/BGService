@@ -79,6 +79,31 @@ func GetUserBindInfos(engine *xorm.Engine, uid string) (*types.UserBindInfos, er
 	return nil, nil
 }
 
+func GetApiKeyUserBindInfos(engine *xorm.Engine, apiKey string) (*types.UserBindInfos, error) {
+	var userBindInfos types.UserBindInfos
+	has, err := engine.Table("userBindInfos").Where("`f_apiKey`=?", apiKey).Get(&userBindInfos)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userBindInfos, nil
+	}
+	return nil, nil
+}
+
+func GetIdUserBindInfos(engine *xorm.Engine, uid string, apiId string) (*types.UserBindInfos, error) {
+	var userBindInfos types.UserBindInfos
+	has, err := engine.Table("userBindInfos").
+		Where("`f_uid`=? and `f_id`=?", uid, apiId).Get(&userBindInfos)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userBindInfos, nil
+	}
+	return nil, nil
+}
+
 func GetAllUserBindInfos(engine *xorm.Engine, uid string) ([]types.UserBindInfos, error) {
 	var userBindInfos []types.UserBindInfos
 	err := engine.Table("userBindInfos").Where("f_uid=?", uid).Find(&userBindInfos)

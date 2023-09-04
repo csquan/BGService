@@ -33,7 +33,7 @@ func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// todo 登录校验
 		//session := sessions.Default(c)
-		//Uid := session.Get("mysession")
+		//Uid := session.Get("Uid")
 		//if Uid == nil {
 		//	c.JSON(http.StatusUnauthorized, gin.H{
 		//		"error": "Unauthorized",
@@ -88,6 +88,9 @@ func (a *ApiService) Run() {
 	v2 := r.Group("/api/user")
 	{
 		v2.GET("info", authMiddleware(), a.info)
+		v2.GET("myApi", authMiddleware(), a.myApi)
+		v2.POST("bindingApi", authMiddleware(), a.bindingApi)
+		v2.POST("unbindingApi", authMiddleware(), a.unbindingApi)
 	}
 
 	v4 := r.Group("/api/market")
