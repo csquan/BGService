@@ -153,9 +153,9 @@ func GetConcernList(engine *xorm.Engine, uid string) (tags []string) {
 	return
 }
 
-func GetStrategy(engine *xorm.Engine, uid string) (*types.Strategy, error) {
+func GetStrategy(engine *xorm.Engine, sid string) (*types.Strategy, error) {
 	var strategy types.Strategy
-	has, err := engine.Where("'f_strategyID'=?", uid).Get(&strategy)
+	has, err := engine.Where("`f_strategyID`=?", sid).Get(&strategy)
 	if err != nil {
 		return nil, err
 	}

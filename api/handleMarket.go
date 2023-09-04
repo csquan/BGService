@@ -268,7 +268,6 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 
 	//一个稳定币只可能存在一个策略
 	for _, strageyID := range strageys {
-
 		//strageyID 查询策列表
 		strageyInfo, err := db.GetStrategy(a.dbEngine, strageyID)
 		if err != nil {
