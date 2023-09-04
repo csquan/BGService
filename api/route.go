@@ -91,8 +91,10 @@ func (a *ApiService) Run() {
 		v2.GET("myApi", authMiddleware(), a.myApi)
 		v2.POST("bindingApi", authMiddleware(), a.bindingApi)
 		v2.POST("unbindingApi", authMiddleware(), a.unbindingApi)
-	}
 
+		v2.GET("/myStrategy", a.myStrategy)
+		v2.POST("/unbindingGoogle", a.unbindingGoogle)
+	}
 	v4 := r.Group("/api/market")
 	{
 		//添加/移除自选
