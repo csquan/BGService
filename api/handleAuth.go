@@ -123,7 +123,7 @@ func (a *ApiService) register(c *gin.Context) {
 			return
 		}
 		if user != nil {
-			if err := db.UpdateUser(a.dbEngine, user.Uid); err != nil {
+			if err := db.AddUserInvite(a.dbEngine, user.Uid); err != nil {
 				res := util.ResponseMsg(-1, "fail", err)
 				c.SecureJSON(http.StatusOK, res)
 				return
@@ -135,15 +135,12 @@ func (a *ApiService) register(c *gin.Context) {
 		}
 	}
 	newUser := types.Users{
-		Uid:                 uid,
-		UserName:            username,
-		Password:            payload.Password,
-		InvitationCode:      inviteCode,
-		InvitatedCode:       payload.InviteCode,
-		MailBox:             payload.Email,
-		ConcernCoinList:     "{}",
-		CollectStragetyList: "{}",
-		JoinStrageyList:     "{}",
+		Uid:            uid,
+		UserName:       username,
+		Password:       payload.Password,
+		InvitationCode: inviteCode,
+		InvitatedCode:  payload.InviteCode,
+		MailBox:        payload.Email,
 	}
 	if err := db.InsertUser(a.dbEngine, &newUser); err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -254,7 +251,7 @@ func (a *ApiService) forgotPassword(c *gin.Context) {
 	}
 	// 修改密码
 	user.Password = payload.Password
-	err = db.UpdateUserPass(a.dbEngine, uidFormatted, user)
+	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		return
 	}
@@ -298,7 +295,7 @@ func (a *ApiService) resetPassword(c *gin.Context) {
 	}
 	// 修改密码
 	user.Password = payload.Password
-	err = db.UpdateUserPass(a.dbEngine, uidFormatted, user)
+	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		return
 	} else {
@@ -339,8 +336,15 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	//产生secret
 	user.Secret = GetSecret()
 
-	err = db.UpdateUserSecret(a.dbEngine, uid, user)
+	err = db.UpdateUser(a.dbEngine, uid, user)
 	if err != nil {
+		logrus.Info("update secret err:", err)
+
+		res.Code = 0
+		res.Message = "update secret err"
+		res.Data = err
+
+		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	//下面将信息存入db
@@ -349,6 +353,7 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	res.Data = user.Secret
 
 	c.SecureJSON(http.StatusOK, res)
+	return
 }
 
 // 输入google验证码，确认后触发后端验证

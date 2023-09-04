@@ -7,20 +7,21 @@ import (
 )
 
 type Users struct {
-	Uid                 string    `xorm:"f_uid"`
-	UserName            string    `xorm:"f_userName"`
-	Password            string    `xorm:"f_password"`
-	InvitationCode      string    `xorm:"f_invitationCode"`
-	InvitatedCode       string    `xorm:"f_invitatedCode"`
-	MailBox             string    `xorm:"f_mailBox"`
-	CreateTime          time.Time `xorm:"f_createTime"`
-	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
-	Secret              string    `xorm:"f_secret"`
-	IsIDVerify          bool      `xorm:"f_isIDVerify "`
-	Mobile              string    `xorm:"f_mobile"`
-	InviteNumber        int       `xorm:"f_inviteNumber"`
-	ClaimRewardNumber   int       `xorm:"f_claimRewardNumber "`
-	ConcernCoinList     string    `xorm:"f_concernCoinList"`
+	Uid               string    `xorm:"f_uid"`
+	UserName          string    `xorm:"f_userName"`
+	Password          string    `xorm:"f_password"`
+	InvitationCode    string    `xorm:"f_invitationCode"`
+	InvitatedCode     string    `xorm:"f_invitatedCode"`
+	MailBox           string    `xorm:"f_mailBox"`
+	CreateTime        time.Time `xorm:"f_createTime"`
+	IsBindGoogle      bool      `xorm:"f_isBindGoogle "`
+	Secret            string    `xorm:"f_secret"`
+	IsIDVerify        bool      `xorm:"f_isIDVerify "`
+	Mobile            string    `xorm:"f_mobile"`
+	InviteNumber      int       `xorm:"f_inviteNumber"`
+	ClaimRewardNumber int       `xorm:"f_claimRewardNumber "`
+	ConcernCoinList   string    `xorm:"f_concernCoinList"`
+	//ConcernCoinList     pq.StringArray `xorm:"f_concernCoinList"`
 	CollectStragetyList string    `xorm:"f_collectStragetyList"`
 	JoinStrageyList     string    `xorm:"f_joinStrageList"`
 	UpdateTime          time.Time `xorm:"f_updateTime"`
@@ -58,6 +59,12 @@ type InsertUserBindInfo struct {
 type UserCodeInfos struct {
 	Uid  string `json:"uid"`
 	Code string `json:"code"`
+}
+
+type UserConcern struct {
+	Uid      string `json:"uid"`
+	CoinPair string `json:"coinPair"`
+	Method   string `json:"method"`
 }
 
 type UserInput struct {
