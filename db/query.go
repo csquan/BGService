@@ -273,3 +273,12 @@ func GetUserStrategyLatestEarnings(engine *xorm.Engine, uid string, sid string) 
 	}
 	return nil, nil
 }
+
+func GetUserIncome(engine *xorm.Engine) (float64, error) {
+	var userStrategyEarnings types.UserStrategyEarnings
+	total, err := engine.Table("userStrategyEarnings").Sum(userStrategyEarnings, "f_totalBenefit")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
