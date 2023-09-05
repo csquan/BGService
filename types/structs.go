@@ -149,6 +149,7 @@ type PlatformExperienceRevenue struct {
 // 策略表
 type Strategy struct {
 	StrategyID      string `xorm:"f_strategyID"`
+	IsValid         string `xorm:"f_isValid"`
 	StrategyName    string `xorm:"f_strategyName"`
 	Source          string `xorm:"f_source"`
 	Type            string `xorm:"f_type"`

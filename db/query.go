@@ -235,3 +235,29 @@ func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, e
 	}
 	return userStrategys, nil
 }
+
+func GetStrategyTotalAssets(engine *xorm.Engine) (float64, error) {
+	var userStrategy *types.UserStrategy
+	total, err := engine.Table("userStrategy").Sum(userStrategy, "f_actualInvest")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func GetStrategyUserCount(engine *xorm.Engine) (int64, error) {
+	total, err := engine.Table("userStrategy").GroupBy("f_uid").Count("f_uid")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func GetAllStrategy(engine *xorm.Engine) ([]*types.Strategy, error) {
+	var Strategy []*types.Strategy
+	err := engine.Table("userStrategy").Where("f_isValid=?", "t").Find(&Strategy)
+	if err != nil {
+		return nil, err
+	}
+	return Strategy, nil
+}

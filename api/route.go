@@ -105,7 +105,6 @@ func (a *ApiService) Run() {
 		v3.GET("/details", a.details)
 	}
 
-
 	v4 := r.Group("/api/market")
 	{
 		//添加/移除自选
@@ -128,6 +127,11 @@ func (a *ApiService) Run() {
 	v7 := r.Group("/api/wallet")
 	{
 		v7.GET("/getTradeAccountDetail", a.getTradeAccountDetail)
+	}
+
+	v8 := r.Group("/api/product")
+	{
+		v8.GET("/overview", a.overview)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
