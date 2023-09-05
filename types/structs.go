@@ -32,6 +32,15 @@ type UserStrategy struct {
 	ActualInvest string `xorm:"f_actualInvest"`
 }
 
+// 用户得策略量化收益表
+type UserStrategyEarnings struct {
+	Uid          string `xorm:"f_uid"`
+	StrategyID   string `xorm:"f_strategyID"`
+	DayBenefit   string `xorm:"f_dayBenefit"`
+	TotalBenefit string `xorm:"f_totalBenefit"`
+	CreateTime   string `xorm:"f_createTime"`
+}
+
 type UserBindInfos struct {
 	ID              int       `xorm:"f_id"`
 	Uid             string    `xorm:"f_uid"`
@@ -161,6 +170,7 @@ type Strategy struct {
 type TradeDetails struct {
 	AccountTotalAssets map[string]string
 	InitAssets         map[string]string
+	CurBenefit         map[string]string
 }
 
 type Balance_Erc20 struct {

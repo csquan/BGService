@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
@@ -233,6 +234,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	accountTotalAssets := make(map[string]string)
 	initAssets := make(map[string]string)
+	todayBenefits := make(map[string]string)
 
 	var tradeDetails types.TradeDetails
 
@@ -255,8 +257,33 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+
 	//一个稳定币只可能存在一个策略
 	for _, userStrategy := range userStrategys {
+		//查询量化收益表
+		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
+		cexTotalProfit, err := decimal.NewFromString(userData.TotalUnrealizedProfit)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		dbTotalBenefit, err := decimal.NewFromString(latestEarning.TotalBenefit)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
+		dayBefinit := cexTotalProfit.Sub(dbTotalBenefit)
+
 		//查询策略表
 		strategyInfo, err := db.GetStrategy(a.dbEngine, userStrategy.StrategyID)
 		if err != nil {
@@ -270,6 +297,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 				if asset.Asset == "usdt" || asset.Asset == "USDT" {
 					accountTotalAssets["usdt"] = asset.MarginBalance
 					initAssets["usdt"] = userStrategy.ActualInvest
+					todayBenefits["usdt"] = dayBefinit.String()
 				}
 			}
 		}
@@ -278,6 +306,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 				if asset.Asset == "usdc" || asset.Asset == "USDC" {
 					accountTotalAssets["usdc"] = asset.MarginBalance
 					initAssets["usdc"] = userStrategy.ActualInvest
+					todayBenefits["usdc"] = dayBefinit.String()
 				}
 			}
 		}
@@ -286,6 +315,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 				if asset.Asset == "busd" || asset.Asset == "BUSD" {
 					accountTotalAssets["busd"] = asset.MarginBalance
 					initAssets["busd"] = userStrategy.ActualInvest
+					todayBenefits["busd"] = dayBefinit.String()
 				}
 			}
 		}
@@ -293,6 +323,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 
 	tradeDetails.AccountTotalAssets = accountTotalAssets
 	tradeDetails.InitAssets = initAssets
+	tradeDetails.CurBenefit = todayBenefits
 
 	res := util.ResponseMsg(0, "getTradeDetails success", tradeDetails)
 	c.SecureJSON(http.StatusOK, res)
