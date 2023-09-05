@@ -179,20 +179,14 @@ func (a *ApiService) unbindingApi(c *gin.Context) {
 func (a *ApiService) getStrategy(c *gin.Context) {
 	uid := c.Query("uid")
 
-	user, err := db.GetUser(a.dbEngine, uid)
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	if user == nil {
-		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	res := util.ResponseMsg(1, "success", user.CollectStragetyList)
+	res := util.ResponseMsg(1, "success", userStrategys)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
