@@ -2,6 +2,7 @@ package util
 
 import (
 	"math/big"
+	"strings"
 )
 
 type CoinInfo struct {
@@ -30,4 +31,8 @@ type HistoryInfo struct {
 type BlockRange struct {
 	BeginBlock *big.Int
 	EndBlock   *big.Int
+}
+
+func RemoveElement(str string, elem string) string {
+	return strings.Replace(str, elem, "", 1)
 }

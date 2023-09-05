@@ -15,7 +15,7 @@ var (
 )
 
 // U本位合约--得到账户余额
-func GetBinanceUserData() (*futures.Account, error) {
+func GetBinanceUMUserData() (*futures.Account, error) {
 	futuresClient := binance.NewFuturesClient(apiKey, secretKey) // USDT-M Futures
 	futuresClient.SetApiEndpoint(base_future_testnet_binance_url)
 
@@ -27,4 +27,19 @@ func GetBinanceUserData() (*futures.Account, error) {
 	}
 
 	return ret, nil
+}
+
+// U本位合约--得到账户余额
+func GetBinanceUMUserTxHistory(symbol string, limit int) ([]*futures.AccountTrade, error) {
+	futuresClient := binance.NewFuturesClient(apiKey, secretKey) // USDT-M Futures
+	futuresClient.SetApiEndpoint(base_future_testnet_binance_url)
+
+	listAccountTrades, err := futuresClient.NewListAccountTradeService().Symbol(symbol).Limit(limit).Do(context.Background())
+
+	if err != nil {
+		logrus.Info(err)
+		return nil, err
+	}
+
+	return listAccountTrades, nil
 }

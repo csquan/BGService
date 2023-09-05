@@ -127,6 +127,7 @@ func (a *ApiService) Run() {
 	v7 := r.Group("/api/wallet")
 	{
 		v7.GET("/getTradeAccountDetail", a.getTradeAccountDetail)
+		v7.GET("/getTradeHistory", a.getTradeHistory)
 	}
 
 	v8 := r.Group("/api/product")
