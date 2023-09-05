@@ -166,6 +166,27 @@ func GetMsg(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, Type string)
 	return news, nil
 }
 
+func GetHotMsg(engine *xorm.Engine, total int, Type string) ([]types.News, error) {
+	var news []types.News
+	err := engine.Table("news").Where("f_type=?", Type).Limit(total).Find(&news)
+	if err != nil {
+		return nil, err
+	}
+	return news, nil
+}
+
+func GetMsgDetail(engine *xorm.Engine, msgId string) (*types.News, error) {
+	var news types.News
+	has, err := engine.Table("news").Where("f_id=?", msgId).Get(&news)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &news, nil
+	}
+	return nil, nil
+}
+
 func GetConcernList(engine *xorm.Engine, uid string) (tags []string) {
 	// the select query, returning 1 column of array type
 	url := "SELECT 'f_concernCoinList' FROM users WHERE f_uid=$1"

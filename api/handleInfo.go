@@ -80,6 +80,13 @@ func (a *ApiService) hotSpotList(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	TotalInt, err := strconv.Atoi(Total)
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	Type, ok := c.GetQuery("type")
 	if !ok {
 		logrus.Error("type not exist.")
@@ -88,7 +95,7 @@ func (a *ApiService) hotSpotList(c *gin.Context) {
 		return
 	}
 
-	msg, err := db.GetMsg(a.dbEngine, pageSizeInt, pageIndexInt, Type)
+	msg, err := db.GetHotMsg(a.dbEngine, TotalInt, Type)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err.Error())
 		c.SecureJSON(http.StatusOK, res)
@@ -108,6 +115,36 @@ func (a *ApiService) hotSpotList(c *gin.Context) {
 	body["total"] = len(msg)
 	body["list"] = msgInfoList
 	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) details(c *gin.Context) {
+	msgId, ok := c.GetQuery("msgId")
+	if !ok {
+		logrus.Error("msgId not exist.")
+		res := util.ResponseMsg(-1, "fail", "msgId not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	msg, err := db.GetMsgDetail(a.dbEngine, msgId)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if msg == nil {
+		res := util.ResponseMsg(-1, "fail", "msg is not exist")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	msgInfo := make(map[string]interface{})
+	msgInfo["id"] = msg.ID
+	msgInfo["title"] = msg.Title
+	msgInfo["content"] = msg.Content
+	msgInfo["image"] = msg.Cover
+	msgInfo["datetime"] = msg.CreateTime
+	res := util.ResponseMsg(1, "success", msgInfo)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
