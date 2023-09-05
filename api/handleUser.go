@@ -281,3 +281,83 @@ func (a *ApiService) inviteRanking(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) getStrategy(c *gin.Context) {
+	uid := c.Query("uid")
+
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(1, "success", userStrategys)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 这个要验证下动态码
+
+func (a *ApiService) unbindingGoogle(c *gin.Context) {
+
+	var userCode types.UserCodeInfos
+
+	err := c.BindJSON(&userCode)
+	if err != nil {
+		logrus.Info("not valid json", err)
+
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	uid := userCode.Uid
+	code := userCode.Code //验证动态码
+
+	_, secret := db.QuerySecret(a.dbEngine, uid)
+
+	codeint, err := strconv.ParseInt(code, 10, 64)
+
+	if err != nil {
+		logrus.Info("not valid code", code)
+
+		res := util.ResponseMsg(-1, "fail", "google code is not pass,so can not unbinding google")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	isTrue := VerifyCode(secret.Secret, int32(codeint))
+
+	if !isTrue {
+		res := util.ResponseMsg(-1, "fail", "google code is not pass,so can not unbinding google")
+		c.SecureJSON(http.StatusOK, res)
+	}
+	logrus.Info("code pass verify,next unbind google")
+
+	//下面才可以解绑--将db更新即可
+	user, err := db.GetUser(a.dbEngine, uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if user == nil {
+		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	user.IsBindGoogle = false
+
+	err = db.UpdateUser(a.dbEngine, uid, user)
+
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	res := util.ResponseMsg(0, "unbinding success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
