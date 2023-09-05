@@ -164,3 +164,24 @@ func GetStrategy(engine *xorm.Engine, sid string) (*types.Strategy, error) {
 	}
 	return nil, nil
 }
+
+func GetUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
+	var userStrategy types.UserStrategy
+	has, err := engine.Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userStrategy, nil
+	}
+	return nil, nil
+}
+
+func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, error) {
+	var userStrategys []*types.UserStrategy
+	err := engine.Table("userStrategy").Where("f_uid=?", uid).Find(&userStrategys)
+	if err != nil {
+		return nil, err
+	}
+	return userStrategys, nil
+}

@@ -239,20 +239,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	//首先得到我的策略
 	uid := c.Query("uid")
 
-	user, err := db.GetUser(a.dbEngine, uid)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	if user == nil {
-		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	//其次得到我的仓位
+	//首先得到我的仓位
 	userData, err := util.GetBinanceUserData()
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
@@ -261,41 +248,44 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 		return
 	}
 
-	//通过策略ID查询策略表
-
-	strageys := strings.Split(user.JoinStrageyList[1:len(user.JoinStrageyList)-1], ",")
-	logrus.Info(strageys)
-
+	//查询用户策略表得到用户对应得所有策略
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	//一个稳定币只可能存在一个策略
-	for _, strageyID := range strageys {
-		//strageyID 查询策列表
-		strageyInfo, err := db.GetStrategy(a.dbEngine, strageyID)
+	for _, userStrategy := range userStrategys {
+		//查询策略表
+		strategyInfo, err := db.GetStrategy(a.dbEngine, userStrategy.StrategyID)
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
+			return
 		}
 
-		if strings.Contains(strings.ToLower(strageyInfo.StrategyName), "usdt") == true {
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdt" || asset.Asset == "USDT" {
 					accountTotalAssets["usdt"] = asset.MarginBalance
-					initAssets["usdt"] = strageyInfo.ActualInvest
+					initAssets["usdt"] = userStrategy.ActualInvest
 				}
 			}
 		}
-		if strings.Contains(strings.ToLower(strageyInfo.StrategyName), "usdc") == true {
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdc" || asset.Asset == "USDC" {
 					accountTotalAssets["usdc"] = asset.MarginBalance
-					initAssets["usdc"] = strageyInfo.ActualInvest
+					initAssets["usdc"] = userStrategy.ActualInvest
 				}
 			}
 		}
-		if strings.Contains(strings.ToLower(strageyInfo.StrategyName), "busd") == true {
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "busd" || asset.Asset == "BUSD" {
 					accountTotalAssets["busd"] = asset.MarginBalance
-					initAssets["busd"] = strageyInfo.ActualInvest
+					initAssets["busd"] = userStrategy.ActualInvest
 				}
 			}
 		}
