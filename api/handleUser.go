@@ -156,7 +156,6 @@ func (a *ApiService) unbindingApi(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
-	// api_id
 	apiId := c.Query("id")
 	id, err := strconv.Atoi(apiId)
 	if err != nil {

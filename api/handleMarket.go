@@ -13,7 +13,9 @@ import (
 
 var base_binance_url = "https://api.binance.com/"
 
-//var base_ok_url = "https://api.binance.com/"
+// var base_ok_url = "https://api.binance.com/"
+
+//var base_future_binance_url = "https://fapi.binance.com"
 
 var base_cmc_url = "https://pro-api.coinmarketcap.com/"
 
@@ -223,6 +225,76 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	res.Code = 0
 	res.Message = "add or remove concern success"
 
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到交易账户详情
+func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
+	accountTotalAssets := make(map[string]string)
+	initAssets := make(map[string]string)
+
+	var tradeDetails types.TradeDetails
+
+	//首先得到我的策略
+	uid := c.Query("uid")
+
+	//首先得到我的仓位
+	userData, err := util.GetBinanceUserData()
+
+	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//查询用户策略表得到用户对应得所有策略
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//一个稳定币只可能存在一个策略
+	for _, userStrategy := range userStrategys {
+		//查询策略表
+		strategyInfo, err := db.GetStrategy(a.dbEngine, userStrategy.StrategyID)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "usdt" || asset.Asset == "USDT" {
+					accountTotalAssets["usdt"] = asset.MarginBalance
+					initAssets["usdt"] = userStrategy.ActualInvest
+				}
+			}
+		}
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "usdc" || asset.Asset == "USDC" {
+					accountTotalAssets["usdc"] = asset.MarginBalance
+					initAssets["usdc"] = userStrategy.ActualInvest
+				}
+			}
+		}
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "busd" || asset.Asset == "BUSD" {
+					accountTotalAssets["busd"] = asset.MarginBalance
+					initAssets["busd"] = userStrategy.ActualInvest
+				}
+			}
+		}
+	}
+
+	tradeDetails.AccountTotalAssets = accountTotalAssets
+	tradeDetails.InitAssets = initAssets
+
+	res := util.ResponseMsg(0, "getTradeDetails success", tradeDetails)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

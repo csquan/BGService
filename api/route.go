@@ -94,6 +94,8 @@ func (a *ApiService) Run() {
 		v2.GET("unbindingApi", authMiddleware(), a.unbindingApi)
 		v2.GET("invite", authMiddleware(), a.invite)
 		v2.GET("inviteRanking", authMiddleware(), a.inviteRanking)
+		v2.GET("/getStrategy", a.getStrategy)
+		v2.POST("/unbindingGoogle", a.unbindingGoogle)
 	}
 
 	v3 := r.Group("/api/info")
@@ -102,6 +104,7 @@ func (a *ApiService) Run() {
 		v3.GET("/hotSpotList", a.hotSpotList)
 		v3.GET("/details", a.details)
 	}
+
 
 	v4 := r.Group("/api/market")
 	{
@@ -120,6 +123,11 @@ func (a *ApiService) Run() {
 		v6.GET("/getUserExperience", a.getUserExperience)
 		//获取平台的体验金收益率
 		v6.GET("/getPlatformExperience", a.getPlatformExperience)
+	}
+
+	v7 := r.Group("/api/wallet")
+	{
+		v7.GET("/getTradeAccountDetail", a.getTradeAccountDetail)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)

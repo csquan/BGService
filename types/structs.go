@@ -7,24 +7,29 @@ import (
 )
 
 type Users struct {
-	Uid               string    `xorm:"f_uid"`
-	UserName          string    `xorm:"f_userName"`
-	Password          string    `xorm:"f_password"`
-	InvitationCode    string    `xorm:"f_invitationCode"`
-	InvitatedCode     string    `xorm:"f_invitatedCode"`
-	MailBox           string    `xorm:"f_mailBox"`
-	CreateTime        time.Time `xorm:"f_createTime"`
-	IsBindGoogle      bool      `xorm:"f_isBindGoogle "`
-	Secret            string    `xorm:"f_secret"`
-	IsIDVerify        bool      `xorm:"f_isIDVerify "`
-	Mobile            string    `xorm:"f_mobile"`
-	InviteNumber      int       `xorm:"f_inviteNumber"`
-	ClaimRewardNumber int       `xorm:"f_claimRewardNumber "`
-	ConcernCoinList   string    `xorm:"f_concernCoinList"`
-	//ConcernCoinList     pq.StringArray `xorm:"f_concernCoinList"`
+	Uid                 string    `xorm:"f_uid"`
+	UserName            string    `xorm:"f_userName"`
+	Password            string    `xorm:"f_password"`
+	InvitationCode      string    `xorm:"f_invitationCode"`
+	InvitatedCode       string    `xorm:"f_invitatedCode"`
+	MailBox             string    `xorm:"f_mailBox"`
+	CreateTime          time.Time `xorm:"f_createTime"`
+	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
+	Secret              string    `xorm:"f_secret"`
+	IsIDVerify          bool      `xorm:"f_isIDVerify "`
+	Mobile              string    `xorm:"f_mobile"`
+	InviteNumber        int       `xorm:"f_inviteNumber"`
+	ClaimRewardNumber   int       `xorm:"f_claimRewardNumber "`
+	ConcernCoinList     string    `xorm:"f_concernCoinList"`
 	CollectStragetyList string    `xorm:"f_collectStragetyList"`
-	JoinStrageyList     string    `xorm:"f_joinStrageList"`
 	UpdateTime          time.Time `xorm:"f_updateTime"`
+}
+
+type UserStrategy struct {
+	Uid          string `xorm:"f_uid"`
+	StrategyID   string `xorm:"f_userStrategyID"`
+	JoinTime     string `xorm:"f_joinTime"`
+	ActualInvest string `xorm:"f_actualInvest"`
 }
 
 type UserBindInfos struct {
@@ -140,6 +145,36 @@ type PlatformExperienceRevenue struct {
 	BenefitSum   string `xorm:"f_benefitSum"`
 	BenefitRatio string `xorm:"f_benefitRatio"`
 }
+
+// 策略表
+type Strategy struct {
+	StrategyID      string `xorm:"f_strategyID"`
+	StrategyName    string `xorm:"f_strategyName"`
+	Source          string `xorm:"f_source"`
+	Type            string `xorm:"f_type"`
+	CreateTime      string `xorm:"f_createTime"`
+	ExpectedBefenit string `xorm:"f_expectedBefenit"`
+	MaxDrawDown     string `xorm:"f_maxDrawDown"`
+	Cap             string `xorm:"f_cap"`
+	LeverageRatio   string `xorm:"f_leverageRatio"`
+	ControlLine     string `xorm:"f_controlLine"`
+	WinChance       string `xorm:"f_winChance"`
+	SharpRatio      string `xorm:"f_sharpRatio"`
+	TradableAssets  string `xorm:"f_tradableAssets"`
+	ShareRatio      string `xorm:"f_shareRatio"`
+	DividePeriod    string `xorm:"f_dividePeriod"`
+	AgreementPeriod string `xorm:"f_agreementPeriod"`
+	HostPlatform    string `xorm:"f_hostPlatform"`
+	MinInvest       string `xorm:"f_minInvest"`
+	CoinName        string `xorm:"f_coinName"`
+	UpdateTime      string `xorm:"f_updateTime"`
+}
+
+type TradeDetails struct {
+	AccountTotalAssets map[string]string
+	InitAssets         map[string]string
+}
+
 type Balance_Erc20 struct {
 	Id             string `xorm:"id"`
 	Addr           string `xorm:"addr"`
