@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/ethereum/BGService/db"
+	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -48,6 +49,21 @@ func (a *ApiService) overview(c *gin.Context) {
 	body["globalUserCount"] = UserCount
 	body["globalUserIncome"] = UserIncome
 
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) productList(c *gin.Context) {
+	var payload *types.StrategyInput
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	db.GetScreenStrategy(a.dbEngine, payload)
+	body := make(map[string]interface{})
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return

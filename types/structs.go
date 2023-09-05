@@ -81,6 +81,19 @@ type InsertUserBindInfo struct {
 	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
 	Permission      bool      `xorm:"f_permission"`
 }
+type StrategyInput struct {
+	PageSize             string `json:"pageSize" binding:"required"`
+	PageIndex            string `json:"pageIndex" binding:"required"`
+	Strategy             string `json:"strategy"`
+	Currency             string `json:"currency"`
+	StrategySource       string `json:"strategySource"`
+	ProductCategory      string `json:"productCategory"`
+	RunTime              string `json:"runTime"`
+	ExpectedYield        string `json:"expectedYield"`
+	MaxWithdrawalRate    string `json:"maxWithdrawalRate"`
+	ComprehensiveSorting string `json:"comprehensiveSorting"`
+	Keywords             string `json:"keywords"`
+}
 
 type UserCodeInfos struct {
 	Uid  string `json:"uid"`

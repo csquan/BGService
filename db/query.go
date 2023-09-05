@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/BGService/types"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 func QuerySecret(engine *xorm.Engine, uid string) (error, *types.Users) {
@@ -282,4 +283,42 @@ func GetUserIncome(engine *xorm.Engine) (float64, error) {
 		return 0, err
 	}
 	return total, nil
+}
+
+func timeFmt(timeCycle string) {
+	// 1:0~6个月  2:6~12个月 3:12~36个月 4:36个月以上
+	var startTime string
+	var endTime string
+	timeNow := time.Now()
+	sixMonthsAgo := timeNow.AddDate(0, -6, 0)
+	twelveMonthsAgo := timeNow.AddDate(-1, 0, 0)
+	thirtySixMonthsAgo := timeNow.AddDate(-3, 0, 0)
+	if timeCycle == "1" {
+
+	}
+}
+
+func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput) {
+	sessionSql := engine.Table("strategys").Where("1=1")
+	// 我的收藏
+	//if payload.Currency != "" && payload.Currency != "-1" {
+	//	sessionSql = sessionSql.Where("`f_coinName` = ?", payload.Currency)
+	//}
+	// 币种
+	if payload.Currency != "" && payload.Currency != "-1" {
+		sessionSql = sessionSql.Where("`f_coinName` = ?", payload.Currency)
+	}
+	// 产品来源
+	if payload.StrategySource != "" && payload.StrategySource != "-1" {
+		sessionSql = sessionSql.Where("`f_source` = ?", payload.StrategySource)
+	}
+	// 产品类别
+	if payload.ProductCategory != "" && payload.ProductCategory != "-1" {
+		sessionSql = sessionSql.Where("`f_type` = ?", payload.ProductCategory)
+	}
+	// 时间
+	if payload.RunTime != "" && payload.RunTime != "-1" {
+
+		sessionSql = sessionSql.Where("`f_type` = ?", payload.ProductCategory)
+	}
 }
