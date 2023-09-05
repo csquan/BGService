@@ -242,7 +242,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	uid := c.Query("uid")
 
 	//首先得到我的仓位
-	userData, err := util.GetBinanceUserData()
+	userData, err := util.GetBinanceUMUserData()
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)
@@ -326,6 +326,26 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	tradeDetails.CurBenefit = todayBenefits
 
 	res := util.ResponseMsg(0, "getTradeDetails success", tradeDetails)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到交易历史--todo:目前量化那边没有接口可以区分用户自己得交易记录和量化交易记录，等那边提供再增加区分逻辑
+func (a *ApiService) getTradeHistory(c *gin.Context) {
+	//首先得到我的策略
+	pairName := c.Query("pairName")
+
+	symbol := util.RemoveElement(pairName, "/")
+
+	userHistory, err := util.GetBinanceUMUserTxHistory(symbol, 1000)
+
+	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(0, "getTradeHistory success", userHistory)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
