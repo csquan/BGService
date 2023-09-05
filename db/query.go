@@ -237,8 +237,8 @@ func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, e
 }
 
 func GetStrategyTotalAssets(engine *xorm.Engine) (float64, error) {
-	var userStrategy *types.UserStrategy
-	total, err := engine.Table("userStrategy").Sum(userStrategy, "f_actualInvest")
+	var userStrategy types.UserStrategy
+	total, err := engine.Table("`userStrategy`").Sum(userStrategy, "`f_actualInvest`")
 	if err != nil {
 		return 0, err
 	}
@@ -246,7 +246,8 @@ func GetStrategyTotalAssets(engine *xorm.Engine) (float64, error) {
 }
 
 func GetStrategyUserCount(engine *xorm.Engine) (int64, error) {
-	total, err := engine.Table("userStrategy").GroupBy("f_uid").Count("f_uid")
+	var userStrategy types.UserStrategy
+	total, err := engine.Table("`userStrategy`").Distinct("f_uid").Count(userStrategy)
 	if err != nil {
 		return 0, err
 	}
@@ -255,7 +256,7 @@ func GetStrategyUserCount(engine *xorm.Engine) (int64, error) {
 
 func GetAllStrategy(engine *xorm.Engine) ([]*types.Strategy, error) {
 	var Strategy []*types.Strategy
-	err := engine.Table("userStrategy").Where("f_isValid=?", "t").Find(&Strategy)
+	err := engine.Table("strategys").Where("`f_isValid`=?", true).Find(&Strategy)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +265,7 @@ func GetAllStrategy(engine *xorm.Engine) ([]*types.Strategy, error) {
 
 func GetUserStrategyLatestEarnings(engine *xorm.Engine, uid string, sid string) (*types.UserStrategyEarnings, error) {
 	var userStrategyEarnings types.UserStrategyEarnings
-	has, err := engine.Table("userStrategyEarnings").Where("f_uid=? and `f_strategyID`=?", uid, sid).OrderBy("`f_createTime` desc").Get(&userStrategyEarnings)
+	has, err := engine.Table("`userStrategyEarnings`").Where("f_uid=? and `f_strategyID`=?", uid, sid).OrderBy("`f_createTime` desc").Get(&userStrategyEarnings)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +277,7 @@ func GetUserStrategyLatestEarnings(engine *xorm.Engine, uid string, sid string) 
 
 func GetUserIncome(engine *xorm.Engine) (float64, error) {
 	var userStrategyEarnings types.UserStrategyEarnings
-	total, err := engine.Table("userStrategyEarnings").Sum(userStrategyEarnings, "f_totalBenefit")
+	total, err := engine.Table("`userStrategyEarnings`").Sum(userStrategyEarnings, "`f_totalBenefit`")
 	if err != nil {
 		return 0, err
 	}
