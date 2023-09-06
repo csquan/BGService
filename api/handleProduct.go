@@ -1,12 +1,15 @@
 package api
 
 import (
+	"fmt"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
 )
 
 func (a *ApiService) overview(c *gin.Context) {
@@ -54,15 +57,68 @@ func (a *ApiService) overview(c *gin.Context) {
 	return
 }
 
+func isInCollectStrategyList(element string, collectStrategyList []string) bool {
+	for _, item := range collectStrategyList {
+		if item == element {
+			return true
+		}
+	}
+	return false
+}
+
 func (a *ApiService) productList(c *gin.Context) {
 	var payload *types.StrategyInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var CollectStragetyList []string
+	if payload.Currency == "1" {
+		session := sessions.Default(c)
+		uid := session.Get("Uid")
+		if uid == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			return
+		}
+		uidFormatted := fmt.Sprintf("%s", uid)
+		user, err := db.GetUser(a.dbEngine, uidFormatted)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
+	}
+
+	ScreenStrategys, err := db.GetScreenStrategy(a.dbEngine, payload, CollectStragetyList)
+	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err.Error())
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	db.GetScreenStrategy(a.dbEngine, payload)
+	ScreenStrategy := make(map[string]interface{})
+	var isCollect = false
+	for _, value := range ScreenStrategys {
+		ScreenStrategy["id"] = value.StrategyID
+		ScreenStrategy["name"] = value.StrategyName
+		ScreenStrategy["productCategory"] = value.Type
+		ScreenStrategy["recommendRate"] = value.RecommendRate
+		if payload.Currency == "1" {
+			isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
+		}
+		ScreenStrategy["isCollect"] = isCollect
+		ScreenStrategy["participateNum"] = value.ParticipateNum
+		ScreenStrategy["totalYield"] = value.TotalYield
+		ScreenStrategy["runTime"] = value.CreateTime
+		ScreenStrategy["maxWithdrawalRate"] = value.MaxDrawDown
+		ScreenStrategy["minimumInvestmentAmount"] = value.MinInvest
+		ScreenStrategy["strategySource"] = value.Source
+	}
 	body := make(map[string]interface{})
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)

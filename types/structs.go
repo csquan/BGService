@@ -81,6 +81,7 @@ type InsertUserBindInfo struct {
 	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
 	Permission      bool      `xorm:"f_permission"`
 }
+
 type StrategyInput struct {
 	PageSize             string `json:"pageSize" binding:"required"`
 	PageIndex            string `json:"pageIndex" binding:"required"`
@@ -172,6 +173,10 @@ type PlatformExperienceRevenue struct {
 type Strategy struct {
 	StrategyID      string `xorm:"f_strategyID"`
 	IsValid         string `xorm:"f_isValid"`
+	RecommendRate   string `xorm:"f_recommendRate"`
+	ParticipateNum  string `xorm:"f_participateNum"`
+	TotalYield      string `xorm:"f_totalYield"`
+	TotalRevenue    string `xorm:"f_totalRevenue"`
 	StrategyName    string `xorm:"f_strategyName"`
 	Source          string `xorm:"f_source"`
 	Type            string `xorm:"f_type"`

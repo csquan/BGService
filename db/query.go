@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/BGService/types"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"time"
 )
 
@@ -285,25 +286,86 @@ func GetUserIncome(engine *xorm.Engine) (float64, error) {
 	return total, nil
 }
 
-func timeFmt(timeCycle string) {
+func timeFmt(timeCycle string) (string, string) {
 	// 1:0~6个月  2:6~12个月 3:12~36个月 4:36个月以上
 	var startTime string
 	var endTime string
 	timeNow := time.Now()
-	sixMonthsAgo := timeNow.AddDate(0, -6, 0)
-	twelveMonthsAgo := timeNow.AddDate(-1, 0, 0)
-	thirtySixMonthsAgo := timeNow.AddDate(-3, 0, 0)
+	sixMonthsAgo := timeNow.AddDate(0, -6, 0).Format("2006-01-02")
+	twelveMonthsAgo := timeNow.AddDate(-1, 0, 0).Format("2006-01-02")
+	thirtySixMonthsAgo := timeNow.AddDate(-3, 0, 0).Format("2006-01-02")
 	if timeCycle == "1" {
-
+		startTime = sixMonthsAgo
+		endTime = timeNow.Format("2006-01-02")
+	} else if timeCycle == "2" {
+		startTime = twelveMonthsAgo
+		endTime = sixMonthsAgo
+	} else if timeCycle == "3" {
+		startTime = thirtySixMonthsAgo
+		endTime = twelveMonthsAgo
+	} else if timeCycle == "4" {
+		startTime = "2006-01-02"
+		endTime = thirtySixMonthsAgo
+	} else {
+		startTime = "2006-01-02"
+		endTime = timeNow.Format("2006-01-02")
 	}
+	return startTime, endTime
 }
 
-func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput) {
-	sessionSql := engine.Table("strategys").Where("1=1")
+func ExpectedYieldFmt(ExpectedYield string) (string, string) {
+	// '预期收益率' -1全部 1:0~50%  2:50%~100% 3:100%~300%
+	var startExpected string
+	var endExpected string
+	if ExpectedYield == "1" {
+		startExpected = "0"
+		endExpected = "50"
+	} else if ExpectedYield == "2" {
+		startExpected = "50"
+		endExpected = "100"
+	} else if ExpectedYield == "3" {
+		startExpected = "100"
+		endExpected = "300"
+	} else {
+		startExpected = "0"
+		endExpected = "300"
+	}
+	return startExpected, endExpected
+}
+
+func WithdrawalRateFmt(WithdrawalRate string) (string, string) {
+	// '最大回撤率' -1全部 1:0~20%  2:20%~40% 3:40%~60%
+	var startWithdrawalRate string
+	var endWithdrawalRate string
+	if WithdrawalRate == "1" {
+		startWithdrawalRate = "0"
+		endWithdrawalRate = "20"
+	} else if WithdrawalRate == "2" {
+		startWithdrawalRate = "20"
+		endWithdrawalRate = "40"
+	} else if WithdrawalRate == "3" {
+		startWithdrawalRate = "40"
+		endWithdrawalRate = "60"
+	} else {
+		startWithdrawalRate = "0"
+		endWithdrawalRate = "60"
+	}
+	return startWithdrawalRate, endWithdrawalRate
+}
+
+func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, CollectStragety []string) ([]types.Strategy, error) {
+	var strategy []types.Strategy
+	sortMap := map[string]string{
+		"1": "f_totalYield",
+		"2": "f_totalRevenue",
+		"3": "f_participateNum",
+		"4": "f_maxDrawDown",
+	}
+	sessionSql := engine.Table("strategys").Where("`f_isValid`=?", true)
 	// 我的收藏
-	//if payload.Currency != "" && payload.Currency != "-1" {
-	//	sessionSql = sessionSql.Where("`f_coinName` = ?", payload.Currency)
-	//}
+	if payload.Currency == "1" {
+		sessionSql = sessionSql.In("`f_strategyID` = ?", CollectStragety)
+	}
 	// 币种
 	if payload.Currency != "" && payload.Currency != "-1" {
 		sessionSql = sessionSql.Where("`f_coinName` = ?", payload.Currency)
@@ -318,7 +380,38 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput) {
 	}
 	// 时间
 	if payload.RunTime != "" && payload.RunTime != "-1" {
-
-		sessionSql = sessionSql.Where("`f_type` = ?", payload.ProductCategory)
+		startTime, endTime := timeFmt(payload.RunTime)
+		sessionSql = sessionSql.Where("?<=`f_createTime`<?", startTime, endTime)
 	}
+	// 预期收益率
+	if payload.ExpectedYield != "" && payload.ExpectedYield != "-1" {
+		startExpected, endExpected := ExpectedYieldFmt(payload.ExpectedYield)
+		sessionSql = sessionSql.Where("?<=`f_expectedBefenit`<?", startExpected, endExpected)
+	}
+	// 最大回撤率
+	if payload.MaxWithdrawalRate != "" && payload.MaxWithdrawalRate != "-1" {
+		startExpected, endExpected := WithdrawalRateFmt(payload.ExpectedYield)
+		sessionSql = sessionSql.Where("?<=`f_maxDrawDown`<?", startExpected, endExpected)
+	}
+	// 排序
+	if payload.ComprehensiveSorting != "" && payload.ComprehensiveSorting != "-1" {
+
+		filed := sortMap[payload.ComprehensiveSorting]
+		sessionSql = sessionSql.Desc("`?`", filed)
+	} else {
+		sessionSql = sessionSql.Desc("`f_participateNum	`").Desc("`f_createTime`").Desc("`f_recommendRate`")
+	}
+	pageIndexInt, err := strconv.Atoi(payload.PageIndex)
+	if err != nil {
+		logrus.Error(err)
+	}
+	pageSizeInt, err := strconv.Atoi(payload.PageSize)
+	if err != nil {
+		logrus.Error(err)
+	}
+	err = sessionSql.Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&strategy)
+	if err != nil {
+		return nil, err
+	}
+	return strategy, nil
 }
