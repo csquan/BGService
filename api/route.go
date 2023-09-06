@@ -135,6 +135,12 @@ func (a *ApiService) Run() {
 		v8.GET("/overview", a.overview)
 	}
 
+	v9 := r.Group("/api/fund")
+	{
+		v9.GET("/fundIn", a.fundIn)
+		v9.GET("/fundOut", a.fundOut)
+	}
+
 	logrus.Info("BGService un at " + a.config.Server.Port)
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))

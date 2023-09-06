@@ -41,6 +41,15 @@ type UserStrategyEarnings struct {
 	CreateTime   string `xorm:"f_createTime"`
 }
 
+// 用户链上地址表
+type UserAddr struct {
+	Uid        string    `xorm:"f_uid"`
+	Network    string    `xorm:"f_network"`
+	Addr       string    `xorm:"f_addr"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
 type UserBindInfos struct {
 	ID              int       `xorm:"f_id"`
 	Uid             string    `xorm:"f_uid"`

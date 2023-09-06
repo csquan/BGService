@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"github.com/ethereum/BGService/db"
+	"github.com/ethereum/BGService/services"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-contrib/sessions"
@@ -107,12 +108,12 @@ func (a *ApiService) register(c *gin.Context) {
 		uid = util.GenerateCode(14)
 	}
 
-	var username string
-	if payload.UserName == "" {
-		username = payload.Email
-	} else {
-		username = payload.UserName
-	}
+	//var username string
+	//if payload.UserName == "" {
+	//	username = payload.Email
+	//} else {
+	//	username = payload.UserName
+	//}
 	// 用户填写了邀请码，给邀请码的用户邀请好友数量加1
 	if payload.InviteCode != "" {
 		err, user := db.QueryInviteCode(a.dbEngine, payload.InviteCode)
@@ -134,19 +135,50 @@ func (a *ApiService) register(c *gin.Context) {
 			return
 		}
 	}
-	newUser := types.Users{
-		Uid:            uid,
-		UserName:       username,
-		Password:       payload.Password,
-		InvitationCode: inviteCode,
-		InvitatedCode:  payload.InviteCode,
-		MailBox:        payload.Email,
-	}
-	if err := db.InsertUser(a.dbEngine, &newUser); err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
+	//newUser := types.Users{
+	//	Uid:            uid,
+	//	UserName:       username,
+	//	Password:       payload.Password,
+	//	InvitationCode: inviteCode,
+	//	InvitatedCode:  payload.InviteCode,
+	//	MailBox:        payload.Email,
+	//}
+	//这个下面得用事务 1.插入用户表 2.插入链上地址表
+	session := a.dbEngine.NewSession()
+	err = session.Begin()
+	if err != nil {
 		return
 	}
+
+	//if _, err := session.Insert(a.dbEngine, &newUser); err != nil {
+	//	res := util.ResponseMsg(-1, "fail", err)
+	//	c.SecureJSON(http.StatusOK, res)
+	//	return
+	//}
+
+	//todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
+	addr, err := services.CreateAccount()
+
+	userAddr := types.UserAddr{
+		Uid:     uid,
+		Network: "TRX",
+		Addr:    addr,
+	}
+
+	_, err = session.Table("userAddr").Insert(userAddr)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			return
+		}
+		logrus.Fatal(err)
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
 	body := make(map[string]interface{})
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
