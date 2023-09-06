@@ -108,12 +108,12 @@ func (a *ApiService) register(c *gin.Context) {
 		uid = util.GenerateCode(14)
 	}
 
-	//var username string
-	//if payload.UserName == "" {
-	//	username = payload.Email
-	//} else {
-	//	username = payload.UserName
-	//}
+	var username string
+	if payload.UserName == "" {
+		username = payload.Email
+	} else {
+		username = payload.UserName
+	}
 	// 用户填写了邀请码，给邀请码的用户邀请好友数量加1
 	if payload.InviteCode != "" {
 		err, user := db.QueryInviteCode(a.dbEngine, payload.InviteCode)
@@ -135,14 +135,14 @@ func (a *ApiService) register(c *gin.Context) {
 			return
 		}
 	}
-	//newUser := types.Users{
-	//	Uid:            uid,
-	//	UserName:       username,
-	//	Password:       payload.Password,
-	//	InvitationCode: inviteCode,
-	//	InvitatedCode:  payload.InviteCode,
-	//	MailBox:        payload.Email,
-	//}
+	newUser := types.Users{
+		Uid:            uid,
+		UserName:       username,
+		Password:       payload.Password,
+		InvitationCode: inviteCode,
+		InvitatedCode:  payload.InviteCode,
+		MailBox:        payload.Email,
+	}
 	//这个下面得用事务 1.插入用户表 2.插入链上地址表
 	session := a.dbEngine.NewSession()
 	err = session.Begin()
@@ -155,9 +155,25 @@ func (a *ApiService) register(c *gin.Context) {
 	//	c.SecureJSON(http.StatusOK, res)
 	//	return
 	//}
+	logrus.Info(newUser)
+	logrus.Info(uid)
 
 	//todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
-	addr, err := services.CreateAccount()
+	addr, mnemonic, err := services.CreateAccount()
+
+	//存储mnemonic todo：后期密文存储 移动到单独私钥服务器
+	userKey := types.UserKey{
+		Addr:     addr,
+		Mnemonic: mnemonic,
+	}
+	_, err = session.Table("userKey").Insert(userKey)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			return
+		}
+		logrus.Fatal(err)
+	}
 
 	userAddr := types.UserAddr{
 		Uid:     uid,

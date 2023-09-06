@@ -138,7 +138,7 @@ func (a *ApiService) Run() {
 	v9 := r.Group("/api/fund")
 	{
 		v9.GET("/fundIn", a.fundIn)
-		v9.GET("/fundOut", a.fundOut)
+		v9.POST("/fundOut", a.fundOut)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)

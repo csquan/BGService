@@ -87,6 +87,18 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 	return nil, nil
 }
 
+func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
+	var userAddr types.UserAddr
+	has, err := engine.Where("f_uid=?", uid).Get(&userAddr)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userAddr, nil
+	}
+	return nil, nil
+}
+
 func GetUserBindInfos(engine *xorm.Engine, uid string) (*types.UserBindInfos, error) {
 	var userBindInfos types.UserBindInfos
 	has, err := engine.Table("userBindInfos").Where("f_uid=?", uid).Get(&userBindInfos)
