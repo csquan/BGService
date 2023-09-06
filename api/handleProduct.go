@@ -93,14 +93,31 @@ func (a *ApiService) productList(c *gin.Context) {
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
 	}
-
-	ScreenStrategys, err := db.GetScreenStrategy(a.dbEngine, payload, CollectStragetyList)
-	if err != nil {
-		logrus.Error(err)
-		res := util.ResponseMsg(-1, "fail", err.Error())
-		c.SecureJSON(http.StatusOK, res)
-		return
+	var ScreenStrategys []types.Strategy
+	if payload.Keywords != "" {
+		// 模糊搜索
+		var err error
+		ScreenStrategys, err = db.GetSearchScreenStrategy(a.dbEngine, payload)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	} else {
+		// 筛选
+		var err error
+		ScreenStrategys, err = db.GetScreenStrategy(a.dbEngine, payload, CollectStragetyList)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 	}
+
+	var ScreenStrategyList []interface{}
+
 	ScreenStrategy := make(map[string]interface{})
 	var isCollect = false
 	for _, value := range ScreenStrategys {
@@ -118,8 +135,11 @@ func (a *ApiService) productList(c *gin.Context) {
 		ScreenStrategy["maxWithdrawalRate"] = value.MaxDrawDown
 		ScreenStrategy["minimumInvestmentAmount"] = value.MinInvest
 		ScreenStrategy["strategySource"] = value.Source
+		ScreenStrategyList = append(ScreenStrategyList, ScreenStrategy)
 	}
 	body := make(map[string]interface{})
+	body["list"] = ScreenStrategyList
+	body["total"] = len(ScreenStrategyList)
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return

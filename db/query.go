@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"github.com/ethereum/BGService/types"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
@@ -395,11 +396,42 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 	}
 	// 排序
 	if payload.ComprehensiveSorting != "" && payload.ComprehensiveSorting != "-1" {
-
 		filed := sortMap[payload.ComprehensiveSorting]
 		sessionSql = sessionSql.Desc("`?`", filed)
 	} else {
 		sessionSql = sessionSql.Desc("`f_participateNum	`").Desc("`f_createTime`").Desc("`f_recommendRate`")
+	}
+	pageIndexInt, err := strconv.Atoi(payload.PageIndex)
+	if err != nil {
+		logrus.Error(err)
+	}
+	pageSizeInt, err := strconv.Atoi(payload.PageSize)
+	if err != nil {
+		logrus.Error(err)
+	}
+	err = sessionSql.Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&strategy)
+	if err != nil {
+		return nil, err
+	}
+	return strategy, nil
+}
+
+func GetSearchScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput) ([]types.Strategy, error) {
+	var strategy []types.Strategy
+	sortMap := map[string]string{
+		"1": "f_totalYield",
+		"2": "f_totalRevenue",
+		"3": "f_participateNum",
+		"4": "f_maxDrawDown",
+	}
+	sessionSql := engine.Table("strategys").Where("`f_isValid`=?", true)
+	sessionSql.Where(fmt.Sprintf("`f_stragetyName` like '%s' ", "%"+payload.Keywords+"%"))
+	// 排序
+	if payload.ComprehensiveSorting != "" && payload.ComprehensiveSorting != "-1" {
+		filed := sortMap[payload.ComprehensiveSorting]
+		sessionSql = sessionSql.Desc("`?`", filed)
+	} else {
+		sessionSql = sessionSql.Desc("`f_participateNum`").Desc("`f_createTime`").Desc("`f_recommendRate`")
 	}
 	pageIndexInt, err := strconv.Atoi(payload.PageIndex)
 	if err != nil {
