@@ -204,6 +204,22 @@ type Strategy struct {
 	UpdateTime      string `xorm:"f_updateTime"`
 }
 
+// 发送交易上链接任务表--目前只考虑trx
+type TransactionTask struct {
+	ID          uint64    `xorm:"f_id"`
+	From        string    `xorm:"f_from"`
+	To          string    `xorm:"f_to"`
+	Amount      string    `xorm:"f_amount"`
+	SignHash    string    `xorm:"f_sign_hash"`
+	TxHash      string    `xorm:"f_tx_hash"`
+	State       int       `xorm:"f_state"`
+	Sig         string    `xorm:"f_sig"`
+	Error       string    `xorm:"f_error"`
+	NetWork     string    `xorm:"f_network"`
+	CreatedTime time.Time `xorm:"f_createdTime"`
+	UpdatedTime time.Time `xorm:"f_updatedTime"`
+}
+
 type TradeDetails struct {
 	AccountTotalAssets map[string]string
 	InitAssets         map[string]string

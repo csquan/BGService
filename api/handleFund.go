@@ -9,12 +9,14 @@ import (
 	"github.com/ethereum/BGService/util"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/fbsobreira/gotron-sdk/pkg/client"
+	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // 去链上查询这个地址，获取交易记录
@@ -78,11 +80,14 @@ func (a *ApiService) fundOut(c *gin.Context) {
 		return
 	}
 
-	tx, err := conn.Transfer(fromAddr.Addr, fundOutParam.ToAddr, amount)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err.Error())
-		c.SecureJSON(http.StatusOK, res)
-		return
+	var tx *api.TransactionExtention
+	for {
+		tx, err = conn.Transfer(fromAddr.Addr, fundOutParam.ToAddr, amount)
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+		} else {
+			break
+		}
 	}
 
 	//开始签名
@@ -109,14 +114,16 @@ func (a *ApiService) fundOut(c *gin.Context) {
 
 	tx.Transaction.Signature = append(tx.Transaction.Signature, signature)
 
-	_, err = conn.Broadcast(tx.Transaction)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
+	for {
+		_, err = conn.Broadcast(tx.Transaction)
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+		} else {
+			break
+		}
 	}
 
-	res := util.ResponseMsg(0, "success to send tx", hex.EncodeToString(tx.Txid))
+	res := util.ResponseMsg(0, "success to send tx", "hash："+hex.EncodeToString(tx.Txid))
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

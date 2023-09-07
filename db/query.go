@@ -297,3 +297,12 @@ func GetUserStrategyLatestEarnings(engine *xorm.Engine, uid string, sid string) 
 	}
 	return nil, nil
 }
+
+func GetOpenedAssemblyTasks(engine *xorm.Engine) ([]*types.TransactionTask, error) {
+	tasks := make([]*types.TransactionTask, 0)
+	err := engine.Table("transaction_task").Where("f_state =0").Find(&tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, err
+}
