@@ -160,3 +160,60 @@ func (a *ApiService) productList(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) collect(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", uid)
+	id, ok := c.GetQuery("id")
+	if !ok {
+		logrus.Error("id not exist.")
+		res := util.ResponseMsg(-1, "fail", "id not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	collect, ok := c.GetQuery("collect")
+	if !ok {
+		logrus.Error("collect not exist.")
+		res := util.ResponseMsg(-1, "fail", "collect not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	boolcollect, err := strconv.ParseBool(collect)
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if boolcollect {
+		err = db.UpdateAddCollectProduct(a.dbEngine, id, uidFormatted)
+		if err != nil {
+			logrus.Info("update secret err:", err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	} else {
+		err, user := db.QuerySecret(a.dbEngine, uidFormatted)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		product := user.CollectStragetyList
+		oldId := fmt.Sprintf(",%s", id)
+		product = strings.Replace(product, oldId, "", -1)
+		err = db.UpdateDelCollectProduct(a.dbEngine, product, uidFormatted)
+		if err != nil {
+			logrus.Info("update secret err:", err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+	body := make(map[string]interface{})
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}

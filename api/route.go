@@ -133,7 +133,8 @@ func (a *ApiService) Run() {
 	v8 := r.Group("/api/product")
 	{
 		v8.GET("/overview", a.overview)
-		v8.POST("/list", authMiddleware(), a.productList)
+		v8.POST("/list", a.productList)
+		v8.GET("/collect", authMiddleware(), a.collect)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
