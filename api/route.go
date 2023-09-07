@@ -137,7 +137,7 @@ func (a *ApiService) Run() {
 
 	v9 := r.Group("/api/fund")
 	{
-		v9.GET("/fundIn", a.fundIn)
+		v9.POST("/fundIn", a.fundIn)
 		v9.POST("/fundOut", a.fundOut)
 	}
 

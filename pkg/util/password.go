@@ -7,7 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/ethereum/api-in/pkg/conf"
+	"github.com/ethereum/BGService/pkg/conf"
 	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/pbkdf2"
 	"io"

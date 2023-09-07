@@ -59,6 +59,12 @@ type UserAddr struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+type FundOutParam struct {
+	Uid    string
+	ToAddr string
+	Amount string
+}
+
 type UserBindInfos struct {
 	ID              int       `xorm:"f_id"`
 	Uid             string    `xorm:"f_uid"`

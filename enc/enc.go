@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
-	"github.com/ethereum/api-in/types"
+	"github.com/ethereum/BGService/types"
 	"net/http"
 	"time"
 )

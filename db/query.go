@@ -89,12 +89,24 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 
 func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
 	var userAddr types.UserAddr
-	has, err := engine.Where("f_uid=?", uid).Get(&userAddr)
+	has, err := engine.Table("userAddr").Where("f_uid=?", uid).Get(&userAddr)
 	if err != nil {
 		return nil, err
 	}
 	if has {
 		return &userAddr, nil
+	}
+	return nil, nil
+}
+
+func GetUserKey(engine *xorm.Engine, addr string) (*types.UserKey, error) {
+	var userKey types.UserKey
+	has, err := engine.Table("userKey").Where("f_addr=?", addr).Get(&userKey)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userKey, nil
 	}
 	return nil, nil
 }
