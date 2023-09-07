@@ -136,12 +136,14 @@ func (a *ApiService) register(c *gin.Context) {
 		}
 	}
 	newUser := types.Users{
-		Uid:            uid,
-		UserName:       username,
-		Password:       payload.Password,
-		InvitationCode: inviteCode,
-		InvitatedCode:  payload.InviteCode,
-		MailBox:        payload.Email,
+		Uid:                 uid,
+		UserName:            username,
+		Password:            payload.Password,
+		InvitationCode:      inviteCode,
+		InvitatedCode:       payload.InviteCode,
+		MailBox:             payload.Email,
+		ConcernCoinList:     "{}",
+		CollectStragetyList: "{}",
 	}
 	//这个下面得用事务 1.插入用户表 2.插入链上地址表
 	session := a.dbEngine.NewSession()
@@ -149,21 +151,23 @@ func (a *ApiService) register(c *gin.Context) {
 	if err != nil {
 		return
 	}
-
-	//if _, err := session.Insert(a.dbEngine, &newUser); err != nil {
-	//	res := util.ResponseMsg(-1, "fail", err)
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
-	logrus.Info(newUser)
-	logrus.Info(uid)
+	if _, err := session.Insert(newUser); err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 
 	//todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
-	addr, privateKey, err := services.CreateAccount()
-
-	//存储mnemonic todo：后期密文存储 移动到单独私钥服务器
+	addr, privateKey, name, err := services.CreateAccount()
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//todo：后期密文存储 移动到单独私钥服务器
 	userKey := types.UserKey{
 		Addr:       addr,
+		Name:       name,
 		PrivateKey: privateKey,
 	}
 	_, err = session.Table("userKey").Insert(userKey)

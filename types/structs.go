@@ -44,7 +44,7 @@ type UserStrategyEarnings struct {
 // 用户私钥助记词表
 type UserKey struct {
 	Addr       string    `xorm:"f_addr"`
-	Mnemonic   string    `xorm:"f_mnemonic"`
+	Name       string    `xorm:"f_name"`
 	PrivateKey string    `xorm:"f_privateKey"`
 	CreateTime time.Time `xorm:"f_createTime"`
 	UpdateTime time.Time `xorm:"f_updateTime"`

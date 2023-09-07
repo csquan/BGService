@@ -1,6 +1,7 @@
 package services
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"github.com/fbsobreira/gotron-sdk/pkg/account"
@@ -17,15 +18,19 @@ func randStringBytesCrypto(n int) (string, error) {
 	return base64.StdEncoding.EncodeToString(b), nil
 }
 
-func CreateAccount() (address string, privateKey string, err error) {
-	name := randStringBytesCrypto()
+func CreateAccount() (address string, privateKey string, name string, err error) {
+	name, err = randStringBytesCrypto(5)
+	if err != nil {
+		return "", "", "", err
+	}
+
 	acc := account.Creation{
 		Name:       name,
 		Passphrase: "",
 	}
 
 	if err := account.CreateNewLocalAccount(&acc); err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	addr, _ := store.AddressFromAccountName(name)
 
@@ -33,7 +38,7 @@ func CreateAccount() (address string, privateKey string, err error) {
 	if err != nil {
 
 	}
-	return addr, privateStr, nil
+	return addr, privateStr, name, nil
 }
 
 // ExportPrivateKey from account
