@@ -172,7 +172,7 @@ type PlatformExperienceRevenue struct {
 // 策略表
 type Strategy struct {
 	StrategyID      string `xorm:"f_strategyID"`
-	IsValid         string `xorm:"f_isValid"`
+	IsValid         bool   `xorm:"f_isValid"`
 	RecommendRate   string `xorm:"f_recommendRate"`
 	ParticipateNum  string `xorm:"f_participateNum"`
 	TotalYield      string `xorm:"f_totalYield"`

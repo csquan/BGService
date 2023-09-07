@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -66,6 +67,19 @@ func isInCollectStrategyList(element string, collectStrategyList []string) bool 
 	return false
 }
 
+func strToInt(strList []string) []int {
+	intList := make([]int, len(strList))
+	for i, str := range strList {
+		num, err := strconv.Atoi(str)
+		if err != nil {
+			logrus.Error("无法将字符串转换为整数：", str)
+			return []int{}
+		}
+		intList[i] = num
+	}
+	return intList
+}
+
 func (a *ApiService) productList(c *gin.Context) {
 	var payload *types.StrategyInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
@@ -75,15 +89,11 @@ func (a *ApiService) productList(c *gin.Context) {
 		return
 	}
 	var CollectStragetyList []string
-	if payload.Currency == "1" {
-		session := sessions.Default(c)
-		uid := session.Get("Uid")
-		if uid == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
-			return
-		}
+	var CollectStragetyListInt []int
+	session := sessions.Default(c)
+	uid := session.Get("Uid")
+	if uid != nil {
+		// 登录状态
 		uidFormatted := fmt.Sprintf("%s", uid)
 		user, err := db.GetUser(a.dbEngine, uidFormatted)
 		if err != nil {
@@ -92,12 +102,18 @@ func (a *ApiService) productList(c *gin.Context) {
 			return
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
+		CollectStragetyListInt = strToInt(CollectStragetyList)
+	} else if payload.Strategy == "1" {
+		res := util.ResponseMsg(-1, "fail", "Please log in")
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
+
 	var ScreenStrategys []types.Strategy
 	if payload.Keywords != "" {
 		// 模糊搜索
 		var err error
-		ScreenStrategys, err = db.GetSearchScreenStrategy(a.dbEngine, payload)
+		ScreenStrategys, err = db.GetSearchScreenStrategy(a.dbEngine, payload, CollectStragetyListInt)
 		if err != nil {
 			logrus.Error(err)
 			res := util.ResponseMsg(-1, "fail", err.Error())
@@ -107,7 +123,7 @@ func (a *ApiService) productList(c *gin.Context) {
 	} else {
 		// 筛选
 		var err error
-		ScreenStrategys, err = db.GetScreenStrategy(a.dbEngine, payload, CollectStragetyList)
+		ScreenStrategys, err = db.GetScreenStrategy(a.dbEngine, payload, CollectStragetyListInt)
 		if err != nil {
 			logrus.Error(err)
 			res := util.ResponseMsg(-1, "fail", err.Error())
@@ -118,9 +134,9 @@ func (a *ApiService) productList(c *gin.Context) {
 
 	var ScreenStrategyList []interface{}
 
-	ScreenStrategy := make(map[string]interface{})
 	var isCollect = false
 	for _, value := range ScreenStrategys {
+		ScreenStrategy := make(map[string]interface{})
 		ScreenStrategy["id"] = value.StrategyID
 		ScreenStrategy["name"] = value.StrategyName
 		ScreenStrategy["productCategory"] = value.Type

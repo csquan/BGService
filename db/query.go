@@ -354,7 +354,7 @@ func WithdrawalRateFmt(WithdrawalRate string) (string, string) {
 	return startWithdrawalRate, endWithdrawalRate
 }
 
-func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, CollectStragety []string) ([]types.Strategy, error) {
+func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, CollectStragety []int) ([]types.Strategy, error) {
 	var strategy []types.Strategy
 	sortMap := map[string]string{
 		"1": "f_totalYield",
@@ -364,8 +364,8 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 	}
 	sessionSql := engine.Table("strategys").Where("`f_isValid`=?", true)
 	// 我的收藏
-	if payload.Currency == "1" {
-		sessionSql = sessionSql.In("`f_strategyID` = ?", CollectStragety)
+	if payload.Strategy == "1" {
+		sessionSql = sessionSql.In("`f_strategyID`", CollectStragety)
 	}
 	// 币种
 	if payload.Currency != "" && payload.Currency != "-1" {
@@ -399,7 +399,7 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 		filed := sortMap[payload.ComprehensiveSorting]
 		sessionSql = sessionSql.Desc("`?`", filed)
 	} else {
-		sessionSql = sessionSql.Desc("`f_participateNum	`").Desc("`f_createTime`").Desc("`f_recommendRate`")
+		sessionSql = sessionSql.Desc("`f_participateNum`").Desc("`f_createTime`").Desc("`f_recommendRate`")
 	}
 	pageIndexInt, err := strconv.Atoi(payload.PageIndex)
 	if err != nil {
@@ -411,12 +411,13 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 	}
 	err = sessionSql.Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&strategy)
 	if err != nil {
+		logrus.Error(err)
 		return nil, err
 	}
 	return strategy, nil
 }
 
-func GetSearchScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput) ([]types.Strategy, error) {
+func GetSearchScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, CollectStragety []int) ([]types.Strategy, error) {
 	var strategy []types.Strategy
 	sortMap := map[string]string{
 		"1": "f_totalYield",
@@ -425,7 +426,11 @@ func GetSearchScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput) 
 		"4": "f_maxDrawDown",
 	}
 	sessionSql := engine.Table("strategys").Where("`f_isValid`=?", true)
-	sessionSql.Where(fmt.Sprintf("`f_stragetyName` like '%s' ", "%"+payload.Keywords+"%"))
+	// 我的收藏
+	if payload.Strategy == "1" {
+		sessionSql = sessionSql.In("`f_strategyID`", CollectStragety)
+	}
+	sessionSql.Where(fmt.Sprintf("`f_strategyName` like '%s' ", "%"+payload.Keywords+"%"))
 	// 排序
 	if payload.ComprehensiveSorting != "" && payload.ComprehensiveSorting != "-1" {
 		filed := sortMap[payload.ComprehensiveSorting]
