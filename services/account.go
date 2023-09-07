@@ -1,22 +1,33 @@
 package services
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/fbsobreira/gotron-sdk/pkg/account"
 	"github.com/fbsobreira/gotron-sdk/pkg/keystore"
 	"github.com/fbsobreira/gotron-sdk/pkg/store"
 )
 
+func randStringBytesCrypto(n int) (string, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(b), nil
+}
+
 func CreateAccount() (address string, privateKey string, err error) {
+	name := randStringBytesCrypto()
 	acc := account.Creation{
-		Name:       "test1",
+		Name:       name,
 		Passphrase: "",
 	}
 
 	if err := account.CreateNewLocalAccount(&acc); err != nil {
 		return "", "", err
 	}
-	addr, _ := store.AddressFromAccountName(acc.Name)
+	addr, _ := store.AddressFromAccountName(name)
 
 	privateStr, err := ExportPrivateKey(addr, "")
 	if err != nil {
