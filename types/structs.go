@@ -178,6 +178,7 @@ type Strategy struct {
 	TotalYield      string `xorm:"f_totalYield"`
 	TotalRevenue    string `xorm:"f_totalRevenue"`
 	StrategyName    string `xorm:"f_strategyName"`
+	Describe        string `xorm:"f_describe"`
 	Source          string `xorm:"f_source"`
 	Type            string `xorm:"f_type"`
 	CreateTime      string `xorm:"f_createTime"`

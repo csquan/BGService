@@ -217,3 +217,63 @@ func (a *ApiService) collect(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) productInfo(c *gin.Context) {
+	id, ok := c.GetQuery("id")
+	if !ok {
+		logrus.Error("id not exist.")
+		res := util.ResponseMsg(-1, "fail", "id not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	strategyInfo, err := db.GetStrategy(a.dbEngine, id)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var CollectStragetyList []string
+	session := sessions.Default(c)
+	uid := session.Get("Uid")
+	if uid != nil {
+		// 登录状态
+		uidFormatted := fmt.Sprintf("%s", uid)
+		user, err := db.GetUser(a.dbEngine, uidFormatted)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
+	}
+	body := make(map[string]interface{})
+	isCollect := isInCollectStrategyList(id, CollectStragetyList)
+	body["id"] = strategyInfo.StrategyID
+	body["name"] = strategyInfo.StrategyID
+	body["recommendRate"] = strategyInfo.RecommendRate
+	body["strategySource"] = strategyInfo.Source
+	body["productCategory"] = strategyInfo.Type
+	body["isCollect"] = isCollect
+	body["collectionsNum"] = strategyInfo.ParticipateNum
+	body["totalRevenue"] = strategyInfo.TotalRevenue
+	body["totalYield"] = strategyInfo.TotalYield
+	body["runTime"] = strategyInfo.CreateTime
+	body["strategyDesc"] = strategyInfo.Describe
+	body["expectedYield"] = strategyInfo.ExpectedBefenit
+	body["winRate"] = strategyInfo.WinChance
+	body["maxWithdrawalRate"] = strategyInfo.MaxDrawDown
+	body["sharpeRatio"] = strategyInfo.SharpRatio
+	body["controlLine"] = strategyInfo.ControlLine
+	body["leverageRatio"] = strategyInfo.LeverageRatio
+	body["minimumInvestmentAmount"] = strategyInfo.MinInvest
+	body["policyCapacity"] = strategyInfo.Cap
+	body["tradableAssets"] = strategyInfo.TradableAssets
+	body["transactionCurrency"] = strategyInfo.CoinName
+	body["shareRatio"] = strategyInfo.ShareRatio
+	body["divideIntoPeriods"] = strategyInfo.DividePeriod
+	body["protocolPeriod"] = strategyInfo.AgreementPeriod
+	body["hostingPlatform"] = strategyInfo.HostPlatform
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
