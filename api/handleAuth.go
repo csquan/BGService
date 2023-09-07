@@ -68,11 +68,11 @@ func (a *ApiService) register(c *gin.Context) {
 		return
 	}
 	// 校验验证码
-	//if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
-	//	res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
+	if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
+		res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	// 删除验证码key
 	a.RedisEngine.Del(c, payload.Email)
 	// 生成8位随机邀请码
