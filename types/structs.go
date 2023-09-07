@@ -226,6 +226,11 @@ type TradeDetails struct {
 	CurBenefit         map[string]string
 }
 
+type UserBenefits struct {
+	Date    string
+	Benefit string
+}
+
 type Balance_Erc20 struct {
 	Id             string `xorm:"id"`
 	Addr           string `xorm:"addr"`
