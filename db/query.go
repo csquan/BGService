@@ -453,3 +453,13 @@ func GetSearchScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, 
 	}
 	return strategy, nil
 }
+
+func TransactionRecords(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, id string) ([]types.TransactionRecords, error) {
+	var transactionRecords []types.TransactionRecords
+	err := engine.Table("`transactionRecords`").Where("`f_strategyID`=?", id).
+		Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&transactionRecords)
+	if err != nil {
+		return nil, err
+	}
+	return transactionRecords, nil
+}

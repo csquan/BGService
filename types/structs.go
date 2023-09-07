@@ -201,14 +201,15 @@ type Strategy struct {
 
 // 交易记录表
 type TransactionRecords struct {
-	Uid        string `xorm:"f_uid"`
-	Address    string `xorm:"f_address"`
-	StrategyID string `xorm:"f_strategyID"`
-	Action     string `xorm:"f_action"`
-	Behavior   string `xorm:"f_behavior"`
-	Time       string `xorm:"f_time"`
-	CreateTime string `xorm:"f_createTime"`
-	UpdateTime string `xorm:"f_updateTime"`
+	ID         int       `xorm:"f_id"`
+	Uid        string    `xorm:"f_uid"`
+	Address    string    `xorm:"f_address"`
+	StrategyID string    `xorm:"f_strategyID"`
+	Action     string    `xorm:"f_action"`
+	Behavior   string    `xorm:"f_behavior"`
+	Time       string    `xorm:"f_time"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
 type TradeDetails struct {

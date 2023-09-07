@@ -286,53 +286,49 @@ func (a *ApiService) transactionRecords(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	strategyInfo, err := db.GetStrategy(a.dbEngine, id)
+	pageSize, ok := c.GetQuery("pageSize")
+	if !ok {
+		logrus.Error("pageSize not exist.")
+		res := util.ResponseMsg(-1, "fail", "id not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	pageIndex, ok := c.GetQuery("pageIndex")
+	if !ok {
+		logrus.Error("pageIndex not exist.")
+		res := util.ResponseMsg(-1, "fail", "id not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	pageSizeInt, err := strconv.Atoi(pageSize)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	pageIndexInt, err := strconv.Atoi(pageIndex)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	Records, err := db.TransactionRecords(a.dbEngine, pageSizeInt, pageIndexInt, id)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	var CollectStragetyList []string
-	session := sessions.Default(c)
-	uid := session.Get("Uid")
-	if uid != nil {
-		// 登录状态
-		uidFormatted := fmt.Sprintf("%s", uid)
-		user, err := db.GetUser(a.dbEngine, uidFormatted)
-		if err != nil {
-			res := util.ResponseMsg(-1, "fail", err)
-			c.SecureJSON(http.StatusOK, res)
-			return
-		}
-		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
+	var RecordsList []interface{}
+	for _, value := range Records {
+		RecordsInfo := make(map[string]interface{})
+		RecordsInfo["id"] = value.ID
+		RecordsInfo["time"] = value.Time
+		RecordsInfo["action"] = value.Action
+		RecordsInfo["behavior"] = value.Behavior
+		RecordsList = append(RecordsList, RecordsInfo)
 	}
 	body := make(map[string]interface{})
-	isCollect := isInCollectStrategyList(id, CollectStragetyList)
-	body["id"] = strategyInfo.StrategyID
-	body["name"] = strategyInfo.StrategyID
-	body["recommendRate"] = strategyInfo.RecommendRate
-	body["strategySource"] = strategyInfo.Source
-	body["productCategory"] = strategyInfo.Type
-	body["isCollect"] = isCollect
-	body["collectionsNum"] = strategyInfo.ParticipateNum
-	body["totalRevenue"] = strategyInfo.TotalRevenue
-	body["totalYield"] = strategyInfo.TotalYield
-	body["runTime"] = strategyInfo.CreateTime
-	body["strategyDesc"] = strategyInfo.Describe
-	body["expectedYield"] = strategyInfo.ExpectedBefenit
-	body["winRate"] = strategyInfo.WinChance
-	body["maxWithdrawalRate"] = strategyInfo.MaxDrawDown
-	body["sharpeRatio"] = strategyInfo.SharpRatio
-	body["controlLine"] = strategyInfo.ControlLine
-	body["leverageRatio"] = strategyInfo.LeverageRatio
-	body["minimumInvestmentAmount"] = strategyInfo.MinInvest
-	body["policyCapacity"] = strategyInfo.Cap
-	body["tradableAssets"] = strategyInfo.TradableAssets
-	body["transactionCurrency"] = strategyInfo.CoinName
-	body["shareRatio"] = strategyInfo.ShareRatio
-	body["divideIntoPeriods"] = strategyInfo.DividePeriod
-	body["protocolPeriod"] = strategyInfo.AgreementPeriod
-	body["hostingPlatform"] = strategyInfo.HostPlatform
+	body["total"] = len(Records)
+	body["list"] = RecordsList
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
