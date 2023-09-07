@@ -71,7 +71,7 @@ func (a *ApiService) fundOut(c *gin.Context) {
 		return
 	}
 	//mnemoric := "crystal gate zoo sock renew puppy process one cricket beach barely perfect praise side frost fat paddle age occur carbon clip claw yard yellow"
-	//ks := store.FromAccountName("csquan1")
+	//ks1 := store.FromAccountName("csquan1")
 	ctrlr := transaction.NewController(conn, ks, acct, tx.Transaction)
 
 	err = ctrlr.ExecuteTransaction()

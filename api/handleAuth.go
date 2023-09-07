@@ -159,12 +159,12 @@ func (a *ApiService) register(c *gin.Context) {
 	logrus.Info(uid)
 
 	//todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
-	addr, mnemonic, err := services.CreateAccount()
+	addr, privateKey, err := services.CreateAccount()
 
 	//存储mnemonic todo：后期密文存储 移动到单独私钥服务器
 	userKey := types.UserKey{
-		Addr:     addr,
-		Mnemonic: mnemonic,
+		Addr:       addr,
+		PrivateKey: privateKey,
 	}
 	_, err = session.Table("userKey").Insert(userKey)
 	if err != nil {
