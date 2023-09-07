@@ -11,7 +11,9 @@ import (
 	"github.com/fbsobreira/gotron-sdk/pkg/client"
 	"github.com/fbsobreira/gotron-sdk/pkg/proto/api"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"net/http"
@@ -19,29 +21,134 @@ import (
 	"time"
 )
 
-// 去链上查询这个地址，获取交易记录
-func (a *ApiService) fundIn(c *gin.Context) {
-	symbols := c.Query("symbols")
+const base_tron_url = "https://api.trongrid.io"
 
-	res := types.HttpRes{}
+// 简单版本充值：去链上查询这个地址，获取交易记录 正规做法：需要爬快 kafka传消息
+func (a *ApiService) haveFundIn(c *gin.Context) {
+	var fundInParam types.FundInParam
+	var UserFundIns []types.UserFundIn
 
-	url := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
-
-	data, err := util.Get(url)
+	err := c.BindJSON(&fundInParam)
 	if err != nil {
-		logrus.Info("获取币价失败", err)
-
-		res.Code = 0
-		res.Message = "成功获取价格"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "成功获取价格"
-	res.Data = data
 
+	userAddr, err := db.GetUserAddr(a.dbEngine, fundInParam.Uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := types.HttpRes{}
+
+	url := base_tron_url + "/v1/accounts/" + userAddr.Addr + "/transactions"
+
+	dataStr, err := util.Get(url)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	data := gjson.Get(dataStr, "data")
+	array := data.Array()
+	//取出用户充值记录表
+	userFundIn, err := db.GetUserFundIn(a.dbEngine, fundInParam.Uid, fundInParam.Network)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var DBBlockHeight int64
+
+	if userFundIn == nil {
+		DBBlockHeight = 0
+	} else {
+		DBBlockHeight, err = strconv.ParseInt(userFundIn.BlockHeight, 10, 64)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+
+	//从交易记录中匹配记录
+	for _, value := range array {
+		str := value.Raw
+		blockNumber := gjson.Get(str, "blockNumber")
+
+		if DBBlockHeight < blockNumber.Int() { //如果账户上次充值记录中的区块高度小于查询的交易记录区块高度
+			data1 := gjson.Get(str, "raw_data.contract")
+
+			contracts := data1.Array()
+			for _, contract := range contracts {
+				amount := gjson.Get(contract.Raw, "parameter.value.amount")
+
+				userFundIn := types.UserFundIn{
+					Uid:         fundInParam.Uid,
+					Network:     fundInParam.Network,
+					Addr:        userAddr.Addr,
+					Amount:      amount.Raw,
+					BlockHeight: blockNumber.Raw,
+				}
+				UserFundIns = append(UserFundIns, userFundIn) //用户充值记录
+			}
+
+		}
+	}
+
+	//这里用事务存储UserFundIns进db 这里的金额作为本次充值的金额
+	session := a.dbEngine.NewSession()
+	err = session.Begin()
+	if err != nil {
+		return
+	}
+
+	for _, fundIn := range UserFundIns {
+		//首先插入用户充值记录
+		_, err = session.Table("platformExperience").Insert(fundIn)
+		if err != nil {
+			err := session.Rollback()
+			if err != nil {
+				return
+			}
+			logrus.Fatal(err)
+		}
+		//下面应该更新用户资产表
+		userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
+		if err != nil {
+
+		}
+		dec1, err := decimal.NewFromString(userAsset.Total)
+		if err != nil {
+
+		}
+		dec2, err := decimal.NewFromString(fundIn.Amount)
+		if err != nil {
+
+		}
+
+		dec := decimal.Sum(dec1, dec2)
+		userAsset.Total = dec.String()
+
+		_, err = session.Table("userAssets").Update(userAsset)
+		if err != nil {
+			err := session.Rollback()
+			if err != nil {
+				return
+			}
+			logrus.Fatal(err)
+		}
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	res = util.ResponseMsg(0, "success", array)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

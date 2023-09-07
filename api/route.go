@@ -130,17 +130,14 @@ func (a *ApiService) Run() {
 		v7.GET("/getTradeHistory", a.getTradeHistory)
 
 		v7.GET("/getUserBeneift", a.getUserBeneift) //画图用
+
+		v7.POST("/haveFundIn", a.haveFundIn)
+		v7.POST("/fundOut", a.fundOut)
 	}
 
 	v8 := r.Group("/api/product")
 	{
 		v8.GET("/overview", a.overview)
-	}
-
-	v9 := r.Group("/api/fund")
-	{
-		v9.POST("/fundIn", a.fundIn)
-		v9.POST("/fundOut", a.fundOut)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)

@@ -41,6 +41,17 @@ type UserStrategyEarnings struct {
 	CreateTime   string `xorm:"f_createTime"`
 }
 
+// 用户资产表
+type UserAsset struct {
+	Uid        string    `xorm:"f_uid"`
+	Network    string    `xorm:"f_network"`
+	CoinName   string    `xorm:"f_coinName"`
+	Available  string    `xorm:"f_available"`
+	Total      string    `xorm:"f_total"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
 // 用户私钥助记词表
 type UserKey struct {
 	Addr       string    `xorm:"f_addr"`
@@ -59,10 +70,26 @@ type UserAddr struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+// 用户充值记录表
+type UserFundIn struct {
+	Uid         string    `xorm:"f_uid"`
+	Network     string    `xorm:"f_network"`
+	Addr        string    `xorm:"f_addr"`
+	Amount      string    `xorm:"f_amount"`
+	BlockHeight string    `xorm:"f_blockHeight"`
+	CreateTime  time.Time `xorm:"f_createTime"`
+	UpdateTime  time.Time `xorm:"f_updateTime"`
+}
+
 type FundOutParam struct {
 	Uid    string
 	ToAddr string
 	Amount string
+}
+
+type FundInParam struct {
+	Uid     string
+	Network string
 }
 
 type UserBindInfos struct {
