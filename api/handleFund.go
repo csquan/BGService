@@ -68,6 +68,8 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 	}
 	balance := gjson.Get(str1, "balance")
 
+	balance = balance
+
 	url = base_tron_url + "/v1/accounts/" + userAddr.Addr + "/transactions"
 
 	//取出用户最近的充值记录表
@@ -77,7 +79,6 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	var DBBlockHeight int64
 
 	if userFundIn == nil {
 		//insert
@@ -115,7 +116,7 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		if err != nil {
 
 		}
-		dec2, err := decimal.NewFromString(fundIn.Amount)
+		dec2, err := decimal.NewFromString(fundIn.FundInAmount)
 		if err != nil {
 
 		}
@@ -138,7 +139,7 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		logrus.Fatal(err)
 	}
 
-	res = util.ResponseMsg(0, "success", array)
+	res = util.ResponseMsg(0, "success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
