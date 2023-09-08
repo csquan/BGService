@@ -55,6 +55,9 @@ type Config struct {
 	Endpoint struct {
 		Trx string `yaml:"Trx"`
 	}
+	Schedule struct {
+		Time string `yaml:"time"`
+	}
 }
 
 var Conf Config

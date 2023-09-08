@@ -31,3 +31,5 @@ Redis:
   db: 0
 Endpoint:
   Trx: "grpc.trongrid.io:50051" #"grpc.shasta.trongrid.io:50051"
+Schedule:
+  time : "12:00"
