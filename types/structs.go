@@ -42,6 +42,74 @@ type UserStrategyEarnings struct {
 	CreateTime   string `xorm:"f_createTime"`
 }
 
+// 用户资产表
+type UserAsset struct {
+	Uid        string    `xorm:"f_uid"`
+	Network    string    `xorm:"f_network"`
+	CoinName   string    `xorm:"f_coinName"`
+	Available  string    `xorm:"f_available"`
+	Total      string    `xorm:"f_total"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
+// 用户私钥助记词表
+type UserKey struct {
+	Addr       string    `xorm:"f_addr"`
+	Name       string    `xorm:"f_name"`
+	PrivateKey string    `xorm:"f_privateKey"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
+// 用户链上地址表
+type UserAddr struct {
+	Uid        string    `xorm:"f_uid"`
+	Network    string    `xorm:"f_network"`
+	Addr       string    `xorm:"f_addr"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
+// 用户充值记录表
+type UserFundIn struct {
+	Uid                 string    `xorm:"f_uid"`
+	Network             string    `xorm:"f_network"`
+	Addr                string    `xorm:"f_addr"`
+	FundInAmount        string    `xorm:"f_fundInAmount"`
+	AfterFundBalance    string    `xorm:"f_afterFundBalance"`
+	IsCollect           bool      `xorm:"f_isCollect"`
+	CollectAmount       string    `xorm:"f_collectAmount"`
+	CollectTime         time.Time `xorm:"f_collectTime"`
+	AfterCollectBalance string    `xorm:"f_afterCollectBalance"`
+	CreateTime          time.Time `xorm:"f_createTime"`
+	UpdateTime          time.Time `xorm:"f_updateTime"`
+}
+
+type FundOutParam struct {
+	Uid    string
+	ToAddr string
+	Amount string
+}
+
+type AccountIdentifier struct {
+	Address string `json:"address"`
+}
+type BlockIdentifier struct {
+	Hash   string `json:"hash"`
+	Number int    `json:"number"`
+}
+
+type AccountParam struct {
+	Address string `json:"address"`
+	Visible bool   `json:"visible"`
+}
+
+type FundInParam struct {
+	Uid     string
+	Network string
+}
+
 type UserBindInfos struct {
 	ID              int       `xorm:"f_id"`
 	Uid             string    `xorm:"f_uid"`
@@ -222,10 +290,31 @@ type TransactionRecords struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+// 发送交易上链接任务表--目前只考虑trx
+type TransactionTask struct {
+	ID          uint64    `xorm:"f_id"`
+	From        string    `xorm:"f_from"`
+	To          string    `xorm:"f_to"`
+	Amount      string    `xorm:"f_amount"`
+	SignHash    string    `xorm:"f_sign_hash"`
+	TxHash      string    `xorm:"f_tx_hash"`
+	State       int       `xorm:"f_state"`
+	Sig         string    `xorm:"f_sig"`
+	Error       string    `xorm:"f_error"`
+	NetWork     string    `xorm:"f_network"`
+	CreatedTime time.Time `xorm:"f_createdTime"`
+	UpdatedTime time.Time `xorm:"f_updatedTime"`
+}
+
 type TradeDetails struct {
 	AccountTotalAssets map[string]string
 	InitAssets         map[string]string
 	CurBenefit         map[string]string
+}
+
+type UserBenefits struct {
+	Date    string
+	Benefit string
 }
 
 type Balance_Erc20 struct {

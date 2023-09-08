@@ -90,6 +90,54 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 	return nil, nil
 }
 
+func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
+	var userAsset types.UserAsset
+	has, err := engine.Table("userAddr").Where("f_uid=? and f_coinName=？", uid, "usdt").Get(&userAsset)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userAsset, nil
+	}
+	return nil, nil
+}
+
+func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
+	var userAddr types.UserAddr
+	has, err := engine.Table("userAddr").Where("f_uid=?", uid).Get(&userAddr)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userAddr, nil
+	}
+	return nil, nil
+}
+
+func GetUserFundIn(engine *xorm.Engine, uid string, network string) (*types.UserFundIn, error) {
+	var userFundIn types.UserFundIn
+	has, err := engine.Table("userFundIn").Where("f_uid=? and f_network=?", uid, network).OrderBy("f_updateTime desc").Limit(1).Get(&userFundIn)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userFundIn, nil
+	}
+	return nil, nil
+}
+
+func GetUserKey(engine *xorm.Engine, addr string) (*types.UserKey, error) {
+	var userKey types.UserKey
+	has, err := engine.Table("userKey").Where("f_addr=?", addr).Get(&userKey)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userKey, nil
+	}
+	return nil, nil
+}
+
 func GetUserBindInfos(engine *xorm.Engine, uid string) (*types.UserBindInfos, error) {
 	var userBindInfos types.UserBindInfos
 	has, err := engine.Table("userBindInfos").Where("f_uid=?", uid).Get(&userBindInfos)
@@ -462,4 +510,14 @@ func TransactionRecords(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, 
 		return nil, err
 	}
 	return transactionRecords, nil
+}
+
+func GetOpenedAssemblyTasks(engine *xorm.Engine) ([]*types.TransactionTask, error) {
+	tasks := make([]*types.TransactionTask, 0)
+	err := engine.Table("transaction_task").Where("f_state =0").Find(&tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, err
+
 }

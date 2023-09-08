@@ -2,9 +2,9 @@ package web
 
 import (
 	"encoding/hex"
-	"github.com/ethereum/api-in/pkg/model"
-	"github.com/ethereum/api-in/pkg/util"
-	"github.com/ethereum/api-in/pkg/util/ecies"
+	"github.com/ethereum/BGService/pkg/model"
+	"github.com/ethereum/BGService/pkg/util"
+	"github.com/ethereum/BGService/pkg/util/ecies"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	jsoniter "github.com/json-iterator/go"

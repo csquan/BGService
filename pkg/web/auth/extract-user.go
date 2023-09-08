@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"github.com/ethereum/api-in/config"
-	"github.com/ethereum/api-in/pkg/log"
-	"github.com/ethereum/api-in/pkg/util"
-	"github.com/ethereum/api-in/pkg/web"
+	"github.com/ethereum/BGService/config"
+	"github.com/ethereum/BGService/pkg/log"
+	"github.com/ethereum/BGService/pkg/util"
+	"github.com/ethereum/BGService/pkg/web"
 	"github.com/gin-gonic/gin"
 	"strings"
 )

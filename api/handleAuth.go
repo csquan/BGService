@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"github.com/ethereum/BGService/db"
+	"github.com/ethereum/BGService/services"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-contrib/sessions"
@@ -67,11 +68,11 @@ func (a *ApiService) register(c *gin.Context) {
 		return
 	}
 	// 校验验证码
-	//if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
-	//	res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
+	if !util.CheckVerifyCode(c, a.RedisEngine, payload.Email, payload.VerifyCode) {
+		res := util.ResponseMsg(-1, "fail", "Wrong verifyCode!")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	// 删除验证码key
 	a.RedisEngine.Del(c, payload.Email)
 	// 生成8位随机邀请码
@@ -135,18 +136,69 @@ func (a *ApiService) register(c *gin.Context) {
 		}
 	}
 	newUser := types.Users{
-		Uid:            uid,
-		UserName:       username,
-		Password:       payload.Password,
-		InvitationCode: inviteCode,
-		InvitatedCode:  payload.InviteCode,
-		MailBox:        payload.Email,
+		Uid:                 uid,
+		UserName:            username,
+		Password:            payload.Password,
+		InvitationCode:      inviteCode,
+		InvitatedCode:       payload.InviteCode,
+		MailBox:             payload.Email,
+		ConcernCoinList:     "{}",
+		CollectStragetyList: "{}",
 	}
-	if err := db.InsertUser(a.dbEngine, &newUser); err != nil {
+	//这个下面得用事务 1.插入用户表 2.插入链上地址表
+	session := a.dbEngine.NewSession()
+	err = session.Begin()
+	if err != nil {
+		return
+	}
+	if _, err := session.Insert(newUser); err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+
+	//todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
+	addr, privateKey, name, err := services.CreateAccount()
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//todo：后期密文存储 移动到单独私钥服务器
+	userKey := types.UserKey{
+		Addr:       addr,
+		Name:       name,
+		PrivateKey: privateKey,
+	}
+	_, err = session.Table("userKey").Insert(userKey)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			return
+		}
+		logrus.Fatal(err)
+	}
+
+	userAddr := types.UserAddr{
+		Uid:     uid,
+		Network: "TRX",
+		Addr:    addr,
+	}
+
+	_, err = session.Table("userAddr").Insert(userAddr)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			return
+		}
+		logrus.Fatal(err)
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
 	body := make(map[string]interface{})
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)

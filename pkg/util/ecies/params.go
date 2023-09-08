@@ -39,7 +39,7 @@ import (
 	"crypto/elliptic"
 	"crypto/sha256"
 	"crypto/sha512"
-	"github.com/ethereum/api-in/pkg/util"
+	"github.com/ethereum/BGService/pkg/util"
 	"hash"
 )
 
