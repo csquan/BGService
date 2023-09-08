@@ -35,10 +35,35 @@ func QueryEmail(engine *xorm.Engine, email string) (error, *types.Users) {
 	return nil, nil
 }
 
-func UserRevenue(engine *xorm.Engine) (error, []types.UserRevenue) {
+func UserRevenue(engine *xorm.Engine, total string) (error, []types.UserRevenue) {
 	var ret []types.UserRevenue
-	err := engine.SQL("SELECT f_uid, SUM(`f_totalBenefit`) AS `totalBenefit` " +
-		"FROM `userStrategyEarnings` GROUP BY f_uid ORDER BY `totalBenefit` DESC").Find(&ret)
+	sql := fmt.Sprintf("SELECT f_uid, SUM(`f_totalBenefit`) AS `totalBenefit` "+
+		"FROM `userStrategyEarnings` GROUP BY f_uid ORDER BY `totalBenefit` DESC limit %s", total)
+	err := engine.SQL(sql).Find(&ret)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, ret
+}
+
+func UserAllRevenue(engine *xorm.Engine) (error, []types.UserRevenue) {
+	var ret []types.UserRevenue
+	sql := fmt.Sprintf("SELECT f_uid, SUM(`f_totalBenefit`) AS `totalBenefit` " +
+		"FROM `userStrategyEarnings` GROUP BY f_uid ORDER BY `totalBenefit` DESC")
+	err := engine.SQL(sql).Find(&ret)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, ret
+}
+
+func UserAllInvest(engine *xorm.Engine) (error, []types.UserInvest) {
+	var ret []types.UserInvest
+	sql := fmt.Sprintf("select f_uid, SUM(`f_actualInvest`) AS `totalInvest` " +
+		"from `userStrategy` GROUP BY f_uid ORDER BY `totalInvest` DESC")
+	err := engine.SQL(sql).Find(&ret)
 	if err != nil {
 		logrus.Error(err)
 		return err, nil

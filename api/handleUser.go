@@ -363,22 +363,46 @@ func (a *ApiService) unbindingGoogle(c *gin.Context) {
 }
 
 func (a *ApiService) userRevenueRanking(c *gin.Context) {
-	err, Revenue := db.UserRevenue(a.dbEngine)
+	total := c.Query("total")
+	err, Revenue := db.UserRevenue(a.dbEngine, total)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	// 总收益排行
 	var UserRevenueList []interface{}
 	for i := 0; i < len(Revenue); i++ {
 		UserRevenue := make(map[string]interface{})
+		err, user := db.QuerySecret(a.dbEngine, Revenue[i].Id)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		UserRevenue["placed"] = i + 1
-		UserRevenue["username"] = i + 1
+		UserRevenue["username"] = user.UserName
 		UserRevenue["revenue"] = Revenue[i].TotalBenefit
+		UserRevenueList = append(UserRevenueList, UserRevenue)
+	}
+	// 总收益率排行
+	// 总收益
+	err, AllRevenue := db.UserAllRevenue(a.dbEngine)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 总投资
+	err, AllInvest := db.UserAllInvest(a.dbEngine)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
 	body := make(map[string]interface{})
-	body["revenueAmount"] = ""
+	body["revenueAmount"] = UserRevenueList
 	res := util.ResponseMsg(0, "success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return

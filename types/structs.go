@@ -151,6 +151,12 @@ type UserRevenue struct {
 	TotalBenefit float64 `json:"totalBenefit"`
 }
 
+// 用户总投资
+type UserInvest struct {
+	Id          string  `json:"f_uid"`
+	TotalInvest float64 `json:"totalInvest"`
+}
+
 type ForgotPasswordInput struct {
 	Email      string `json:"email" binding:"required"`
 	VerifyCode string `json:"verifyCode" binding:"required"`
