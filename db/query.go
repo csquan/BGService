@@ -113,7 +113,7 @@ func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
 
 func GetUserFundIn(engine *xorm.Engine, uid string, network string) (*types.UserFundIn, error) {
 	var userFundIn types.UserFundIn
-	has, err := engine.Table("userFundIn").Where("f_uid=? and f_network=?", uid, network).Get(&userFundIn)
+	has, err := engine.Table("userFundIn").Where("f_uid=? and f_network=?", uid, network).OrderBy("f_updateTime desc").Limit(1).Get(&userFundIn)
 	if err != nil {
 		return nil, err
 	}

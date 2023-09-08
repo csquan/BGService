@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -44,17 +45,32 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	url := base_tron_url + "/v1/accounts/" + userAddr.Addr + "/transactions"
+	//这里简单逻辑修改下：直接取最新的区块，然后取余额，与数据库中上次修改的余额相减，得到本次充值
+	url := base_tron_url + "/wallet/getaccount"
 
-	dataStr, err := util.Get(url)
+	accountParam := types.AccountParam{
+		Address: userAddr.Addr,
+		Visible: true,
+	}
+
+	bodyStr, err := json.Marshal(accountParam)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	data := gjson.Get(dataStr, "data")
-	array := data.Array()
-	//取出用户充值记录表
+
+	str1, err := util.Post(url, bodyStr)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	balance := gjson.Get(str1, "balance")
+
+	url = base_tron_url + "/v1/accounts/" + userAddr.Addr + "/transactions"
+
+	//取出用户最近的充值记录表
 	userFundIn, err := db.GetUserFundIn(a.dbEngine, fundInParam.Uid, fundInParam.Network)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -64,42 +80,16 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 	var DBBlockHeight int64
 
 	if userFundIn == nil {
-		DBBlockHeight = 0
+		//insert
 	} else {
-		DBBlockHeight, err = strconv.ParseInt(userFundIn.BlockHeight, 10, 64)
-		if err != nil {
-			res := util.ResponseMsg(-1, "fail", err)
-			c.SecureJSON(http.StatusOK, res)
-			return
-		}
-	}
+		if userFundIn.IsCollect == true { //发生过归集 本次充值金额为 归集后链上余额 + 目前的链上余额
 
-	//从交易记录中匹配记录
-	for _, value := range array {
-		str := value.Raw
-		blockNumber := gjson.Get(str, "blockNumber")
-
-		if DBBlockHeight < blockNumber.Int() { //如果账户上次充值记录中的区块高度小于查询的交易记录区块高度
-			data1 := gjson.Get(str, "raw_data.contract")
-
-			contracts := data1.Array()
-			for _, contract := range contracts {
-				amount := gjson.Get(contract.Raw, "parameter.value.amount")
-
-				userFundIn := types.UserFundIn{
-					Uid:         fundInParam.Uid,
-					Network:     fundInParam.Network,
-					Addr:        userAddr.Addr,
-					Amount:      amount.Raw,
-					BlockHeight: blockNumber.Raw,
-				}
-				UserFundIns = append(UserFundIns, userFundIn) //用户充值记录
-			}
+		} else { //未发生归集 本次充值金额为 本次充值后链上余额-上次充值后链上余额
 
 		}
 	}
 
-	//这里用事务存储UserFundIns进db 这里的金额作为本次充值的金额
+	//这里用事务更新UserFundIns进db 这里的金额作为本次充值的金额
 	session := a.dbEngine.NewSession()
 	err = session.Begin()
 	if err != nil {

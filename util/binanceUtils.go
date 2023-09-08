@@ -20,6 +20,7 @@ func GetBinanceUMUserData() (*futures.Account, error) {
 	futuresClient.SetApiEndpoint(base_future_testnet_binance_url)
 
 	ret, err := futuresClient.NewGetAccountService().Do(context.Background())
+	futuresClient.NewGetOrderService()
 
 	if err != nil {
 		logrus.Info(err)
