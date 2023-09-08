@@ -38,7 +38,7 @@ import (
 	"crypto/subtle"
 	"encoding/binary"
 	"encoding/hex"
-	"github.com/ethereum/api-in/pkg/util"
+	"github.com/ethereum/BGService/pkg/util"
 	"hash"
 	"io"
 	"math/big"

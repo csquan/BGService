@@ -349,3 +349,11 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) getUserBeneift(c *gin.Context) {
+	var userBenefits types.UserBenefits
+	//todo 取出用户每日收益
+	res := util.ResponseMsg(0, "getTradeHistory success", userBenefits)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}

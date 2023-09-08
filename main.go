@@ -7,6 +7,8 @@ import (
 	"github.com/ethereum/BGService/config"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/log"
+	"github.com/ethereum/BGService/services"
+	"github.com/jasonlvhit/gocron"
 	"github.com/sirupsen/logrus"
 	"os"
 )
@@ -32,13 +34,21 @@ func main() {
 
 	flag.Parse()
 
-	err = log.Init("api-in", &config.Conf)
+	err = log.Init("BGService", &config.Conf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	dbEngine := db.GetDBEngine(&config.Conf)
 	RedisEngine := db.GetRedisEngine(&config.Conf)
+
+	//setup scheduler
+	scheduler, err := services.NewServiceScheduler(&config.Conf, dbEngine)
+	if err != nil {
+		return
+	}
+
+	gocron.Every(1).Day().At(config.Conf.Schedule.Time).Do(scheduler.Start)
 
 	apiService := api.NewApiService(dbEngine, RedisEngine, &config.Conf)
 	go apiService.Run()
