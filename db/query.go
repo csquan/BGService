@@ -35,6 +35,17 @@ func QueryEmail(engine *xorm.Engine, email string) (error, *types.Users) {
 	return nil, nil
 }
 
+func UserRevenue(engine *xorm.Engine) (error, []types.UserRevenue) {
+	var ret []types.UserRevenue
+	err := engine.SQL("SELECT f_uid, SUM(`f_totalBenefit`) AS `totalBenefit` " +
+		"FROM `userStrategyEarnings` GROUP BY f_uid ORDER BY `totalBenefit` DESC").Find(&ret)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, ret
+}
+
 func QueryInviteCode(engine *xorm.Engine, InviteCode string) (error, *types.Users) {
 	var user types.Users
 	has, err := engine.Table("users").Where("`f_invitationCode`=?", InviteCode).Get(&user)

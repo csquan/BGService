@@ -96,6 +96,7 @@ func (a *ApiService) Run() {
 		v2.GET("inviteRanking", authMiddleware(), a.inviteRanking)
 		v2.GET("/getStrategy", a.getStrategy)
 		v2.POST("/unbindingGoogle", a.unbindingGoogle)
+		v2.GET("/ranking", a.userRevenueRanking)
 	}
 
 	v3 := r.Group("/api/info")

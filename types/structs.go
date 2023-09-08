@@ -145,6 +145,12 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// 用户总收益
+type UserRevenue struct {
+	Id           string  `json:"f_uid"`
+	TotalBenefit float64 `json:"totalBenefit"`
+}
+
 type ForgotPasswordInput struct {
 	Email      string `json:"email" binding:"required"`
 	VerifyCode string `json:"verifyCode" binding:"required"`

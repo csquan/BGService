@@ -361,3 +361,25 @@ func (a *ApiService) unbindingGoogle(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) userRevenueRanking(c *gin.Context) {
+	err, Revenue := db.UserRevenue(a.dbEngine)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var UserRevenueList []interface{}
+	for i := 0; i < len(Revenue); i++ {
+		UserRevenue := make(map[string]interface{})
+		UserRevenue["placed"] = i + 1
+		UserRevenue["username"] = i + 1
+		UserRevenue["revenue"] = Revenue[i].TotalBenefit
+	}
+
+	body := make(map[string]interface{})
+	body["revenueAmount"] = ""
+	res := util.ResponseMsg(0, "success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
