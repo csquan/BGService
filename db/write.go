@@ -53,6 +53,20 @@ func DeleteUserBindInfo(engine *xorm.Engine, id int) error {
 	return nil
 }
 
+func InsertUserStrategy(engine *xorm.Engine, UserBindInfo *types.UserStrategy) error {
+	rows, err := engine.Table("`userStrategy`").Insert(UserBindInfo)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if rows == 0 {
+		fmt.Println("插入失败")
+		return errors.New("insert null")
+	}
+	fmt.Println("插入成功")
+	return nil
+}
+
 /*
 // 删除
 func deleteUser(engine *xorm.Engine, name string) {

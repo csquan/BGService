@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func (a *ApiService) overview(c *gin.Context) {
@@ -329,6 +330,133 @@ func (a *ApiService) transactionRecords(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["total"] = len(Records)
 	body["list"] = RecordsList
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string, ProductId string, Balance float64) (error, *types.Strategy, float64, float64, float64) {
+	userBindInfos, err := db.GetIdUserBindInfos(a.dbEngine, uidFormatted, id)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return err, nil, 0, 0, 0
+	}
+	if userBindInfos == nil {
+		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
+		c.SecureJSON(http.StatusOK, res)
+		return err, nil, 0, 0, 0
+	}
+	// 获取具体产品
+	strategyInfo, err := db.GetStrategy(a.dbEngine, ProductId)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return err, nil, 0, 0, 0
+	}
+	principalGuaranteeDepositDrop, err := strconv.ParseFloat(strategyInfo.PrincipalGuaranteeDepositDrop, 64)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil, 0, 0, 0
+	}
+	shareBonusDrop, err := strconv.ParseFloat(strategyInfo.ShareBonusDrop, 64)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil, 0, 0, 0
+	}
+	managementFeesDrop, err := strconv.ParseFloat(strategyInfo.ManagementFeesDrop, 64)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil, 0, 0, 0
+	}
+	shareBonus := Balance * shareBonusDrop / 100
+	managementFees := Balance * managementFeesDrop / 100
+	principalGuaranteeDeposit := Balance * principalGuaranteeDepositDrop / 100
+	return nil, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit
+}
+
+func (a *ApiService) invest(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", uid)
+	// 交易所id
+	id, ok := c.GetQuery("id")
+	if !ok {
+		logrus.Error("id not exist.")
+		res := util.ResponseMsg(-1, "fail", "id not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 投入产品id
+	ProductId, ok := c.GetQuery("productId")
+	if !ok {
+		logrus.Error("productId not exist.")
+		res := util.ResponseMsg(-1, "fail", "productId not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// TODO 根据用户绑定的交易所获取余额
+	var Balance float64
+	Balance = 100
+	err, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit := a.investHandle(c, uidFormatted, id, ProductId, Balance)
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	body := make(map[string]interface{})
+	body["usableBalance"] = Balance
+	body["investBudget"] = Balance
+	body["shareBonusDrop"] = strategyInfo.ShareBonusDrop
+	body["managementFeesDrop"] = strategyInfo.ManagementFeesDrop
+	body["principalGuaranteeDepositDrop"] = strategyInfo.PrincipalGuaranteeDepositDrop
+	body["shareBonus"] = shareBonus
+	body["managementFees"] = managementFees
+	body["principalGuaranteeDeposit"] = principalGuaranteeDeposit
+
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) executeStrategy(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", uid)
+	var payload *types.ExecuteStrategyInput
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// TODO 根据用户绑定的交易所获取余额
+	var Balance float64
+	Balance = 100
+	err, _, _, _, _ := a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, Balance)
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// todo 扣除费用
+	FormatBalance := strconv.FormatFloat(Balance, 2, -1, 64)
+	UserStrategy := types.UserStrategy{
+		Uid:          uidFormatted,
+		StrategyID:   payload.ProductId,
+		JoinTime:     time.Now().Format("2006-01-02"),
+		ActualInvest: FormatBalance,
+	}
+	err = db.InsertUserStrategy(a.dbEngine, &UserStrategy)
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	body := make(map[string]interface{})
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return

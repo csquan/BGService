@@ -213,7 +213,7 @@ func (a *ApiService) logout(c *gin.Context) {
 }
 
 func (a *ApiService) forgotPassword(c *gin.Context) {
-	uid, _ := c.Get("Uid")
+	// 用户未登录状态
 	var payload *types.ForgotPasswordInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
@@ -227,9 +227,7 @@ func (a *ApiService) forgotPassword(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// 根据uid查询用户信息
-	uidFormatted := fmt.Sprintf("%s", uid)
-	err, user := db.QuerySecret(a.dbEngine, uidFormatted)
+	err, user := db.QueryEmail(a.dbEngine, payload.Email)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -252,7 +250,7 @@ func (a *ApiService) forgotPassword(c *gin.Context) {
 	}
 	// 修改密码
 	user.Password = payload.Password
-	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
+	err = db.UpdateUser(a.dbEngine, user.Uid, user)
 	if err != nil {
 		return
 	}

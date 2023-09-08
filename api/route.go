@@ -81,7 +81,7 @@ func (a *ApiService) Run() {
 		v1.POST("/register", a.register)
 		v1.POST("/login", a.login)
 		v1.POST("/logout", authMiddleware(), a.logout)
-		v1.POST("/forgotPassword", authMiddleware(), a.forgotPassword)
+		v1.POST("/forgotPassword", a.forgotPassword)
 		v1.POST("/resetPassword", authMiddleware(), a.resetPassword)
 		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
 		v1.POST("/verifyCode", a.verifyCode)
@@ -137,6 +137,8 @@ func (a *ApiService) Run() {
 		v8.GET("/collect", authMiddleware(), a.collect)
 		v8.GET("/info", a.productInfo)
 		v8.GET("/transactionRecords", a.transactionRecords)
+		v8.GET("/invest", authMiddleware(), a.invest)
+		v8.GET("/executeStrategy", authMiddleware(), a.executeStrategy)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
