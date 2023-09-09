@@ -78,7 +78,7 @@ type UserFundIn struct {
 	Network          string    `xorm:"f_network"`
 	Addr             string    `xorm:"f_addr"`
 	FundInAmount     string    `xorm:"f_fundInAmount"`
-	AfterFundBalance string    `xorm:"f_afterFundBalance"`
+	AfterFundBalance string    `xorm:"f_balance"`
 	IsCollect        bool      `xorm:"f_isCollect"`
 	CollectAmount    string    `xorm:"f_collectAmount"`
 	CollectTime      time.Time `xorm:"f_collectTime"`

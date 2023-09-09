@@ -92,7 +92,8 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 
 func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	var userAsset types.UserAsset
-	has, err := engine.Table("userAddr").Where("f_uid=? and f_coinName=？", uid, "usdt").Get(&userAsset)
+	coinName := "usdt"
+	has, err := engine.Table("userAsset").Where("f_uid=? and `f_coinName`=?", uid, coinName).Get(&userAsset)
 	if err != nil {
 		return nil, err
 	}

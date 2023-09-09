@@ -24,7 +24,7 @@ import (
 func (a *ApiService) haveFundIn(c *gin.Context) {
 	var fundInParam *types.FundInParam
 
-	err := c.BindJSON(fundInParam)
+	err := c.BindJSON(&fundInParam)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -54,24 +54,39 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 			logrus.Fatal(err)
 		}
 	}
-	//下面应该更新用户资产表
+	//下面更新用户资产表
 	userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	dec1, err := decimal.NewFromString(userAsset.Total)
+	fundInDec, err := decimal.NewFromString(fundInAmount)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	dec := decimal.Sum(dec1, fundInAmount)
-	userAsset.Total = dec.String()
+	if userAsset == nil {
+		userAsset = &types.UserAsset{
+			Uid:       fundInParam.Uid,
+			Network:   fundInParam.Network,
+			CoinName:  "usdt",
+			Available: fundInAmount,
+			Total:     fundInAmount,
+		}
+	} else {
+		dec1, err := decimal.NewFromString(userAsset.Total)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		userAsset.Total = decimal.Sum(dec1, fundInDec).String()
+	}
 
-	_, err = session.Table("userAssets").Update(userAsset)
+	_, err = session.Table("userAsset").Insert(userAsset)
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {

@@ -12,7 +12,7 @@ import (
 
 const base_tron_url = "https://api.trongrid.io"
 
-func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *types.FundInParam, userAddr *types.UserAddr) (decimal.Decimal, error) {
+func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *types.FundInParam, userAddr *types.UserAddr) (string, error) {
 	//取最新余额
 	url := base_tron_url + "/wallet/getaccount"
 
@@ -24,46 +24,39 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 	bodyStr, err := json.Marshal(accountParam)
 	if err != nil {
 		logrus.Info(err)
-		return decimal.Zero, err
+		return "", err
 	}
 
 	str1, err := Post(url, bodyStr)
 	if err != nil {
 		logrus.Info(err)
-		return decimal.Zero, err
+		return "", err
 	}
 	balance := gjson.Get(str1, "balance")
-	dec, err := decimal.NewFromString(balance.Str) // 目前链上余额
+	dec, err := decimal.NewFromString(balance.Raw) // 目前链上余额
 	if err != nil {
 		logrus.Info(err)
-		return decimal.Zero, err
+		return "", err
 	}
-
 	//取出用户最近的充值记录
 	userFundIn, err := db.GetUserFundIn(engine, fundInParam.Uid, fundInParam.Network)
 	if err != nil {
-		return decimal.Zero, err
+		return "", err
 	}
 
 	if userFundIn == nil { //没充过值，这里就是链上余额
-		fund := types.UserFundIn{
+		userFundIn = &types.UserFundIn{
+			Id:           0,
 			Uid:          fundInParam.Uid,
 			Network:      fundInParam.Network,
 			Addr:         userAddr.Addr,
 			FundInAmount: dec.String(),
 		}
-		_, err = session.Table("userFundIn").Insert(&fund)
-		if err != nil {
-			err := session.Rollback()
-			if err != nil {
-				return decimal.Zero, err
-			}
-		}
 	} else {
 		if userFundIn.IsCollect == true { //发生过归集 本次充值金额为 目前的链上余额-上次归集后的剩余金额
 			dec1, err := decimal.NewFromString(userFundIn.CollectRemain)
 			if err != nil {
-				return decimal.Zero, err
+				return "", err
 			}
 			dec3 := dec.Sub(dec1)
 			userFundIn.FundInAmount = dec3.String()
@@ -71,22 +64,20 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 		} else { //未发生归集 本次充值金额为 本次充值后链上余额-上次充值后链上余额
 			dec1, err := decimal.NewFromString(userFundIn.AfterFundBalance)
 			if err != nil {
-				return decimal.Zero, err
+				return "", err
 			}
 			dec3 := dec.Sub(dec1)
 			userFundIn.FundInAmount = dec3.String()
 			userFundIn.AfterFundBalance = dec.String()
 		}
-
 		userFundIn.Id = userFundIn.Id + 1
-
-		_, err = session.Table("userFundIn").Insert(&userFundIn)
+	}
+	_, err = session.Table("userFundIn").Insert(userFundIn)
+	if err != nil {
+		err := session.Rollback()
 		if err != nil {
-			err := session.Rollback()
-			if err != nil {
-				return decimal.Zero, err
-			}
+			return "", err
 		}
 	}
-	return decimal.NewFromString(userFundIn.FundInAmount), nil
+	return userFundIn.FundInAmount, nil
 }
