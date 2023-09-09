@@ -73,17 +73,18 @@ type UserAddr struct {
 
 // 用户充值记录表
 type UserFundIn struct {
-	Uid                 string    `xorm:"f_uid"`
-	Network             string    `xorm:"f_network"`
-	Addr                string    `xorm:"f_addr"`
-	FundInAmount        string    `xorm:"f_fundInAmount"`
-	AfterFundBalance    string    `xorm:"f_afterFundBalance"`
-	IsCollect           bool      `xorm:"f_isCollect"`
-	CollectAmount       string    `xorm:"f_collectAmount"`
-	CollectTime         time.Time `xorm:"f_collectTime"`
-	AfterCollectBalance string    `xorm:"f_afterCollectBalance"`
-	CreateTime          time.Time `xorm:"f_createTime"`
-	UpdateTime          time.Time `xorm:"f_updateTime"`
+	Id               int64     `xorm:"f_id"`
+	Uid              string    `xorm:"f_uid"`
+	Network          string    `xorm:"f_network"`
+	Addr             string    `xorm:"f_addr"`
+	FundInAmount     string    `xorm:"f_fundInAmount"`
+	AfterFundBalance string    `xorm:"f_afterFundBalance"`
+	IsCollect        bool      `xorm:"f_isCollect"`
+	CollectAmount    string    `xorm:"f_collectAmount"`
+	CollectTime      time.Time `xorm:"f_collectTime"`
+	CollectRemain    string    `xorm:"f_collectRemain"`
+	CreateTime       time.Time `xorm:"f_createTime"`
+	UpdateTime       time.Time `xorm:"f_updateTime"`
 }
 
 type FundOutParam struct {
