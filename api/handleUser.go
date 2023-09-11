@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -362,28 +363,51 @@ func (a *ApiService) unbindingGoogle(c *gin.Context) {
 	return
 }
 
+func getRevenue(revenueMap interface{}, filed string) float64 {
+	revenue, ok := revenueMap.(map[string]interface{})
+	if !ok {
+		return 0
+	}
+	return revenue[filed].(float64)
+}
+
 func (a *ApiService) userRevenueRanking(c *gin.Context) {
 	total := c.Query("total")
-	err, Revenue := db.UserRevenue(a.dbEngine, total)
+	totalInt, err := strconv.Atoi(total)
+	if err != nil {
+		logrus.Error(err)
+	}
+	err, Revenue := db.UserRevenue(a.dbEngine, totalInt)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	// 总收益排行
-	var UserRevenueList []interface{}
+	var UserRevenueList []map[string]interface{}
 	for i := 0; i < len(Revenue); i++ {
 		UserRevenue := make(map[string]interface{})
-		err, user := db.QuerySecret(a.dbEngine, Revenue[i].Id)
+		err, user := db.QuerySecret(a.dbEngine, Revenue[i]["f_uid"])
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		UserRevenue["placed"] = i + 1
+		fRevenue, err := strconv.ParseFloat(Revenue[i]["totalBenefit"], 64)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		UserRevenue["username"] = user.UserName
-		UserRevenue["revenue"] = Revenue[i].TotalBenefit
+		UserRevenue["revenue"] = fRevenue
 		UserRevenueList = append(UserRevenueList, UserRevenue)
+	}
+	sort.Slice(UserRevenueList, func(i, j int) bool {
+		return getRevenue(UserRevenueList[i], "revenue") < getRevenue(UserRevenueList[j], "revenue")
+	})
+	for key, value := range UserRevenueList {
+		value["placed"] = key + 1
 	}
 	// 总收益率排行
 	// 总收益
@@ -400,10 +424,52 @@ func (a *ApiService) userRevenueRanking(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-
+	var RevenueRatioRanking []map[string]interface{}
+	for _, RevenueValue := range AllRevenue {
+		for _, InvestValue := range AllInvest {
+			if RevenueValue["f_uid"] == InvestValue["f_uid"] {
+				RevenueRatio := make(map[string]interface{})
+				err, userInfo := db.QuerySecret(a.dbEngine, RevenueValue["f_uid"])
+				if err != nil {
+					res := util.ResponseMsg(-1, "fail", err)
+					c.SecureJSON(http.StatusOK, res)
+					return
+				}
+				fRevenue, err := strconv.ParseFloat(RevenueValue["totalBenefit"], 64)
+				if err != nil {
+					res := util.ResponseMsg(-1, "fail", err)
+					c.SecureJSON(http.StatusOK, res)
+					return
+				}
+				fInvest, err := strconv.ParseFloat(InvestValue["totalInvest"], 64)
+				if err != nil {
+					res := util.ResponseMsg(-1, "fail", err)
+					c.SecureJSON(http.StatusOK, res)
+					return
+				}
+				revenueRatio := fRevenue / fInvest
+				RevenueRatio["revenueRatio"] = revenueRatio
+				RevenueRatio["username"] = userInfo.UserName
+				RevenueRatioRanking = append(RevenueRatioRanking, RevenueRatio)
+			}
+		}
+	}
+	sort.Slice(RevenueRatioRanking, func(i, j int) bool {
+		return getRevenue(RevenueRatioRanking[i], "revenueRatio") < getRevenue(RevenueRatioRanking[j], "revenueRatio")
+	})
+	for key, value := range RevenueRatioRanking {
+		value["placed"] = key + 1
+	}
 	body := make(map[string]interface{})
+	var revenueAmountRatio []map[string]interface{}
 	body["revenueAmount"] = UserRevenueList
-	res := util.ResponseMsg(0, "success", nil)
+	if len(RevenueRatioRanking) > totalInt {
+		revenueAmountRatio = RevenueRatioRanking[:totalInt]
+	} else {
+		revenueAmountRatio = RevenueRatioRanking
+	}
+	body["revenueAmountRatio"] = revenueAmountRatio
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

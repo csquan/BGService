@@ -35,11 +35,12 @@ type UserStrategy struct {
 
 // 用户得策略量化收益表
 type UserStrategyEarnings struct {
-	Uid          string `xorm:"f_uid"`
-	StrategyID   string `xorm:"f_strategyID"`
-	DayBenefit   string `xorm:"f_dayBenefit"`
-	TotalBenefit string `xorm:"f_totalBenefit"`
-	CreateTime   string `xorm:"f_createTime"`
+	Uid          string    `xorm:"f_uid"`
+	StrategyID   string    `xorm:"f_strategyID"`
+	DayBenefit   string    `xorm:"f_dayBenefit"`
+	TotalBenefit string    `xorm:"f_totalBenefit"`
+	CreateTime   time.Time `xorm:"f_createTime"`
+	UpdateTime   time.Time `xorm:"f_updateTime"`
 }
 
 // 用户资产表
@@ -215,8 +216,8 @@ type LoginInput struct {
 
 // 用户总收益
 type UserRevenue struct {
-	Id           string  `json:"f_uid"`
-	TotalBenefit float64 `json:"totalBenefit"`
+	Id           string
+	TotalBenefit float64
 }
 
 // 用户总投资
