@@ -347,7 +347,7 @@ func GetStrategyByName(engine *xorm.Engine, sName string) (*types.Strategy, erro
 	return nil, nil
 }
 
-func GetUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
+func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
 	var userStrategy types.UserStrategy
 	has, err := engine.Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
 	if err != nil {
@@ -383,6 +383,16 @@ func GetStrategyTotalBenefits(engine *xorm.Engine, sid string) (float64, error) 
 		return 0, err
 	}
 	return total, nil
+}
+
+func GetStrategy30Benefits(engine *xorm.Engine, sid, uid string, startTime time.Time, endTime time.Time) ([]*types.UserStrategyEarnings, error) {
+	var userStrategyEarnings []*types.UserStrategyEarnings
+	err := engine.Table("userStrategyEarnings").Where("`f_strategyID`=? and f_uid = ? and ?=<`f_createTime`<=?", sid, uid, startTime, endTime).OrderBy("`f_createTime` desc").Find(&userStrategyEarnings)
+	if err != nil {
+		return nil, err
+	}
+	return userStrategyEarnings, nil
+
 }
 
 func GetStrategyTotalInvests(engine *xorm.Engine, sid string) (float64, error) {
@@ -607,14 +617,4 @@ func TransactionRecords(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, 
 		return nil, err
 	}
 	return transactionRecords, nil
-}
-
-func GetOpenedAssemblyTasks(engine *xorm.Engine) ([]*types.TransactionTask, error) {
-	tasks := make([]*types.TransactionTask, 0)
-	err := engine.Table("transaction_task").Where("f_state =0").Find(&tasks)
-	if err != nil {
-		return nil, err
-	}
-	return tasks, err
-
 }

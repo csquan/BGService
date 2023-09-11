@@ -26,21 +26,22 @@ type Users struct {
 }
 
 type UserStrategy struct {
-	Uid          string    `xorm:"f_uid"`
-	StrategyID   string    `xorm:"f_strategyID"`
-	JoinTime     time.Time `xorm:"f_joinTime"`
-	ActualInvest string    `xorm:"f_actualInvest"`
-	IsValid      bool      `xorm:"f_isValid"`
+	Uid          string          `xorm:"f_uid"`
+	StrategyID   string          `xorm:"f_strategyID"`
+	JoinTime     time.Time       `xorm:"f_joinTime"`
+	ActualInvest decimal.Decimal `xorm:"f_actualInvest"`
+	IsValid      bool            `xorm:"f_isValid"`
 }
 
 // 用户得策略量化收益表
 type UserStrategyEarnings struct {
-	Uid          string    `xorm:"f_uid"`
-	StrategyID   string    `xorm:"f_strategyID"`
-	DayBenefit   string    `xorm:"f_dayBenefit"`
-	TotalBenefit string    `xorm:"f_totalBenefit"`
-	CreateTime   time.Time `xorm:"f_createTime"`
-	UpdateTime   time.Time `xorm:"f_updateTime"`
+	Uid          string          `xorm:"f_uid"`
+	StrategyID   string          `xorm:"f_strategyID"`
+	DayBenefit   decimal.Decimal `xorm:"f_dayBenefit"`
+	DayRatio     decimal.Decimal `xorm:"f_dayRatio"`
+	TotalBenefit decimal.Decimal `xorm:"f_totalBenefit"`
+	CreateTime   time.Time       `xorm:"f_createTime"`
+	UpdateTime   time.Time       `xorm:"f_updateTime"`
 }
 
 // 用户资产表
@@ -339,6 +340,12 @@ type StrategyStats struct {
 type UserBenefits struct {
 	Date    string
 	Benefit string
+}
+type UserBenefit30Days struct {
+	BenefitSum   decimal.Decimal
+	BenefitRatio string
+	WinRatio     string
+	Huiche       string
 }
 
 type Balance_Erc20 struct {
