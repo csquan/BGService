@@ -35,6 +35,72 @@ func QueryEmail(engine *xorm.Engine, email string) (error, *types.Users) {
 	return nil, nil
 }
 
+func UserRevenue(engine *xorm.Engine, total int) (error, []map[string]string) {
+	sql := fmt.Sprintf("SELECT f_uid, SUM(`f_totalBenefit`) AS `totalBenefit` "+
+		"FROM `userStrategyEarnings` GROUP BY f_uid ORDER BY `totalBenefit` DESC limit %d", total)
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, result
+}
+
+func ProductRevenue(engine *xorm.Engine, total int) (error, []map[string]string) {
+	sql := fmt.Sprintf("SELECT `f_stragetyID`, SUM(`f_totalBenefit`) AS `totalBenefit` "+
+		"FROM `userStrategyEarnings` GROUP BY `f_stragetyID` ORDER BY `totalBenefit` DESC limit %d", total)
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, result
+}
+
+func UserAllRevenue(engine *xorm.Engine) (error, []map[string]string) {
+	sql := fmt.Sprintf("SELECT f_uid, SUM(`f_totalBenefit`) AS `totalBenefit` " +
+		"FROM `userStrategyEarnings` GROUP BY f_uid ORDER BY `totalBenefit` DESC")
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, result
+}
+
+func UserAllInvest(engine *xorm.Engine) (error, []map[string]string) {
+	sql := fmt.Sprintf("select f_uid, SUM(`f_actualInvest`) AS `totalInvest` " +
+		"from `userStrategy` GROUP BY f_uid ORDER BY `totalInvest` DESC")
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, result
+}
+
+func ProductAllRevenue(engine *xorm.Engine) (error, []map[string]string) {
+	sql := fmt.Sprintf("SELECT `f_stragetyID`, SUM(`f_totalBenefit`) AS `totalBenefit` " +
+		"FROM `userStrategyEarnings` GROUP BY `f_stragetyID` ORDER BY `totalBenefit` DESC")
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, result
+}
+
+func ProductAllInvest(engine *xorm.Engine) (error, []map[string]string) {
+	sql := fmt.Sprintf("select `f_strategyID`, SUM(`f_actualInvest`) AS `totalInvest` " +
+		"from `userStrategy` GROUP BY `f_strategyID` ORDER BY `totalInvest` DESC")
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, result
+}
+
 func QueryInviteCode(engine *xorm.Engine, InviteCode string) (error, *types.Users) {
 	var user types.Users
 	has, err := engine.Table("users").Where("`f_invitationCode`=?", InviteCode).Get(&user)
