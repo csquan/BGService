@@ -231,7 +231,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	return
 }
 
-// 得到特定的交易详情-todo：接口需要修改
+// 得到特定的交易详情
 func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	accountTotalAssets := make(map[string]string)
 	initAssets := make(map[string]string)
@@ -241,6 +241,7 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 
 	//首先得到我的策略
 	uid := c.Query("uid")
+	//strategyName := c.Query("strategyName")
 
 	//首先得到我的仓位
 	userData, err := util.GetBinanceUMUserData()
@@ -424,6 +425,12 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 		tradeDetails.InitAssets = initAssets
 		tradeDetails.CurBenefit = todayBenefits
 		tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
+
+		tradeDetails.Source = strategyInfo.Source
+		tradeDetails.Type = strategyInfo.Type
+		tradeDetails.ShareRatio = strategyInfo.ShareRatio
+		tradeDetails.DividePeriod = strategyInfo.DividePeriod
+		tradeDetails.AgreementPeriod = strategyInfo.AgreementPeriod
 
 		tradeList = append(tradeList, tradeDetails)
 	}

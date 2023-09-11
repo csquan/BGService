@@ -311,7 +311,13 @@ type TradeDetails struct {
 	AccountTotalAssets map[string]string
 	InitAssets         map[string]string
 	CurBenefit         map[string]string
+	WithdrawalSum      map[string]string
 	InDays             string
+	Source             string
+	Type               string
+	ShareRatio         string
+	DividePeriod       string
+	AgreementPeriod    string
 }
 
 type UserBenefits struct {
