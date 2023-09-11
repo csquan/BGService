@@ -334,6 +334,19 @@ func GetStrategy(engine *xorm.Engine, sid string) (*types.Strategy, error) {
 	return nil, nil
 }
 
+func GetStrategyByName(engine *xorm.Engine, sName string) (*types.Strategy, error) {
+	var strategy types.Strategy
+	has, err := engine.Table("strategy").Where("`f_strategyName`=?", sName).Get(&strategy)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	if has {
+		return &strategy, nil
+	}
+	return nil, nil
+}
+
 func GetUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
 	var userStrategy types.UserStrategy
 	has, err := engine.Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
@@ -358,6 +371,23 @@ func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, e
 func GetStrategyTotalAssets(engine *xorm.Engine) (float64, error) {
 	var userStrategy types.UserStrategy
 	total, err := engine.Table("`userStrategy`").Sum(userStrategy, "`f_actualInvest`")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+func GetStrategyTotalBenefits(engine *xorm.Engine, sid string) (float64, error) {
+	var userStrategyEarnings types.UserStrategyEarnings
+	total, err := engine.Table("`userStrategyEarnings`").Where("`f_strategyID`=?", sid).Sum(userStrategyEarnings, "`f_totalBenefit`")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func GetStrategyTotalInvests(engine *xorm.Engine, sid string) (float64, error) {
+	var userStrategy types.UserStrategy
+	total, err := engine.Table("`userStrategy`").Where("`f_strategyID`=?", sid).Sum(userStrategy, "`f_actualInvest`")
 	if err != nil {
 		return 0, err
 	}

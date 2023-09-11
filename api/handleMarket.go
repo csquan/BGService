@@ -233,8 +233,34 @@ func (a *ApiService) addConcern(c *gin.Context) {
 
 // 得到特定策略的信息--总收益 总收益率 运行时长--查询用户策略收益表，统计这个策略的信息
 func (a *ApiService) getStragetyDetail(c *gin.Context) {
+	strategyName := c.Query("strategyName")
 
-	res := util.ResponseMsg(0, "getTradeDetails success", nil)
+	strategy, err := db.GetStrategyByName(a.dbEngine, strategyName)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+	totalBenefit, err := db.GetStrategyTotalBenefits(a.dbEngine, strategy.StrategyID)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+	totalInvest, err := db.GetStrategyTotalInvests(a.dbEngine, strategy.StrategyID)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+	dec1 := decimal.NewFromFloat(totalBenefit)
+	dec2 := decimal.NewFromFloat(totalInvest)
+	ratio := dec1.Div(dec2)
+
+	var strategyStats types.StrategyStats
+
+	strategyStats.TotalBenefit = dec1.String()
+	strategyStats.TotalRatio = ratio.String()
+	strategyStats.RunTime = time.Now().Sub(strategy.CreateTime).String()
+
+	res := util.ResponseMsg(0, "getStragetyDetail success", strategyStats)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -367,10 +393,18 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 	return
 }
 
+func (a *ApiService) getUser30Beneift(c *gin.Context) {
+	var userBenefits types.UserBenefits
+	//todo 取出用户每日收益
+	res := util.ResponseMsg(0, "getUser30Beneift success", userBenefits)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
 func (a *ApiService) getUserBeneift(c *gin.Context) {
 	var userBenefits types.UserBenefits
 	//todo 取出用户每日收益
-	res := util.ResponseMsg(0, "getTradeHistory success", userBenefits)
+	res := util.ResponseMsg(0, "getUserBeneift success", userBenefits)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
