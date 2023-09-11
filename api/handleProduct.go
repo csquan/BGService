@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -354,24 +355,24 @@ func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string
 		c.SecureJSON(http.StatusOK, res)
 		return err, nil, 0, 0, 0
 	}
-	principalGuaranteeDepositDrop, err := strconv.ParseFloat(strategyInfo.PrincipalGuaranteeDepositDrop, 64)
-	if err != nil {
-		logrus.Error(err)
-		return err, nil, 0, 0, 0
-	}
-	shareBonusDrop, err := strconv.ParseFloat(strategyInfo.ShareBonusDrop, 64)
-	if err != nil {
-		logrus.Error(err)
-		return err, nil, 0, 0, 0
-	}
-	managementFeesDrop, err := strconv.ParseFloat(strategyInfo.ManagementFeesDrop, 64)
-	if err != nil {
-		logrus.Error(err)
-		return err, nil, 0, 0, 0
-	}
-	shareBonus := Balance * shareBonusDrop / 100
-	managementFees := Balance * managementFeesDrop / 100
-	principalGuaranteeDeposit := Balance * principalGuaranteeDepositDrop / 100
+	//principalGuaranteeDepositDrop, err := strconv.ParseFloat(strategyInfo.PrincipalGuaranteeDepositDrop, 64)
+	//if err != nil {
+	//	logrus.Error(err)
+	//	return err, nil, 0, 0, 0
+	//}
+	//shareBonusDrop, err := strconv.ParseFloat(strategyInfo.ShareBonusDrop, 64)
+	//if err != nil {
+	//	logrus.Error(err)
+	//	return err, nil, 0, 0, 0
+	//}
+	//managementFeesDrop, err := strconv.ParseFloat(strategyInfo.ManagementFeesDrop, 64)
+	//if err != nil {
+	//	logrus.Error(err)
+	//	return err, nil, 0, 0, 0
+	//}
+	shareBonus := Balance * 0 / 100
+	managementFees := Balance * 0 / 100
+	principalGuaranteeDeposit := Balance * 0 / 100
 	return nil, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit
 }
 
@@ -398,7 +399,7 @@ func (a *ApiService) invest(c *gin.Context) {
 	// TODO 根据用户绑定的交易所获取余额
 	var Balance float64
 	Balance = 100
-	err, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit := a.investHandle(c, uidFormatted, id, ProductId, Balance)
+	err, _, shareBonus, managementFees, principalGuaranteeDeposit := a.investHandle(c, uidFormatted, id, ProductId, Balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)
@@ -408,9 +409,9 @@ func (a *ApiService) invest(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["usableBalance"] = Balance
 	body["investBudget"] = Balance
-	body["shareBonusDrop"] = strategyInfo.ShareBonusDrop
-	body["managementFeesDrop"] = strategyInfo.ManagementFeesDrop
-	body["principalGuaranteeDepositDrop"] = strategyInfo.PrincipalGuaranteeDepositDrop
+	body["shareBonusDrop"] = 0
+	body["managementFeesDrop"] = 0
+	body["principalGuaranteeDepositDrop"] = 0
 	body["shareBonus"] = shareBonus
 	body["managementFees"] = managementFees
 	body["principalGuaranteeDeposit"] = principalGuaranteeDeposit
@@ -457,6 +458,117 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		return
 	}
 	body := make(map[string]interface{})
+	res := util.ResponseMsg(1, "success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func ProductRevenue(a *ApiService, Revenue []map[string]string) (error, []map[string]interface{}) {
+	// 总收益排行
+	var ProductRevenueList []map[string]interface{}
+	for i := 0; i < len(Revenue); i++ {
+		UserRevenue := make(map[string]interface{})
+		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_stragetyID"])
+		if err != nil {
+			return err, ProductRevenueList
+		}
+		fRevenue, err := strconv.ParseFloat(Revenue[i]["totalBenefit"], 64)
+		if err != nil {
+			return err, ProductRevenueList
+		}
+		UserRevenue["stragetyName"] = strategy.StrategyName
+		UserRevenue["revenue"] = fRevenue
+		ProductRevenueList = append(ProductRevenueList, UserRevenue)
+	}
+	sort.Slice(ProductRevenueList, func(i, j int) bool {
+		return getRevenue(ProductRevenueList[i], "revenue") > getRevenue(ProductRevenueList[j], "revenue")
+	})
+	for key, value := range ProductRevenueList {
+		value["placed"] = key + 1
+	}
+	return nil, ProductRevenueList
+}
+
+func ProductRevenueRatio(a *ApiService, AllRevenue []map[string]string, AllInvest []map[string]string) (error, []map[string]interface{}) {
+	var RevenueRatioRanking []map[string]interface{}
+	for _, RevenueValue := range AllRevenue {
+		for _, InvestValue := range AllInvest {
+			if RevenueValue["f_stragetyID"] == InvestValue["f_strategyID"] {
+				RevenueRatio := make(map[string]interface{})
+				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_stragetyID"])
+				if err != nil {
+					return err, RevenueRatioRanking
+				}
+				fRevenue, err := strconv.ParseFloat(RevenueValue["totalBenefit"], 64)
+				if err != nil {
+					return err, RevenueRatioRanking
+				}
+				fInvest, err := strconv.ParseFloat(InvestValue["totalInvest"], 64)
+				if err != nil {
+					return err, RevenueRatioRanking
+				}
+				revenueRatio := fRevenue / fInvest
+				RevenueRatio["revenueRatio"] = revenueRatio
+				RevenueRatio["stragetyName"] = strategy.StrategyName
+				RevenueRatioRanking = append(RevenueRatioRanking, RevenueRatio)
+			}
+		}
+	}
+	sort.Slice(RevenueRatioRanking, func(i, j int) bool {
+		return getRevenue(RevenueRatioRanking[i], "revenueRatio") > getRevenue(RevenueRatioRanking[j], "revenueRatio")
+	})
+	for key, value := range RevenueRatioRanking {
+		value["placed"] = key + 1
+	}
+	return nil, RevenueRatioRanking
+}
+
+func (a *ApiService) productRanking(c *gin.Context) {
+	total := c.Query("total")
+	totalInt, err := strconv.Atoi(total)
+	if err != nil {
+		logrus.Error(err)
+	}
+	err, Revenue := db.ProductRevenue(a.dbEngine, totalInt)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 产品总收益排行
+	err, ProductRevenueList := ProductRevenue(a, Revenue)
+	if err != nil {
+		return
+	}
+
+	// 总收益率排行
+	// 总收益
+	err, AllRevenue := db.ProductAllRevenue(a.dbEngine)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 总投资
+	err, AllInvest := db.ProductAllInvest(a.dbEngine)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	err, ProductRevenueRatioList := ProductRevenueRatio(a, AllRevenue, AllInvest)
+	if err != nil {
+		return
+	}
+	var RevenueRatio []map[string]interface{}
+	if len(ProductRevenueRatioList) > totalInt {
+		RevenueRatio = ProductRevenueRatioList[:totalInt]
+	} else {
+		RevenueRatio = ProductRevenueRatioList
+	}
+	body := make(map[string]interface{})
+	body["revenueAmount"] = ProductRevenueList
+	body["revenueAmountRatio"] = RevenueRatio
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return

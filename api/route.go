@@ -96,6 +96,7 @@ func (a *ApiService) Run() {
 		v2.GET("inviteRanking", authMiddleware(), a.inviteRanking)
 		v2.GET("/getStrategy", a.getStrategy)
 		v2.POST("/unbindingGoogle", a.unbindingGoogle)
+		v2.GET("/ranking", a.userRevenueRanking)
 	}
 
 	v3 := r.Group("/api/info")
@@ -147,6 +148,7 @@ func (a *ApiService) Run() {
 		v8.GET("/transactionRecords", a.transactionRecords)
 		v8.GET("/invest", authMiddleware(), a.invest)
 		v8.GET("/executeStrategy", authMiddleware(), a.executeStrategy)
+		v8.GET("/ranking", authMiddleware(), a.productRanking)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
