@@ -126,8 +126,10 @@ func (a *ApiService) Run() {
 
 	v7 := r.Group("/api/wallet")
 	{
+		//得到用户的策略列表
 		v7.GET("/getTradeList", a.getTradeList)
-		v7.GET("/getTradeAccountDetail", a.getTradeAccountDetail)
+		//得到特定策略的信息
+		v7.GET("/getTradeAccountDetail", a.getStragetyDetail)
 		v7.GET("/getTradeHistory", a.getTradeHistory)
 
 		v7.GET("/getUserBeneift", a.getUserBeneift) //画图用
