@@ -446,7 +446,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	UserStrategy := types.UserStrategy{
 		Uid:          uidFormatted,
 		StrategyID:   payload.ProductId,
-		JoinTime:     time.Now().Format("2006-01-02"),
+		JoinTime:     time.Now(), //.Format("2006-01-02"),
 		ActualInvest: FormatBalance,
 	}
 	err = db.InsertUserStrategy(a.dbEngine, &UserStrategy)

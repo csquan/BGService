@@ -26,11 +26,11 @@ type Users struct {
 }
 
 type UserStrategy struct {
-	Uid          string `xorm:"f_uid"`
-	StrategyID   string `xorm:"f_strategyID"`
-	JoinTime     string `xorm:"f_joinTime"`
-	ActualInvest string `xorm:"f_actualInvest"`
-	IsValid      bool   `xorm:"f_isValid"`
+	Uid          string    `xorm:"f_uid"`
+	StrategyID   string    `xorm:"f_strategyID"`
+	JoinTime     time.Time `xorm:"f_joinTime"`
+	ActualInvest string    `xorm:"f_actualInvest"`
+	IsValid      bool      `xorm:"f_isValid"`
 }
 
 // 用户得策略量化收益表
@@ -311,6 +311,7 @@ type TradeDetails struct {
 	AccountTotalAssets map[string]string
 	InitAssets         map[string]string
 	CurBenefit         map[string]string
+	InDays             string
 }
 
 type UserBenefits struct {

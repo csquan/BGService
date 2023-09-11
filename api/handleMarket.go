@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 var base_binance_url = "https://api.binance.com/"
@@ -230,7 +231,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	return
 }
 
-// 得到交易账户详情
+// 得到特定的交易详情-todo：接口需要修改
 func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	accountTotalAssets := make(map[string]string)
 	initAssets := make(map[string]string)
@@ -326,6 +327,108 @@ func (a *ApiService) getTradeAccountDetail(c *gin.Context) {
 	tradeDetails.CurBenefit = todayBenefits
 
 	res := util.ResponseMsg(0, "getTradeDetails success", tradeDetails)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到交易账户列表--遍历我的策略产品列表
+func (a *ApiService) getTradeList(c *gin.Context) {
+	accountTotalAssets := make(map[string]string)
+	initAssets := make(map[string]string)
+	todayBenefits := make(map[string]string)
+
+	var tradeDetails types.TradeDetails
+	var tradeList []types.TradeDetails
+	//首先得到我的策略
+	uid := c.Query("uid")
+
+	//首先得到我的仓位
+	userData, err := util.GetBinanceUMUserData()
+
+	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//查询用户策略表得到用户对应得所有策略
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//一个稳定币只可能存在一个策略
+	for _, userStrategy := range userStrategys {
+		//查询量化收益表
+		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
+		cexTotalProfit, err := decimal.NewFromString(userData.TotalUnrealizedProfit)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		dbTotalBenefit, err := decimal.NewFromString(latestEarning.TotalBenefit)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
+		dayBefinit := cexTotalProfit.Sub(dbTotalBenefit)
+
+		//查询策略表
+		strategyInfo, err := db.GetStrategy(a.dbEngine, userStrategy.StrategyID)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "usdt" || asset.Asset == "USDT" {
+					accountTotalAssets["usdt"] = asset.MarginBalance
+					initAssets["usdt"] = userStrategy.ActualInvest
+					todayBenefits["usdt"] = dayBefinit.String()
+				}
+			}
+		}
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "usdc" || asset.Asset == "USDC" {
+					accountTotalAssets["usdc"] = asset.MarginBalance
+					initAssets["usdc"] = userStrategy.ActualInvest
+					todayBenefits["usdc"] = dayBefinit.String()
+				}
+			}
+		}
+		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
+			for _, asset := range userData.Assets {
+				if asset.Asset == "busd" || asset.Asset == "BUSD" {
+					accountTotalAssets["busd"] = asset.MarginBalance
+					initAssets["busd"] = userStrategy.ActualInvest
+					todayBenefits["busd"] = dayBefinit.String()
+				}
+			}
+		}
+		tradeDetails.AccountTotalAssets = accountTotalAssets
+		tradeDetails.InitAssets = initAssets
+		tradeDetails.CurBenefit = todayBenefits
+		tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
+
+		tradeList = append(tradeList, tradeDetails)
+	}
+
+	res := util.ResponseMsg(0, "getTradeList success", tradeList)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
