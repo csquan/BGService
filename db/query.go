@@ -385,14 +385,13 @@ func GetStrategyTotalBenefits(engine *xorm.Engine, sid string) (float64, error) 
 	return total, nil
 }
 
-func GetStrategy30Benefits(engine *xorm.Engine, sid, uid string, startTime time.Time, endTime time.Time) ([]*types.UserStrategyEarnings, error) {
+func GetStrategyBenefits(engine *xorm.Engine, sid, uid string, startTime string, endTime string) ([]*types.UserStrategyEarnings, error) {
 	var userStrategyEarnings []*types.UserStrategyEarnings
 	err := engine.Table("userStrategyEarnings").Where("`f_strategyID`=? and f_uid = ? and ?=<`f_createTime`<=?", sid, uid, startTime, endTime).OrderBy("`f_createTime` desc").Find(&userStrategyEarnings)
 	if err != nil {
 		return nil, err
 	}
 	return userStrategyEarnings, nil
-
 }
 
 func GetStrategyTotalInvests(engine *xorm.Engine, sid string) (float64, error) {

@@ -392,10 +392,10 @@ func (a *ApiService) getUser30Beneift(c *gin.Context) {
 	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
 	uid := c.Query("uid")
-	startTime := time.Now().AddDate(0, 0, -30)
+	startTime := time.Now().AddDate(0, -1, 0)
 
 	//取出30天按照时间倒序排序的收益
-	earnings, err := db.GetStrategy30Benefits(a.dbEngine, sid, uid, startTime, time.Now())
+	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime.String(), time.Now().String())
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -452,10 +452,31 @@ func (a *ApiService) getUser30Beneift(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) getUserBeneift(c *gin.Context) {
-	var userBenefits types.UserBenefits
+func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
+	timeType := c.Query("timeType")
+	sid := c.Query("sid")
+	uid := c.Query("uid")
+
+	startTime := time.Now().String()
+
+	switch timeType {
+	case "1":
+		startTime = time.Now().AddDate(0, -1, 0).Format("2006-01-02")
+	case "2":
+		startTime = time.Now().AddDate(0, -3, 0).Format("2006-01-02")
+	case "3":
+		startTime = time.Now().AddDate(1, 0, 0).Format("2006-01-02")
+	default:
+		startTime = time.Now().AddDate(100, 0, 0).Format("2006-01-02")
+	}
 	//todo 取出用户每日收益
-	res := util.ResponseMsg(0, "getUserBeneift success", userBenefits)
+	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime, time.Now().String())
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	res := util.ResponseMsg(0, "getUserBeneift success", earnings)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
