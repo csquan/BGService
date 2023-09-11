@@ -11,7 +11,6 @@ type Users struct {
 	UserName            string    `xorm:"f_userName"`
 	Password            string    `xorm:"f_password"`
 	InvitationCode      string    `xorm:"f_invitationCode"`
-	InvitatedCode       string    `xorm:"f_invitatedCode"`
 	MailBox             string    `xorm:"f_mailBox"`
 	CreateTime          time.Time `xorm:"f_createTime"`
 	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
@@ -23,6 +22,14 @@ type Users struct {
 	ConcernCoinList     string    `xorm:"f_concernCoinList"`
 	CollectStragetyList string    `xorm:"f_collectStragetyList"`
 	UpdateTime          time.Time `xorm:"f_updateTime"`
+}
+
+type Invitation struct {
+	Uid        string    `xorm:"f_uid"`
+	SonUid     string    `xorm:"f_sonUid"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+	Level      string    `xorm:"f_level"`
 }
 
 type UserStrategy struct {

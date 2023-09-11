@@ -25,6 +25,20 @@ func InsertUser(engine *xorm.Engine, user *types.Users) error {
 	return nil
 }
 
+func InsertInvitation(engine *xorm.Engine, invitation *types.Invitation) error {
+	rows, err := engine.Table("invitation").Insert(invitation)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if rows == 0 {
+		fmt.Println("插入失败")
+		return errors.New("insert null")
+	}
+	fmt.Println("插入成功")
+	return nil
+}
+
 func InsertUserBindInfo(engine *xorm.Engine, UserBindInfo *types.InsertUserBindInfo) error {
 	rows, err := engine.Table("userBindInfos").Insert(UserBindInfo)
 	if err != nil {

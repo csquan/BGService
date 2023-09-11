@@ -22,6 +22,19 @@ func QuerySecret(engine *xorm.Engine, uid string) (error, *types.Users) {
 	return nil, nil
 }
 
+func QueryInvite(engine *xorm.Engine, uid string) (error, *types.Invitation) {
+	var invitation types.Invitation
+	has, err := engine.Where("`f_sonUid`=?", uid).Get(&invitation)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	if has {
+		return nil, &invitation // 返回指向 user 的指针
+	}
+	return nil, nil
+}
+
 func QueryEmail(engine *xorm.Engine, email string) (error, *types.Users) {
 	var user types.Users
 	has, err := engine.Where("`f_mailBox`=?", email).Get(&user)
