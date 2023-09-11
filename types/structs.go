@@ -259,35 +259,32 @@ type PlatformExperienceRevenue struct {
 
 // 策略表
 type Strategy struct {
-	StrategyID                    string `xorm:"f_strategyID"`
-	IsValid                       bool   `xorm:"f_isValid"`
-	RecommendRate                 string `xorm:"f_recommendRate"`
-	ParticipateNum                string `xorm:"f_participateNum"`
-	TotalYield                    string `xorm:"f_totalYield"`
-	TotalRevenue                  string `xorm:"f_totalRevenue"`
-	ShareBonusDrop                string `xorm:"f_shareBonusDrop"`
-	ManagementFeesDrop            string `xorm:"f_managementFeesDrop"`
-	PrincipalGuaranteeDepositDrop string `xorm:"f_principalGuaranteeDepositDrop"`
-	StrategyName                  string `xorm:"f_strategyName"`
-	Describe                      string `xorm:"f_describe"`
-	Source                        string `xorm:"f_source"`
-	Type                          string `xorm:"f_type"`
-	CreateTime                    string `xorm:"f_createTime"`
-	ExpectedBefenit               string `xorm:"f_expectedBefenit"`
-	MaxDrawDown                   string `xorm:"f_maxDrawDown"`
-	Cap                           string `xorm:"f_cap"`
-	LeverageRatio                 string `xorm:"f_leverageRatio"`
-	ControlLine                   string `xorm:"f_controlLine"`
-	WinChance                     string `xorm:"f_winChance"`
-	SharpRatio                    string `xorm:"f_sharpRatio"`
-	TradableAssets                string `xorm:"f_tradableAssets"`
-	ShareRatio                    string `xorm:"f_shareRatio"`
-	DividePeriod                  string `xorm:"f_dividePeriod"`
-	AgreementPeriod               string `xorm:"f_agreementPeriod"`
-	HostPlatform                  string `xorm:"f_hostPlatform"`
-	MinInvest                     string `xorm:"f_minInvest"`
-	CoinName                      string `xorm:"f_coinName"`
-	UpdateTime                    string `xorm:"f_updateTime"`
+	StrategyID      string `xorm:"f_strategyID"`
+	IsValid         bool   `xorm:"f_isValid"`
+	RecommendRate   string `xorm:"f_recommendRate"`
+	ParticipateNum  string `xorm:"f_participateNum"`
+	TotalYield      string `xorm:"f_totalYield"`
+	TotalRevenue    string `xorm:"f_totalRevenue"`
+	StrategyName    string `xorm:"f_strategyName"`
+	Describe        string `xorm:"f_describe"`
+	Source          string `xorm:"f_source"`
+	Type            string `xorm:"f_type"`
+	CreateTime      string `xorm:"f_createTime"`
+	ExpectedBefenit string `xorm:"f_expectedBefenit"`
+	MaxDrawDown     string `xorm:"f_maxDrawDown"`
+	Cap             string `xorm:"f_cap"`
+	LeverageRatio   string `xorm:"f_leverageRatio"`
+	ControlLine     string `xorm:"f_controlLine"`
+	WinChance       string `xorm:"f_winChance"`
+	SharpRatio      string `xorm:"f_sharpRatio"`
+	TradableAssets  string `xorm:"f_tradableAssets"`
+	ShareRatio      string `xorm:"f_shareRatio"`
+	DividePeriod    string `xorm:"f_dividePeriod"`
+	AgreementPeriod string `xorm:"f_agreementPeriod"`
+	HostPlatform    string `xorm:"f_hostPlatform"`
+	MinInvest       string `xorm:"f_minInvest"`
+	CoinName        string `xorm:"f_coinName"`
+	UpdateTime      string `xorm:"f_updateTime"`
 }
 
 // 交易记录表

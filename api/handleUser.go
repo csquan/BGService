@@ -404,7 +404,7 @@ func (a *ApiService) userRevenueRanking(c *gin.Context) {
 		UserRevenueList = append(UserRevenueList, UserRevenue)
 	}
 	sort.Slice(UserRevenueList, func(i, j int) bool {
-		return getRevenue(UserRevenueList[i], "revenue") < getRevenue(UserRevenueList[j], "revenue")
+		return getRevenue(UserRevenueList[i], "revenue") > getRevenue(UserRevenueList[j], "revenue")
 	})
 	for key, value := range UserRevenueList {
 		value["placed"] = key + 1
@@ -455,7 +455,7 @@ func (a *ApiService) userRevenueRanking(c *gin.Context) {
 		}
 	}
 	sort.Slice(RevenueRatioRanking, func(i, j int) bool {
-		return getRevenue(RevenueRatioRanking[i], "revenueRatio") < getRevenue(RevenueRatioRanking[j], "revenueRatio")
+		return getRevenue(RevenueRatioRanking[i], "revenueRatio") > getRevenue(RevenueRatioRanking[j], "revenueRatio")
 	})
 	for key, value := range RevenueRatioRanking {
 		value["placed"] = key + 1

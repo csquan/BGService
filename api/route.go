@@ -145,6 +145,7 @@ func (a *ApiService) Run() {
 		v8.GET("/transactionRecords", a.transactionRecords)
 		v8.GET("/invest", authMiddleware(), a.invest)
 		v8.GET("/executeStrategy", authMiddleware(), a.executeStrategy)
+		v8.GET("/ranking", authMiddleware(), a.productRanking)
 	}
 
 	logrus.Info("BGService un at " + a.config.Server.Port)
