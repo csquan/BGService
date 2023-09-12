@@ -533,26 +533,12 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 		startTime = time.Now().AddDate(100, 0, 0)
 	}
 
-	//_, err := db.GetStrategyBenefits1(a.dbEngine)
-	//if err != nil {
-	//	res := util.ResponseMsg(-1, "fail", err)
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
-
 	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime.Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//取出N天按照时间倒序排序的收益
-	//earnings, err := db.GetStrategyBenefits1(a.dbEngine, sid, uid, startTime, time.Now())
-	//if err != nil {
-	//	res := util.ResponseMsg(-1, "fail", err)
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
 	//取出用户策略的实际投资额
 	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uid, sid)
 	if err != nil {
@@ -561,7 +547,7 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 		return
 	}
 
-	sumRatio, err := decimal.NewFromString("")
+	sumRatio, err := decimal.NewFromString("0")
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -572,12 +558,14 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 	for _, earning := range earnings {
 		darDec, err := decimal.NewFromString(earning.DayBenefit)
 		if err != nil {
-
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
 		}
 		userBenefit30Days.BenefitSum = decimal.Sum(userBenefit30Days.BenefitSum, darDec)
 		ratioDec, err := decimal.NewFromString(earning.DayRatio)
 		if err != nil {
-
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
 		}
 		sumRatio = decimal.Sum(sumRatio, ratioDec)
 		if ratioDec.IsPositive() { //收益率为正 胜利次数++
