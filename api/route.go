@@ -129,6 +129,8 @@ func (a *ApiService) Run() {
 	{
 		//得到用户的策略列表
 		v7.GET("/getTradeList", a.getTradeList)
+		//得到用户的产品详情
+		v7.GET("/getTradeDetail", a.getTradeDetail)
 		//得到特定策略的信息
 		v7.GET("/getStragetyDetail", a.getStragetyDetail)
 

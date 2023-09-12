@@ -456,7 +456,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		Uid:          uidFormatted,
 		StrategyID:   payload.ProductId,
 		JoinTime:     time.Now(), //.Format("2006-01-02"),
-		ActualInvest: actualInvest,
+		ActualInvest: actualInvest.String(),
 	}
 	err = db.InsertUserStrategy(a.dbEngine, &UserStrategy)
 	if err != nil {

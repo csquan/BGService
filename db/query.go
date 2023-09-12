@@ -349,7 +349,7 @@ func GetStrategyByName(engine *xorm.Engine, sName string) (*types.Strategy, erro
 
 func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
 	var userStrategy types.UserStrategy
-	has, err := engine.Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
+	has, err := engine.Table("userStrategy").Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
 	if err != nil {
 		return nil, err
 	}
@@ -360,6 +360,15 @@ func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types
 }
 
 func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, error) {
+	var userStrategys []*types.UserStrategy
+	err := engine.Table("userStrategy").Where("f_uid=?", uid).Find(&userStrategys)
+	if err != nil {
+		return nil, err
+	}
+	return userStrategys, nil
+}
+
+func GetUserStrategy(engine *xorm.Engine, uid string) ([]*types.UserStrategy, error) {
 	var userStrategys []*types.UserStrategy
 	err := engine.Table("userStrategy").Where("f_uid=?", uid).Find(&userStrategys)
 	if err != nil {

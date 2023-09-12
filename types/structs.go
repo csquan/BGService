@@ -26,11 +26,11 @@ type Users struct {
 }
 
 type UserStrategy struct {
-	Uid          string          `xorm:"f_uid"`
-	StrategyID   string          `xorm:"f_strategyID"`
-	JoinTime     time.Time       `xorm:"f_joinTime"`
-	ActualInvest decimal.Decimal `xorm:"f_actualInvest"`
-	IsValid      bool            `xorm:"f_isValid"`
+	Uid          string    `xorm:"f_uid"`
+	StrategyID   string    `xorm:"f_strategyID"`
+	JoinTime     time.Time `xorm:"f_joinTime"`
+	ActualInvest string    `xorm:"f_actualInvest"`
+	IsValid      bool      `xorm:"f_isValid"`
 }
 
 // 用户得策略量化收益表
@@ -330,6 +330,7 @@ type TradeDetails struct {
 	ShareRatio         string            `json:"shareRatio"`
 	DividePeriod       string            `json:"dividePeriod"`
 	AgreementPeriod    string            `json:"agreementPeriod"`
+	ProductID          string            `json:"productID"`
 }
 
 type StrategyStats struct {

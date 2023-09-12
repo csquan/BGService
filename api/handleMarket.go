@@ -331,7 +331,7 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdt" || asset.Asset == "USDT" {
 					accountTotalAssets["usdt"] = asset.MarginBalance
-					initAssets["usdt"] = userStrategy.ActualInvest.String()
+					initAssets["usdt"] = userStrategy.ActualInvest
 					todayBenefits["usdt"] = dayBefinit.String()
 				}
 			}
@@ -340,7 +340,7 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdc" || asset.Asset == "USDC" {
 					accountTotalAssets["usdc"] = asset.MarginBalance
-					initAssets["usdc"] = userStrategy.ActualInvest.String()
+					initAssets["usdc"] = userStrategy.ActualInvest
 					todayBenefits["usdc"] = dayBefinit.String()
 				}
 			}
@@ -349,11 +349,12 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "busd" || asset.Asset == "BUSD" {
 					accountTotalAssets["busd"] = asset.MarginBalance
-					initAssets["busd"] = userStrategy.ActualInvest.String()
+					initAssets["busd"] = userStrategy.ActualInvest
 					todayBenefits["busd"] = dayBefinit.String()
 				}
 			}
 		}
+		tradeDetails.ProductID = userStrategy.StrategyID
 		tradeDetails.AccountTotalAssets = accountTotalAssets
 		tradeDetails.InitAssets = initAssets
 		tradeDetails.CurBenefit = todayBenefits
@@ -369,6 +370,106 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	}
 
 	res := util.ResponseMsg(0, "getTradeList success", tradeList)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到特定产品的详情
+func (a *ApiService) getTradeDetail(c *gin.Context) {
+	accountTotalAssets := make(map[string]string)
+	initAssets := make(map[string]string)
+	todayBenefits := make(map[string]string)
+
+	var tradeDetails types.TradeDetails
+	//首先得到我的策略
+	uid := c.Query("uid")
+	productID := c.Query("productID")
+	//一期先不处理status
+	//首先得到我的仓位
+	userData, err := util.GetBinanceUMUserData()
+
+	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//查询用户策略表得到用户对应得所有策略
+	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uid, productID)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//一个稳定币只可能存在一个策略
+	//查询量化收益表
+	latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	cexTotalProfit, err := decimal.NewFromString(userData.TotalUnrealizedProfit)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	dec, err := decimal.NewFromString(latestEarning.TotalBenefit)
+
+	dayBefinit := cexTotalProfit.Sub(dec)
+
+	//查询策略表
+	strategyInfo, err := db.GetStrategy(a.dbEngine, userStrategy.StrategyID)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
+		for _, asset := range userData.Assets {
+			if asset.Asset == "usdt" || asset.Asset == "USDT" {
+				accountTotalAssets["usdt"] = asset.MarginBalance
+				initAssets["usdt"] = userStrategy.ActualInvest
+				todayBenefits["usdt"] = dayBefinit.String()
+			}
+		}
+	}
+	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
+		for _, asset := range userData.Assets {
+			if asset.Asset == "usdc" || asset.Asset == "USDC" {
+				accountTotalAssets["usdc"] = asset.MarginBalance
+				initAssets["usdc"] = userStrategy.ActualInvest
+				todayBenefits["usdc"] = dayBefinit.String()
+			}
+		}
+	}
+	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
+		for _, asset := range userData.Assets {
+			if asset.Asset == "busd" || asset.Asset == "BUSD" {
+				accountTotalAssets["busd"] = asset.MarginBalance
+				initAssets["busd"] = userStrategy.ActualInvest
+				todayBenefits["busd"] = dayBefinit.String()
+			}
+		}
+	}
+	tradeDetails.ProductID = userStrategy.StrategyID
+	tradeDetails.AccountTotalAssets = accountTotalAssets
+	tradeDetails.InitAssets = initAssets
+	tradeDetails.CurBenefit = todayBenefits
+	tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
+
+	tradeDetails.Source = strategyInfo.Source
+	tradeDetails.Type = strategyInfo.Type
+	tradeDetails.ShareRatio = strategyInfo.ShareRatio
+	tradeDetails.DividePeriod = strategyInfo.DividePeriod
+	tradeDetails.AgreementPeriod = strategyInfo.AgreementPeriod
+
+	res := util.ResponseMsg(0, "getTradeList success", tradeDetails)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -463,9 +564,13 @@ func (a *ApiService) getUser30Beneift(c *gin.Context) {
 	if err != nil {
 
 	}
+	capitalDec, err := decimal.NewFromString(capital)
+	if err != nil {
+
+	}
 
 	//净值
-	maxNetValue := decimal.Sum(capital, maxDec)
+	maxNetValue := decimal.Sum(capitalDec, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
 
 	userBenefit30Days.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
