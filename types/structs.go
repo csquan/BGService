@@ -349,14 +349,16 @@ type StrategyStats struct {
 }
 
 type UserBenefits struct {
-	Date    string
-	Benefit string
+	Date    string `json:"date"`
+	Benefit string `json:"benefit"`
+	Ratio   string `json:"ratio"`
 }
 type UserBenefitNDays struct {
 	BenefitSum   decimal.Decimal `json:"benefitSum"`
 	BenefitRatio string          `json:"benefitRatio"`
 	WinRatio     string          `json:"winRatio"`
 	Huiche       string          `json:"huiche"`
+	Benefitlist  []UserBenefits  `json:"benefitlist"`
 }
 
 type Balance_Erc20 struct {

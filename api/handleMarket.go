@@ -514,7 +514,11 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 }
 
 func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
-	var userBenefit30Days types.UserBenefitNDays
+	var userBenefitNDays types.UserBenefitNDays
+
+	var userBenefit types.UserBenefits
+	var userBenefits []types.UserBenefits
+
 	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
 	uid := c.Query("uid")
@@ -561,7 +565,7 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 		}
-		userBenefit30Days.BenefitSum = decimal.Sum(userBenefit30Days.BenefitSum, darDec)
+		userBenefitNDays.BenefitSum = decimal.Sum(userBenefitNDays.BenefitSum, darDec)
 		ratioDec, err := decimal.NewFromString(earning.DayRatio)
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
@@ -571,17 +575,22 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 		if ratioDec.IsPositive() { //收益率为正 胜利次数++
 			win = win + 1
 		}
+		userBenefit.Date = earning.CreateTime.String()
+		userBenefit.Benefit = earning.DayBenefit
+		userBenefit.Ratio = earning.DayRatio
 	}
 
+	userBenefits = append(userBenefits, userBenefit)
+
 	days := decimal.New(int64(len(earnings)), 32)
-	userBenefit30Days.BenefitRatio = sumRatio.Div(days).String()
+	userBenefitNDays.BenefitRatio = sumRatio.Div(days).String()
 
 	//计算胜率
 	length := len(earnings)
 	dec1 := decimal.NewFromInt32(int32(win))
 	dec2 := decimal.NewFromInt32(int32(length))
 
-	userBenefit30Days.WinRatio = dec1.Div(dec2).String() //30日胜率
+	userBenefitNDays.WinRatio = dec1.Div(dec2).String() //30日胜率
 
 	//开始计算回撤率
 	capital := userStrategy.ActualInvest //实际投资额
@@ -606,9 +615,10 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 	maxNetValue := decimal.Sum(capitalDec, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
 
-	userBenefit30Days.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
+	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
+	userBenefitNDays.Benefitlist = userBenefits
 
-	res := util.ResponseMsg(0, "getUserDaysBenefit success", userBenefit30Days)
+	res := util.ResponseMsg(0, "getUserDaysBenefit success", userBenefitNDays)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
