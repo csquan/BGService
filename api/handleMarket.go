@@ -271,11 +271,16 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	initAssets := make(map[string]string)
 	todayBenefits := make(map[string]string)
 
+	//latestEarning1, _ := db.GetUserStrategyLatestEarnings(a.dbEngine, "123", "1")
+	//
+	//latestEarning1.Uid = "1234"
+
 	var tradeDetails types.TradeDetails
 	var tradeList []types.TradeDetails
 	//首先得到我的策略
 	uid := c.Query("uid")
-
+	//status := c.Query("status")
+	//一期先不处理status
 	//首先得到我的仓位
 	userData, err := util.GetBinanceUMUserData()
 
@@ -310,8 +315,9 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
+		dec, err := decimal.NewFromString(latestEarning.TotalBenefit)
 
-		dayBefinit := cexTotalProfit.Sub(latestEarning.TotalBenefit)
+		dayBefinit := cexTotalProfit.Sub(dec)
 
 		//查询策略表
 		strategyInfo, err := db.GetStrategy(a.dbEngine, userStrategy.StrategyID)
@@ -418,10 +424,17 @@ func (a *ApiService) getUser30Beneift(c *gin.Context) {
 
 	win := 0
 	for _, earning := range earnings {
-		userBenefit30Days.BenefitSum = decimal.Sum(userBenefit30Days.BenefitSum, earning.DayBenefit)
-		sumRatio = decimal.Sum(sumRatio, earning.DayRatio)
+		darDec, err := decimal.NewFromString(earning.DayBenefit)
+		if err != nil {
 
-		if earning.DayRatio.IsPositive() { //收益率为正 胜利次数++
+		}
+		userBenefit30Days.BenefitSum = decimal.Sum(userBenefit30Days.BenefitSum, darDec)
+		ratioDec, err := decimal.NewFromString(earning.DayRatio)
+		if err != nil {
+
+		}
+		sumRatio = decimal.Sum(sumRatio, ratioDec)
+		if ratioDec.IsPositive() { //收益率为正 胜利次数++
 			win = win + 1
 		}
 	}
@@ -442,10 +455,20 @@ func (a *ApiService) getUser30Beneift(c *gin.Context) {
 	maxEarning := earnings[0].DayBenefit        //30日最大收益
 	minEarning := earnings[length-1].DayBenefit //30日最小收益
 
+	maxDec, err := decimal.NewFromString(maxEarning)
+	if err != nil {
+
+	}
+	minDec, err := decimal.NewFromString(minEarning)
+	if err != nil {
+
+	}
+
 	//净值
-	maxNetValue := decimal.Sum(capital, maxEarning)
+	maxNetValue := decimal.Sum(capital, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
-	userBenefit30Days.Huiche = maxEarning.Sub(minEarning).Div(maxNetValue).String() //30日最大回撤率
+
+	userBenefit30Days.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
 
 	res := util.ResponseMsg(0, "getUser30Beneift success", userBenefit30Days)
 	c.SecureJSON(http.StatusOK, res)

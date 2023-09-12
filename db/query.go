@@ -423,7 +423,7 @@ func GetAllStrategy(engine *xorm.Engine) ([]*types.Strategy, error) {
 
 func GetUserStrategyLatestEarnings(engine *xorm.Engine, uid string, sid string) (*types.UserStrategyEarnings, error) {
 	var userStrategyEarnings types.UserStrategyEarnings
-	has, err := engine.Table("`userStrategyEarnings`").Where("f_uid=? and `f_strategyID`=?", uid, sid).OrderBy("`f_createTime` desc").Get(&userStrategyEarnings)
+	has, err := engine.Table("`userStrategyEarnings`").Where("f_uid=? and `f_strategyID`=?", uid, sid).Desc("f_id").Limit(1).Get(&userStrategyEarnings)
 	if err != nil {
 		return nil, err
 	}

@@ -35,13 +35,14 @@ type UserStrategy struct {
 
 // 用户得策略量化收益表
 type UserStrategyEarnings struct {
-	Uid          string          `xorm:"f_uid"`
-	StrategyID   string          `xorm:"f_strategyID"`
-	DayBenefit   decimal.Decimal `xorm:"f_dayBenefit"`
-	DayRatio     decimal.Decimal `xorm:"f_dayRatio"`
-	TotalBenefit decimal.Decimal `xorm:"f_totalBenefit"`
-	CreateTime   time.Time       `xorm:"f_createTime"`
-	UpdateTime   time.Time       `xorm:"f_updateTime"`
+	Id           string    `xorm:"f_id"`
+	Uid          string    `xorm:"f_uid"`
+	StrategyID   string    `xorm:"f_strategyID"`
+	DayBenefit   string    `xorm:"f_dayBenefit"`
+	DayRatio     string    `xorm:"f_dayRatio"`
+	TotalBenefit string    `xorm:"f_totalBenefit"`
+	CreateTime   time.Time `xorm:"f_createTime"`
+	UpdateTime   time.Time `xorm:"f_updateTime"`
 }
 
 // 用户资产表
@@ -319,16 +320,16 @@ type TransactionTask struct {
 }
 
 type TradeDetails struct {
-	AccountTotalAssets map[string]string
-	InitAssets         map[string]string
-	CurBenefit         map[string]string
-	WithdrawalSum      map[string]string
-	InDays             string
-	Source             string
-	Type               string
-	ShareRatio         string
-	DividePeriod       string
-	AgreementPeriod    string
+	AccountTotalAssets map[string]string `json:"accountTotalAssets"`
+	InitAssets         map[string]string `json:"initAssets"`
+	CurBenefit         map[string]string `json:"curBenefit"`
+	WithdrawalSum      map[string]string `json:"withdrawalSum"`
+	InDays             string            `json:"inDays"`
+	Source             string            `json:"source"`
+	Type               string            `json:"type"`
+	ShareRatio         string            `json:"shareRatio"`
+	DividePeriod       string            `json:"dividePeriod"`
+	AgreementPeriod    string            `json:"agreementPeriod"`
 }
 
 type StrategyStats struct {
