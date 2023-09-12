@@ -138,9 +138,7 @@ func (a *ApiService) Run() {
 
 		v7.GET("/getUserDaysBenefit", a.getUserDaysBenefit)
 
-		v7.GET("/getUserDaysBenefitRatio", a.getUserDaysBenefitRatio)
-
-		v7.GET("/getUserBeneiftInfo", a.getUserBeneiftInfo) //画图用
+		v7.GET("/getUserBeneiftInfo", a.getUserBeneiftInfo)
 
 		v7.POST("/haveFundIn", a.haveFundIn)
 		v7.POST("/fundOut", a.fundOut)

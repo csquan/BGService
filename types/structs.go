@@ -303,6 +303,14 @@ type TransactionRecords struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+// 交易记录
+type TransactionRecord struct {
+	ID       int    `json:"id"`
+	Action   string `json:"action"`
+	Behavior string `json:"behavior"`
+	Time     string `json:"time"`
+}
+
 // 发送交易上链接任务表--目前只考虑trx
 type TransactionTask struct {
 	ID          uint64    `xorm:"f_id"`
@@ -331,6 +339,7 @@ type TradeDetails struct {
 	DividePeriod       string            `json:"dividePeriod"`
 	AgreementPeriod    string            `json:"agreementPeriod"`
 	ProductID          string            `json:"productID"`
+	Name               string            `json:"name"`
 }
 
 type StrategyStats struct {
