@@ -217,60 +217,6 @@ func (a *ApiService) register(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	////这个下面得用事务 1.插入用户表 2.插入链上地址表
-	//session := a.dbEngine.NewSession()
-	//err = session.Begin()
-	//if err != nil {
-	//	return
-	//}
-	//if _, err := session.Insert(newUser); err != nil {
-	//	res := util.ResponseMsg(-1, "fail", err)
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
-	//
-	////todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
-	//addr, privateKey, name, err := services.CreateAccount()
-	//if err != nil {
-	//	res := util.ResponseMsg(-1, "fail", err)
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
-	////todo：后期密文存储 移动到单独私钥服务器
-	//userKey := types.UserKey{
-	//	Addr:       addr,
-	//	Name:       name,
-	//	PrivateKey: privateKey,
-	//}
-	//_, err = session.Table("userKey").Insert(userKey)
-	//if err != nil {
-	//	err := session.Rollback()
-	//	if err != nil {
-	//		return
-	//	}
-	//	logrus.Fatal(err)
-	//}
-	//
-	//userAddr := types.UserAddr{
-	//	Uid:     uid,
-	//	Network: "TRX",
-	//	Addr:    addr,
-	//}
-	//
-	//_, err = session.Table("userAddr").Insert(userAddr)
-	//if err != nil {
-	//	err := session.Rollback()
-	//	if err != nil {
-	//		return
-	//	}
-	//	logrus.Fatal(err)
-	//}
-	//
-	//err = session.Commit()
-	//if err != nil {
-	//	logrus.Fatal(err)
-	//}
-
 	body := make(map[string]interface{})
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
@@ -363,22 +309,20 @@ func (a *ApiService) forgotPassword(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	body := map[string]int{
-		"status": 1,
-	}
+	body := make(map[string]interface{})
 	// 是否谷歌验证
 	if user.IsBindGoogle {
-		res := util.ResponseMsg(1, "fail", body)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		body["status"] = 1
+	} else {
+		body["status"] = 0
+		// 修改密码
+		user.Password = payload.Password
+		err = db.UpdateUser(a.dbEngine, user.Uid, user)
+		if err != nil {
+			return
+		}
 	}
-	// 修改密码
-	user.Password = payload.Password
-	err = db.UpdateUser(a.dbEngine, user.Uid, user)
-	if err != nil {
-		return
-	}
-	body["status"] = 0
+	body["uid"] = user.Uid
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
