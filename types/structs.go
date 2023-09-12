@@ -343,11 +343,11 @@ type UserBenefits struct {
 	Date    string
 	Benefit string
 }
-type UserBenefit30Days struct {
-	BenefitSum   decimal.Decimal
-	BenefitRatio string
-	WinRatio     string
-	Huiche       string
+type UserBenefitNDays struct {
+	BenefitSum   decimal.Decimal `json:"benefitSum"`
+	BenefitRatio string          `json:"benefitRatio"`
+	WinRatio     string          `json:"winRatio"`
+	Huiche       string          `json:"huiche"`
 }
 
 type Balance_Erc20 struct {

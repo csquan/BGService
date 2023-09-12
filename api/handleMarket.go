@@ -494,14 +494,27 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) getUser30Beneift(c *gin.Context) {
-	var userBenefit30Days types.UserBenefit30Days
+func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
+	var userBenefit30Days types.UserBenefitNDays
 	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
 	uid := c.Query("uid")
-	startTime := time.Now().AddDate(0, -1, 0)
+	timeType := c.Query("timeType")
 
-	//取出30天按照时间倒序排序的收益
+	startTime := time.Now()
+
+	switch timeType {
+	case "1":
+		startTime = time.Now().AddDate(0, -1, 0)
+	case "3":
+		startTime = time.Now().AddDate(0, -3, 0)
+	case "12":
+		startTime = time.Now().AddDate(1, 0, 0)
+	default:
+		startTime = time.Now().AddDate(100, 0, 0)
+	}
+
+	//取出N天按照时间倒序排序的收益
 	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime.String(), time.Now().String())
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -575,7 +588,105 @@ func (a *ApiService) getUser30Beneift(c *gin.Context) {
 
 	userBenefit30Days.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
 
-	res := util.ResponseMsg(0, "getUser30Beneift success", userBenefit30Days)
+	res := util.ResponseMsg(0, "getUserDaysBenefit success", userBenefit30Days)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) getUserDaysBenefitRatio(c *gin.Context) {
+	var userBenefit30Days types.UserBenefitNDays
+	sid := c.Query("sid")
+	uid := c.Query("uid")
+	timeType := c.Query("timeType")
+
+	startTime := time.Now()
+
+	switch timeType {
+	case "1":
+		startTime = time.Now().AddDate(0, -1, 0)
+	case "3":
+		startTime = time.Now().AddDate(0, -3, 0)
+	case "12":
+		startTime = time.Now().AddDate(1, 0, 0)
+	default:
+		startTime = time.Now().AddDate(100, 0, 0)
+	}
+
+	//取出N天按照时间倒序排序的收益
+	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime.String(), time.Now().String())
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//取出用户策略的实际投资额
+	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uid, sid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	sumRatio, err := decimal.NewFromString("")
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	win := 0
+	for _, earning := range earnings {
+		darDec, err := decimal.NewFromString(earning.DayBenefit)
+		if err != nil {
+
+		}
+		userBenefit30Days.BenefitSum = decimal.Sum(userBenefit30Days.BenefitSum, darDec)
+		ratioDec, err := decimal.NewFromString(earning.DayRatio)
+		if err != nil {
+
+		}
+		sumRatio = decimal.Sum(sumRatio, ratioDec)
+		if ratioDec.IsPositive() { //收益率为正 胜利次数++
+			win = win + 1
+		}
+	}
+
+	days := decimal.New(int64(len(earnings)), 32)
+	userBenefit30Days.BenefitRatio = sumRatio.Div(days).String()
+
+	//计算胜率
+	length := len(earnings)
+	dec1 := decimal.NewFromInt32(int32(win))
+	dec2 := decimal.NewFromInt32(int32(length))
+
+	userBenefit30Days.WinRatio = dec1.Div(dec2).String() //30日胜率
+
+	//开始计算回撤率
+	capital := userStrategy.ActualInvest //实际投资额
+
+	maxEarning := earnings[0].DayBenefit        //30日最大收益
+	minEarning := earnings[length-1].DayBenefit //30日最小收益
+
+	maxDec, err := decimal.NewFromString(maxEarning)
+	if err != nil {
+
+	}
+	minDec, err := decimal.NewFromString(minEarning)
+	if err != nil {
+
+	}
+	capitalDec, err := decimal.NewFromString(capital)
+	if err != nil {
+
+	}
+
+	//净值
+	maxNetValue := decimal.Sum(capitalDec, maxDec)
+	//计算回撤率：(最大收益-最小收益)/净值
+
+	userBenefit30Days.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
+
+	res := util.ResponseMsg(0, "getUserDaysBenefit success", userBenefit30Days)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
