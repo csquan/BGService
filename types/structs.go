@@ -151,7 +151,6 @@ type InsertUserBindInfo struct {
 	CreateTime      time.Time `xorm:"f_createTime"`
 	UpdateTime      time.Time `xorm:"f_updateTime"`
 	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
-	Permission      bool      `xorm:"f_permission"`
 	BinanceUid      string    `xorm:"f_binanceUid"`
 	BindIP          string    `xorm:"f_bindIP"`
 }

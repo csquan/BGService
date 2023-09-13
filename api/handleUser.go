@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
@@ -81,6 +82,7 @@ func (a *ApiService) myApi(c *gin.Context) {
 		client := binance.NewClient(apiKey, apiSecret)
 		client.SetApiEndpoint(base_binance_url)
 		var permission *binance.APIKeyPermission
+		err := errors.New("init")
 		for err != nil { //这里有可能一次请求错误，被对方拒绝
 			permission, err = client.NewGetAPIKeyPermission().Do(context.Background())
 			if err != nil {
@@ -139,6 +141,12 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		return
 	}
 
+	keyEncrypt := util.AesEncrypt(types.ApiKey, types.AesKey)
+	secretEncrypt := util.AesEncrypt(types.ApiSecret, types.AesKey)
+
+	fmt.Println("keyEncrypt:", keyEncrypt)
+	fmt.Println("secretEncrypt:", secretEncrypt)
+
 	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, payload.ApiKey)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -161,7 +169,6 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		Alias:           payload.Alias,
 		Account:         payload.Account,
 		SynchronizeTime: nowTime,
-		Permission:      true,
 		BinanceUid:      payload.BinanceUid,
 		BindIP:          payload.BindIP,
 	}
