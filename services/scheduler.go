@@ -23,12 +23,10 @@ func NewServiceScheduler(conf *config.Config, engine *xorm.Engine) (t *ServiceSc
 }
 
 func (t *ServiceScheduler) Start() {
-	userBenefitService := NewUserBenefitService(t.conf, t.engine)
 	UserTxRecordService := NewUserTxRecordService(t.conf, t.engine)
 	UserBonusService := NewUserBonusService(t.conf, t.engine)
 
 	t.services = []types.IAsyncService{
-		userBenefitService,
 		UserTxRecordService,
 		UserBonusService,
 	}

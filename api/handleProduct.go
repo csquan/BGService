@@ -581,3 +581,131 @@ func (a *ApiService) productRanking(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) productChart(c *gin.Context) {
+	var userBenefitNDays types.UserBenefitNDays
+
+	var Benefit types.UserBenefits
+	var Benefits []types.UserBenefits
+	productId := c.Query("id")
+	timeDate := c.Query("date")
+
+	startTime := time.Now()
+
+	switch timeDate {
+	case "1":
+		startTime = time.Now().AddDate(0, -1, 0)
+	case "3":
+		startTime = time.Now().AddDate(0, -3, 0)
+	case "12":
+		startTime = time.Now().AddDate(1, 0, 0)
+	default:
+		startTime = time.Now().AddDate(100, 0, 0)
+	}
+	earnings, err := db.GetAllStrategyBenefits(a.dbEngine, productId, startTime.Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//取出产品的实际投资额
+	Strategy, err := db.GetExactlyStrategy(a.dbEngine, productId, startTime.Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	sumRatio, err := decimal.NewFromString("0")
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	win := 0
+	for _, earning := range earnings {
+		darDec, err := decimal.NewFromString(earning.DayBenefit)
+		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		userBenefitNDays.BenefitSum = decimal.Sum(userBenefitNDays.BenefitSum, darDec)
+		ratioDec, err := decimal.NewFromString(earning.DayRatio)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		sumRatio = decimal.Sum(sumRatio, ratioDec)
+		if ratioDec.IsPositive() { //收益率为正 胜利次数++
+			win = win + 1
+		}
+		Benefit.Date = earning.CreateTime.String()
+		Benefit.Benefit = earning.DayBenefit
+		Benefit.Ratio = earning.DayRatio
+	}
+
+	Benefits = append(Benefits, Benefit)
+
+	days := decimal.New(int64(len(earnings)), 32)
+	userBenefitNDays.BenefitRatio = sumRatio.Div(days).String()
+
+	//计算胜率
+	length := len(earnings)
+	dec1 := decimal.NewFromInt32(int32(win))
+	dec2 := decimal.NewFromInt32(int32(length))
+
+	userBenefitNDays.WinRatio = dec1.Div(dec2).String() //30日胜率
+
+	//开始计算回撤率
+	capital := Strategy.ActualInvest //实际投资额
+
+	maxEarning := earnings[0].DayBenefit        //30日最大收益
+	minEarning := earnings[length-1].DayBenefit //30日最小收益
+
+	maxDec, err := decimal.NewFromString(maxEarning)
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	minDec, err := decimal.NewFromString(minEarning)
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	capitalDec, err := decimal.NewFromString(capital)
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	//净值
+	maxNetValue := decimal.Sum(capitalDec, maxDec)
+	//计算回撤率：(最大收益-最小收益)/净值
+
+	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
+	userBenefitNDays.Benefitlist = Benefits
+
+	res := util.ResponseMsg(0, "success", userBenefitNDays)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}

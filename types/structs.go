@@ -44,7 +44,7 @@ type UserStrategy struct {
 type UserStrategyEarnings struct {
 	Id           string    `xorm:"f_id"`
 	Uid          string    `xorm:"f_uid"`
-	StrategyID   string    `xorm:"f_strategyID"`
+	StrategyID   string    `xorm:"f_stragetyID"`
 	DayBenefit   string    `xorm:"f_dayBenefit"`
 	DayRatio     string    `xorm:"f_dayRatio"`
 	TotalBenefit string    `xorm:"f_totalBenefit"`
@@ -356,16 +356,16 @@ type StrategyStats struct {
 }
 
 type UserBenefits struct {
-	Date    string `json:"date"`
-	Benefit string `json:"benefit"`
-	Ratio   string `json:"ratio"`
+	Date    string `json:"time"`
+	Benefit string `json:"price"`
+	Ratio   string `json:"yield"`
 }
 type UserBenefitNDays struct {
-	BenefitSum   decimal.Decimal `json:"benefitSum"`
-	BenefitRatio string          `json:"benefitRatio"`
-	WinRatio     string          `json:"winRatio"`
-	Huiche       string          `json:"huiche"`
-	Benefitlist  []UserBenefits  `json:"benefitlist"`
+	BenefitSum   decimal.Decimal `json:"statEarnings"`
+	BenefitRatio string          `json:"statYield"`
+	WinRatio     string          `json:"statWinRate"`
+	Huiche       string          `json:"statMaxWithdrawalRate"`
+	Benefitlist  []UserBenefits  `json:"list"`
 }
 
 type Balance_Erc20 struct {
