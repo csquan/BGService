@@ -129,11 +129,16 @@ func (a *ApiService) Run() {
 	{
 		//得到用户的策略列表
 		v7.GET("/getTradeList", a.getTradeList)
+		//得到用户的产品详情
+		v7.GET("/getTradeDetail", a.getTradeDetail)
 		//得到特定策略的信息
-		v7.GET("/getTradeAccountDetail", a.getStragetyDetail)
+		v7.GET("/getStragetyDetail", a.getStragetyDetail)
+
 		v7.GET("/getTradeHistory", a.getTradeHistory)
 
-		v7.GET("/getUserBeneift", a.getUserBeneift) //画图用
+		v7.GET("/getUserDaysBenefit", a.getUserDaysBenefit)
+
+		v7.GET("/getUserBeneiftInfo", a.getUserBeneiftInfo)
 
 		v7.POST("/haveFundIn", a.haveFundIn)
 		v7.POST("/fundOut", a.fundOut)

@@ -35,9 +35,11 @@ type UserStrategy struct {
 
 // 用户得策略量化收益表
 type UserStrategyEarnings struct {
+	Id           string    `xorm:"f_id"`
 	Uid          string    `xorm:"f_uid"`
 	StrategyID   string    `xorm:"f_strategyID"`
 	DayBenefit   string    `xorm:"f_dayBenefit"`
+	DayRatio     string    `xorm:"f_dayRatio"`
 	TotalBenefit string    `xorm:"f_totalBenefit"`
 	CreateTime   time.Time `xorm:"f_createTime"`
 	UpdateTime   time.Time `xorm:"f_updateTime"`
@@ -260,32 +262,32 @@ type PlatformExperienceRevenue struct {
 
 // 策略表
 type Strategy struct {
-	StrategyID      string `xorm:"f_strategyID"`
-	IsValid         bool   `xorm:"f_isValid"`
-	RecommendRate   string `xorm:"f_recommendRate"`
-	ParticipateNum  string `xorm:"f_participateNum"`
-	TotalYield      string `xorm:"f_totalYield"`
-	TotalRevenue    string `xorm:"f_totalRevenue"`
-	StrategyName    string `xorm:"f_strategyName"`
-	Describe        string `xorm:"f_describe"`
-	Source          string `xorm:"f_source"`
-	Type            string `xorm:"f_type"`
-	CreateTime      string `xorm:"f_createTime"`
-	ExpectedBefenit string `xorm:"f_expectedBefenit"`
-	MaxDrawDown     string `xorm:"f_maxDrawDown"`
-	Cap             string `xorm:"f_cap"`
-	LeverageRatio   string `xorm:"f_leverageRatio"`
-	ControlLine     string `xorm:"f_controlLine"`
-	WinChance       string `xorm:"f_winChance"`
-	SharpRatio      string `xorm:"f_sharpRatio"`
-	TradableAssets  string `xorm:"f_tradableAssets"`
-	ShareRatio      string `xorm:"f_shareRatio"`
-	DividePeriod    string `xorm:"f_dividePeriod"`
-	AgreementPeriod string `xorm:"f_agreementPeriod"`
-	HostPlatform    string `xorm:"f_hostPlatform"`
-	MinInvest       string `xorm:"f_minInvest"`
-	CoinName        string `xorm:"f_coinName"`
-	UpdateTime      string `xorm:"f_updateTime"`
+	StrategyID      string    `xorm:"f_strategyID"`
+	IsValid         bool      `xorm:"f_isValid"`
+	RecommendRate   string    `xorm:"f_recommendRate"`
+	ParticipateNum  string    `xorm:"f_participateNum"`
+	TotalYield      string    `xorm:"f_totalYield"`
+	TotalRevenue    string    `xorm:"f_totalRevenue"`
+	StrategyName    string    `xorm:"f_strategyName"`
+	Describe        string    `xorm:"f_describe"`
+	Source          string    `xorm:"f_source"`
+	Type            string    `xorm:"f_type"`
+	CreateTime      time.Time `xorm:"f_createTime"`
+	ExpectedBefenit string    `xorm:"f_expectedBefenit"`
+	MaxDrawDown     string    `xorm:"f_maxDrawDown"`
+	Cap             string    `xorm:"f_cap"`
+	LeverageRatio   string    `xorm:"f_leverageRatio"`
+	ControlLine     string    `xorm:"f_controlLine"`
+	WinChance       string    `xorm:"f_winChance"`
+	SharpRatio      string    `xorm:"f_sharpRatio"`
+	TradableAssets  string    `xorm:"f_tradableAssets"`
+	ShareRatio      string    `xorm:"f_shareRatio"`
+	DividePeriod    string    `xorm:"f_dividePeriod"`
+	AgreementPeriod string    `xorm:"f_agreementPeriod"`
+	HostPlatform    string    `xorm:"f_hostPlatform"`
+	MinInvest       string    `xorm:"f_minInvest"`
+	CoinName        string    `xorm:"f_coinName"`
+	UpdateTime      string    `xorm:"f_updateTime"`
 }
 
 // 交易记录表
@@ -299,6 +301,14 @@ type TransactionRecords struct {
 	Time       string    `xorm:"f_time"`
 	CreateTime time.Time `xorm:"f_createTime"`
 	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
+// 交易记录
+type TransactionRecord struct {
+	ID       int    `json:"id"`
+	Action   string `json:"action"`
+	Behavior string `json:"behavior"`
+	Time     string `json:"time"`
 }
 
 // 发送交易上链接任务表--目前只考虑trx
@@ -318,21 +328,37 @@ type TransactionTask struct {
 }
 
 type TradeDetails struct {
-	AccountTotalAssets map[string]string
-	InitAssets         map[string]string
-	CurBenefit         map[string]string
-	WithdrawalSum      map[string]string
-	InDays             string
-	Source             string
-	Type               string
-	ShareRatio         string
-	DividePeriod       string
-	AgreementPeriod    string
+	AccountTotalAssets map[string]string `json:"accountTotalAssets"`
+	InitAssets         map[string]string `json:"initAssets"`
+	CurBenefit         map[string]string `json:"curBenefit"`
+	WithdrawalSum      map[string]string `json:"withdrawalSum"`
+	InDays             string            `json:"inDays"`
+	Source             string            `json:"source"`
+	Type               string            `json:"type"`
+	ShareRatio         string            `json:"shareRatio"`
+	DividePeriod       string            `json:"dividePeriod"`
+	AgreementPeriod    string            `json:"agreementPeriod"`
+	ProductID          string            `json:"productID"`
+	Name               string            `json:"name"`
+}
+
+type StrategyStats struct {
+	TotalBenefit string
+	TotalRatio   string
+	RunTime      string
 }
 
 type UserBenefits struct {
-	Date    string
-	Benefit string
+	Date    string `json:"date"`
+	Benefit string `json:"benefit"`
+	Ratio   string `json:"ratio"`
+}
+type UserBenefitNDays struct {
+	BenefitSum   decimal.Decimal `json:"benefitSum"`
+	BenefitRatio string          `json:"benefitRatio"`
+	WinRatio     string          `json:"winRatio"`
+	Huiche       string          `json:"huiche"`
+	Benefitlist  []UserBenefits  `json:"benefitlist"`
 }
 
 type Balance_Erc20 struct {

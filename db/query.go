@@ -334,9 +334,22 @@ func GetStrategy(engine *xorm.Engine, sid string) (*types.Strategy, error) {
 	return nil, nil
 }
 
-func GetUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
+func GetStrategyByName(engine *xorm.Engine, sName string) (*types.Strategy, error) {
+	var strategy types.Strategy
+	has, err := engine.Table("strategy").Where("`f_strategyName`=?", sName).Get(&strategy)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	if has {
+		return &strategy, nil
+	}
+	return nil, nil
+}
+
+func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types.UserStrategy, error) {
 	var userStrategy types.UserStrategy
-	has, err := engine.Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
+	has, err := engine.Table("userStrategy").Where("f_uid=? and `f_strategyID`=?", uid, sid).Get(&userStrategy)
 	if err != nil {
 		return nil, err
 	}
@@ -355,9 +368,54 @@ func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, e
 	return userStrategys, nil
 }
 
+func GetUserStrategy(engine *xorm.Engine, uid string) ([]*types.UserStrategy, error) {
+	var userStrategys []*types.UserStrategy
+	err := engine.Table("userStrategy").Where("f_uid=?", uid).Find(&userStrategys)
+	if err != nil {
+		return nil, err
+	}
+	return userStrategys, nil
+}
+
 func GetStrategyTotalAssets(engine *xorm.Engine) (float64, error) {
 	var userStrategy types.UserStrategy
 	total, err := engine.Table("`userStrategy`").Sum(userStrategy, "`f_actualInvest`")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+func GetStrategyTotalBenefits(engine *xorm.Engine, sid string) (float64, error) {
+	var userStrategyEarnings types.UserStrategyEarnings
+	total, err := engine.Table("`userStrategyEarnings`").Where("`f_strategyID`=?", sid).Sum(userStrategyEarnings, "`f_totalBenefit`")
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func GetStrategyBenefits1(engine *xorm.Engine) ([]*types.UserStrategyEarnings, error) {
+	var userStrategyEarnings []*types.UserStrategyEarnings
+	start := "2023-08-12 16:26:02"
+	err := engine.Table("userStrategyEarnings").Where("`f_createTime`<= ?", start).Find(&userStrategyEarnings)
+	if err != nil {
+		return nil, err
+	}
+	return userStrategyEarnings, nil
+}
+
+func GetStrategyBenefits(engine *xorm.Engine, sid, uid string, startTime string, endTime string) ([]*types.UserStrategyEarnings, error) {
+	var userStrategyEarnings []*types.UserStrategyEarnings
+	err := engine.Table("userStrategyEarnings").Where("f_uid = ? and `f_strategyID` = ? and `f_createTime`>= ? and `f_createTime`<= ?", uid, sid, startTime, endTime).Find(&userStrategyEarnings)
+	if err != nil {
+		return nil, err
+	}
+	return userStrategyEarnings, nil
+}
+
+func GetStrategyTotalInvests(engine *xorm.Engine, sid string) (float64, error) {
+	var userStrategy types.UserStrategy
+	total, err := engine.Table("`userStrategy`").Where("`f_strategyID`=?", sid).Sum(userStrategy, "`f_actualInvest`")
 	if err != nil {
 		return 0, err
 	}
@@ -384,7 +442,7 @@ func GetAllStrategy(engine *xorm.Engine) ([]*types.Strategy, error) {
 
 func GetUserStrategyLatestEarnings(engine *xorm.Engine, uid string, sid string) (*types.UserStrategyEarnings, error) {
 	var userStrategyEarnings types.UserStrategyEarnings
-	has, err := engine.Table("`userStrategyEarnings`").Where("f_uid=? and `f_strategyID`=?", uid, sid).OrderBy("`f_createTime` desc").Get(&userStrategyEarnings)
+	has, err := engine.Table("`userStrategyEarnings`").Where("f_uid=? and `f_strategyID`=?", uid, sid).Desc("f_id").Limit(1).Get(&userStrategyEarnings)
 	if err != nil {
 		return nil, err
 	}
@@ -577,14 +635,4 @@ func TransactionRecords(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, 
 		return nil, err
 	}
 	return transactionRecords, nil
-}
-
-func GetOpenedAssemblyTasks(engine *xorm.Engine) ([]*types.TransactionTask, error) {
-	tasks := make([]*types.TransactionTask, 0)
-	err := engine.Table("transaction_task").Where("f_state =0").Find(&tasks)
-	if err != nil {
-		return nil, err
-	}
-	return tasks, err
-
 }

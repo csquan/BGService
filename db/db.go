@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/ethereum/BGService/config"
 	"github.com/go-xorm/xorm"
-
 	_ "github.com/lib/pq"
 	"log"
+	"time"
 )
 
 // 连接
@@ -18,6 +18,7 @@ func GetDBEngine(con *config.Config) *xorm.Engine {
 		return nil
 	}
 	engine.ShowSQL()
+	engine.SetTZLocation(time.Local)
 	err = engine.Ping()
 	if err != nil {
 		log.Fatal(err)
