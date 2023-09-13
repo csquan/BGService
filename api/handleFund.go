@@ -3,7 +3,6 @@ package api
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -14,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"net/http"
@@ -22,12 +20,9 @@ import (
 	"time"
 )
 
-const base_tron_url = "https://api.trongrid.io"
-
-// 简单版本充值：去链上查询这个地址，获取交易记录 正规做法：需要爬快 kafka传消息
+// 简单版本充值：去链上查询这个地址，获取余额和db中最新的一条比对 正规做法：需要爬快 kafka传消息-待迭代
 func (a *ApiService) haveFundIn(c *gin.Context) {
-	var fundInParam types.FundInParam
-	var UserFundIns []types.UserFundIn
+	var fundInParam *types.FundInParam
 
 	err := c.BindJSON(&fundInParam)
 	if err != nil {
@@ -45,91 +40,56 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 
 	res := types.HttpRes{}
 
-	//这里简单逻辑修改下：直接取最新的区块，然后取余额，与数据库中上次修改的余额相减，得到本次充值
-	url := base_tron_url + "/wallet/getaccount"
-
-	accountParam := types.AccountParam{
-		Address: userAddr.Addr,
-		Visible: true,
-	}
-
-	bodyStr, err := json.Marshal(accountParam)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	str1, err := util.Post(url, bodyStr)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	balance := gjson.Get(str1, "balance")
-
-	balance = balance
-
-	url = base_tron_url + "/v1/accounts/" + userAddr.Addr + "/transactions"
-
-	//取出用户最近的充值记录表
-	userFundIn, err := db.GetUserFundIn(a.dbEngine, fundInParam.Uid, fundInParam.Network)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	if userFundIn == nil {
-		//insert
-	} else {
-		if userFundIn.IsCollect == true { //发生过归集 本次充值金额为 归集后链上余额 + 目前的链上余额
-
-		} else { //未发生归集 本次充值金额为 本次充值后链上余额-上次充值后链上余额
-
-		}
-	}
-
-	//这里用事务更新UserFundIns进db 这里的金额作为本次充值的金额
 	session := a.dbEngine.NewSession()
 	err = session.Begin()
 	if err != nil {
 		return
 	}
 
-	for _, fundIn := range UserFundIns {
-		//首先插入用户充值记录
-		_, err = session.Table("platformExperience").Insert(fundIn)
+	//首先插入或修改用户充值记录
+	fundInAmount, err := util.ModifyUserFundIn(session, a.dbEngine, fundInParam, userAddr)
+	if err != nil {
+		err := session.Rollback()
 		if err != nil {
-			err := session.Rollback()
-			if err != nil {
-				return
-			}
 			logrus.Fatal(err)
 		}
-		//下面应该更新用户资产表
-		userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
-		if err != nil {
+	}
+	//下面更新用户资产表
+	userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	fundInDec, err := decimal.NewFromString(fundInAmount)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 
+	if userAsset == nil {
+		userAsset = &types.UserAsset{
+			Uid:       fundInParam.Uid,
+			Network:   fundInParam.Network,
+			CoinName:  "usdt",
+			Available: fundInAmount,
+			Total:     fundInAmount,
 		}
+	} else {
 		dec1, err := decimal.NewFromString(userAsset.Total)
 		if err != nil {
-
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
 		}
-		dec2, err := decimal.NewFromString(fundIn.FundInAmount)
+		userAsset.Total = decimal.Sum(dec1, fundInDec).String()
+	}
+
+	_, err = session.Table("userAsset").Insert(userAsset)
+	if err != nil {
+		err := session.Rollback()
 		if err != nil {
-
-		}
-
-		dec := decimal.Sum(dec1, dec2)
-		userAsset.Total = dec.String()
-
-		_, err = session.Table("userAssets").Update(userAsset)
-		if err != nil {
-			err := session.Rollback()
-			if err != nil {
-				return
-			}
 			logrus.Fatal(err)
 		}
 	}

@@ -46,3 +46,12 @@ func UpdateDelCollectProduct(engine *xorm.Engine, productId string, uid string) 
 	}
 	return nil
 }
+
+func UpdateUserFundIn(engine *xorm.Engine, id string, UserFundIn *types.UserFundIn) error {
+	_, err := engine.Table("userFundIn").Where("f_id=?", id).Update(UserFundIn)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+	return nil
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"sort"
@@ -444,11 +445,18 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	}
 	// todo 扣除费用
 	FormatBalance := strconv.FormatFloat(Balance, 2, -1, 64)
+	actualInvest, err := decimal.NewFromString(FormatBalance)
+	if err != nil {
+		logrus.Error(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	UserStrategy := types.UserStrategy{
 		Uid:          uidFormatted,
 		StrategyID:   payload.ProductId,
-		JoinTime:     time.Now().Format("2006-01-02"),
-		ActualInvest: FormatBalance,
+		JoinTime:     time.Now(), //.Format("2006-01-02"),
+		ActualInvest: actualInvest.String(),
 	}
 	err = db.InsertUserStrategy(a.dbEngine, &UserStrategy)
 	if err != nil {

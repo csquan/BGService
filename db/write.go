@@ -10,9 +10,22 @@ import (
 	"log"
 )
 
-// 插入
 func InsertUser(engine *xorm.Engine, user *types.Users) error {
 	rows, err := engine.Table("users").Insert(user)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if rows == 0 {
+		fmt.Println("插入失败")
+		return errors.New("insert null")
+	}
+	fmt.Println("插入成功")
+	return nil
+}
+
+func InsertUserFundIn(engine *xorm.Engine, userFundIn *types.UserFundIn) error {
+	rows, err := engine.Table("userFundIn").Insert(userFundIn)
 	if err != nil {
 		log.Println(err)
 		return err

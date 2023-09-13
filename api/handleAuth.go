@@ -382,20 +382,16 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	user, err := db.GetUser(a.dbEngine, uid)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
-
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		logrus.Info(err)
+		res = util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if user == nil {
-		logrus.Info("未找到用户记录", uid)
+		logrus.Info("can not find user:", uid)
 
-		res.Code = -1
-		res.Message = "未找到用户记录"
+		res = util.ResponseMsg(-1, "can not find user", uid)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -405,20 +401,13 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 
 	err = db.UpdateUser(a.dbEngine, uid, user)
 	if err != nil {
-		logrus.Info("update secret err:", err)
-
-		res.Code = 0
-		res.Message = "update secret err"
-		res.Data = err
-
+		res = util.ResponseMsg(-1, "update secret err", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
+
 	}
 	//下面将信息存入db
-	res.Code = 0
-	res.Message = "success"
-	res.Data = user.Secret
-
+	res = util.ResponseMsg(0, "success", user.Secret)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -431,11 +420,7 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 
 	err := c.BindJSON(&userCode)
 	if err != nil {
-		logrus.Info("传递的不是合法的json参数")
-
-		res.Code = -1
-		res.Message = "传递的不是合法的json参数"
-		res.Data = err
+		res = util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -447,10 +432,7 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 	codeint, err := strconv.ParseInt(code, 10, 64)
 
 	if err != nil {
-		logrus.Info("输入的动态码不是合法数字，请检查", code)
-
-		res.Code = -1
-		res.Message = "输入的动态码不是合法数字，请检查"
+		res = util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
