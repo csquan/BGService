@@ -30,4 +30,5 @@ JmD2FGyrrbzy+HbspLQP7hL2rexmW0m9zcGjvMGfZE+JAItNAcXTNQyrmzNBPw2Y
 -----END PUBLIC KEY-----
 `)
 
-var AesKey = "BGAESKEYBGAESKEY"
+var AesKey = "crypto-insecure-d111y=1ziukr07k*!r$q=zcgto%" //AES密钥
+var base_binance_url = "https://api.binance.com"

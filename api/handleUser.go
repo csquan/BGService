@@ -1,14 +1,14 @@
 package api
 
 import (
-	"encoding/base64"
+	"context"
 	"fmt"
+	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"net/http"
 	"sort"
 	"strconv"
@@ -74,6 +74,21 @@ func (a *ApiService) myApi(c *gin.Context) {
 	var allOkCex []interface{}
 	var allBinanceCex []interface{}
 	for _, value := range userBindInfos {
+		// 先解密APIKEY
+		apiKey := util.AesDecrypt(value.ApiKey, types.AesKey)
+		apiSecret := util.AesDecrypt(value.ApiSecret, types.AesKey)
+		// 查询此apikey交易权限--目前只有币安
+		client := binance.NewClient(apiKey, apiSecret)
+		client.SetApiEndpoint(base_binance_url)
+		var permission *binance.APIKeyPermission
+		for err != nil { //这里有可能一次请求错误，被对方拒绝
+			permission, err = client.NewGetAPIKeyPermission().Do(context.Background())
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		fmt.Println("permission:", permission)
+
 		if value.Cex == "okex" {
 			oneCex := make(map[string]interface{})
 			oneCex["id"] = value.ID
@@ -84,7 +99,7 @@ func (a *ApiService) myApi(c *gin.Context) {
 			oneCex["account"] = value.Account
 			oneCex["alias"] = value.Alias
 			oneCex["synchronizeTime"] = value.SynchronizeTime
-			oneCex["permission"] = value.Permission
+			oneCex["permission"] = permission
 			allOkCex = append(allOkCex, oneCex)
 		}
 		if value.Cex == "binance" {
@@ -97,10 +112,11 @@ func (a *ApiService) myApi(c *gin.Context) {
 			oneCex["account"] = value.Account
 			oneCex["alias"] = value.Alias
 			oneCex["synchronizeTime"] = value.SynchronizeTime
-			oneCex["permission"] = value.Permission
+			oneCex["permission"] = permission
 			allBinanceCex = append(allBinanceCex, oneCex)
 		}
 	}
+
 	body["okex"] = allOkCex
 	body["binance"] = allBinanceCex
 	res := util.ResponseMsg(1, "success", body)
@@ -123,41 +139,7 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("aesKeyEncrypt and rsaEncryptText should send to houtai")
-
-	encryptAesKey, err := base64.StdEncoding.DecodeString(payload.EncryptAesKey)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err.Error())
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	aesKey, err := util.RsaDecrypt(encryptAesKey)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err.Error())
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	text := util.AesDecrypt(payload.EncryptText, string(aesKey)) // {"cex":"","apiKey":"","apiSecret":"","passphrase":"","account":"","alias":"","uid":"","bindIP":""}
-
-	cex := gjson.Get(text, "cex").String()
-
-	var apiKey, apiSecret, alias, passphrase, account, binanceUid, bindIP string
-
-	switch cex {
-	case "ok":
-		passphrase = gjson.Get(text, "passphrase").String()
-		account = gjson.Get(text, "account").String()
-	case "binance":
-		binanceUid = gjson.Get(text, "uid").String()
-		bindIP = gjson.Get(text, "bindIP").String()
-	}
-
-	apiKey = gjson.Get(text, "apiKey").String()
-	apiSecret = gjson.Get(text, "apiSecret").String()
-	alias = gjson.Get(text, "alias").String()
-
-	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, apiKey)
+	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, payload.ApiKey)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -169,20 +151,19 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// todo 缺一个查询此apikey交易权限
 	nowTime := time.Now()
 	UserBindInfo := types.InsertUserBindInfo{
 		Uid:             uidFormatted,
-		Cex:             cex,
-		ApiKey:          apiKey,
-		ApiSecret:       apiSecret,
-		Passphrase:      passphrase,
-		Alias:           alias,
-		Account:         account,
+		Cex:             payload.Cex,
+		ApiKey:          payload.ApiKey,
+		ApiSecret:       payload.ApiSecret,
+		Passphrase:      payload.Passphrase,
+		Alias:           payload.Alias,
+		Account:         payload.Account,
 		SynchronizeTime: nowTime,
 		Permission:      true,
-		BinanceUid:      binanceUid,
-		BindIP:          bindIP,
+		BinanceUid:      payload.BinanceUid,
+		BindIP:          payload.BindIP,
 	}
 	if err := db.InsertUserBindInfo(a.dbEngine, &UserBindInfo); err != nil {
 		res := util.ResponseMsg(-1, "fail", err)

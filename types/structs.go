@@ -126,7 +126,6 @@ type UserBindInfos struct {
 	CreateTime      time.Time `xorm:"f_createTime"`
 	UpdateTime      time.Time `xorm:"f_updateTime"`
 	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
-	Permission      bool      `xorm:"f_permission"`
 }
 
 type News struct {
@@ -198,10 +197,15 @@ type ExecuteStrategyInput struct {
 	IsBreak   string `json:"isBreak" binding:"required"`
 }
 
-// 只传递密文
 type UserBindInfoInput struct {
-	EncryptAesKey string `json:"encryptAesKey" binding:"required"`
-	EncryptText   string `json:"encryptText" binding:"required"`
+	Cex        string `json:"cex" binding:"required"`
+	ApiKey     string `json:"apiKey" binding:"required"`
+	ApiSecret  string `json:"apiSecret" binding:"required"`
+	Passphrase string `json:"passphrase" binding:"required"`
+	Account    string `json:"account" binding:"required"`
+	Alias      string `json:"alias" binding:"required"`
+	BinanceUid string `json:"binanceUid" binding:"required"`
+	BindIP     string `json:"bindIP" binding:"required"`
 }
 
 type UnbindingApiInput struct {
