@@ -1,21 +1,14 @@
 package services
 
 import (
-	"github.com/ethereum/BGService/config"
-	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
 )
 
 type UserTxRecordService struct {
-	engine *xorm.Engine
-	config *config.Config
 }
 
-func NewUserTxRecordService(c *config.Config, engine *xorm.Engine) *UserTxRecordService {
-	return &UserTxRecordService{
-		engine: engine,
-		config: c,
-	}
+func NewUserTxRecordService() *UserTxRecordService {
+	return &UserTxRecordService{}
 }
 
 func (c *UserTxRecordService) Run() error {

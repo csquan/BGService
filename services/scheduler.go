@@ -12,10 +12,8 @@ type ServiceScheduler struct {
 	services []types.IAsyncService
 }
 
-func NewServiceScheduler(conf *config.Config, engine *xorm.Engine) (t *ServiceScheduler, err error) {
+func NewServiceScheduler() (t *ServiceScheduler, err error) {
 	t = &ServiceScheduler{
-		conf:     conf,
-		engine:   engine,
 		services: make([]types.IAsyncService, 0),
 	}
 
@@ -23,12 +21,14 @@ func NewServiceScheduler(conf *config.Config, engine *xorm.Engine) (t *ServiceSc
 }
 
 func (t *ServiceScheduler) Start() {
-	UserTxRecordService := NewUserTxRecordService(t.conf, t.engine)
-	UserBonusService := NewUserBonusService(t.conf, t.engine)
+	UserTxRecordService := NewUserTxRecordService()
+	UserBonusService := NewUserBonusService()
+	UserBenefit := NewUserBenefitService()
 
 	t.services = []types.IAsyncService{
 		UserTxRecordService,
 		UserBonusService,
+		UserBenefit,
 	}
 
 	for _, s := range t.services {
