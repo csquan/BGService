@@ -372,18 +372,28 @@ func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types
 	return nil, nil
 }
 
-func GetExactlyStrategy(engine *xorm.Engine, sid string, startTime string, endTime string) (*types.UserStrategy, error) {
-	var userStrategy types.UserStrategy
-	has, err := engine.Table("userStrategy").
-		Where("`f_strategyID`=? and `f_joinTime`>= ? and `f_joinTime`<= ?", sid, startTime, endTime).Get(&userStrategy)
+// 查询天级产品总收益
+func GetAllStrategyBenefits(engine *xorm.Engine, sid string, startTime string, endTime string) ([]map[string]string, error) {
+	sql := fmt.Sprintf(`select to_char("f_createTime"::DATE, 'YYYY-MM-DD') as day, sum("f_totalBenefit")  as "f_totalBenefit"
+from "userStrategyEarnings" where "f_stragetyID"='%s' and "f_createTime">= '%s' and "f_createTime"<= '%s'  GROUP BY "day" ORDER BY "f_totalBenefit" DESC`, sid, startTime, endTime)
+	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
 	}
-	if has {
-		return &userStrategy, nil
+	return result, nil
+}
+
+// 取出天极产品的实际投资额
+func GetExactlyStrategy(engine *xorm.Engine, sid string, startTime string, endTime string) ([]map[string]string, error) {
+	sql := fmt.Sprintf(`select to_char("f_joinTime"::DATE, 'YYYY-MM-DD') as day, sum("f_actualInvest")  as "f_actualInvest"
+from "userStrategy" where "f_strategyID"='%s'  and "f_joinTime">= '%s' and "f_joinTime"<= '%s' GROUP BY "day"  ORDER BY "f_actualInvest" DESC`, sid, startTime, endTime)
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
 	}
-	return nil, nil
+	return result, nil
 }
 
 func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, error) {
@@ -435,16 +445,6 @@ func GetStrategyBenefits(engine *xorm.Engine, sid, uid string, startTime string,
 	var userStrategyEarnings []*types.UserStrategyEarnings
 	err := engine.Table("userStrategyEarnings").Where("f_uid = ? and `f_strategyID` = ? and `f_createTime`>= ? and `f_createTime`<= ?", uid, sid, startTime, endTime).Find(&userStrategyEarnings)
 	if err != nil {
-		return nil, err
-	}
-	return userStrategyEarnings, nil
-}
-
-func GetAllStrategyBenefits(engine *xorm.Engine, sid string, startTime string, endTime string) ([]*types.UserStrategyEarnings, error) {
-	var userStrategyEarnings []*types.UserStrategyEarnings
-	err := engine.Table("userStrategyEarnings").Where("`f_stragetyID` = ? and `f_createTime`>= ? and `f_createTime`<= ?", sid, startTime, endTime).Find(&userStrategyEarnings)
-	if err != nil {
-		logrus.Error(err)
 		return nil, err
 	}
 	return userStrategyEarnings, nil
