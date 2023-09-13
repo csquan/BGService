@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -109,6 +110,7 @@ func (a *ApiService) myApi(c *gin.Context) {
 
 // 这里加入解密APIKEY这一套东西 ，然后存储db,再把明文对称解密一起传给前端
 func (a *ApiService) bindingApi(c *gin.Context) {
+
 	uid, _ := c.Get("Uid")
 
 	// 根据uid查询用户信息
@@ -121,9 +123,20 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		return
 	}
 
-	aesKey, err := util.RsaDecrypt([]byte(payload.EncryptAesKey))
-	if err != nil {
+	fmt.Println("aesKeyEncrypt and rsaEncryptText should send to houtai")
 
+	encryptAesKey, err := base64.StdEncoding.DecodeString(payload.EncryptAesKey)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	aesKey, err := util.RsaDecrypt(encryptAesKey)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err.Error())
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 	text := util.AesDecrypt(payload.EncryptText, string(aesKey)) // {"cex":"","apiKey":"","apiSecret":"","passphrase":"","account":"","alias":"","uid":"","bindIP":""}
 
@@ -144,17 +157,7 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 	apiSecret = gjson.Get(text, "apiSecret").String()
 	alias = gjson.Get(text, "alias").String()
 
-	//下面将apiKey apiSecret RSA加密后存储db
-	apiKeyEncrypt, err := util.RsaEncrypt([]byte(apiKey))
-	if err != nil {
-
-	}
-	apiSecretEncrypt, err := util.RsaEncrypt([]byte(apiSecret))
-	if err != nil {
-
-	}
-
-	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, string(apiKeyEncrypt))
+	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, apiKey)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -171,8 +174,8 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 	UserBindInfo := types.InsertUserBindInfo{
 		Uid:             uidFormatted,
 		Cex:             cex,
-		ApiKey:          string(apiKeyEncrypt),
-		ApiSecret:       string(apiSecretEncrypt),
+		ApiKey:          apiKey,
+		ApiSecret:       apiSecret,
 		Passphrase:      passphrase,
 		Alias:           alias,
 		Account:         account,
