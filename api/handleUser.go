@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/BGService/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 	"net/http"
 	"sort"
 	"strconv"
@@ -106,8 +107,10 @@ func (a *ApiService) myApi(c *gin.Context) {
 	return
 }
 
+// 这里加入解密APIKEY这一套东西 ，然后存储db,再把明文对称解密一起传给前端
 func (a *ApiService) bindingApi(c *gin.Context) {
 	uid, _ := c.Get("Uid")
+
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
 	var payload *types.UserBindInfoInput
@@ -117,7 +120,41 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, payload.ApiKey)
+
+	aesKey, err := util.RsaDecrypt([]byte(payload.EncryptAesKey))
+	if err != nil {
+
+	}
+	text := util.AesDecrypt(payload.EncryptText, string(aesKey)) // {"cex":"","apiKey":"","apiSecret":"","passphrase":"","account":"","alias":"","uid":"","bindIP":""}
+
+	cex := gjson.Get(text, "cex").String()
+
+	var apiKey, apiSecret, alias, passphrase, account, binanceUid, bindIP string
+
+	switch cex {
+	case "ok":
+		passphrase = gjson.Get(text, "passphrase").String()
+		account = gjson.Get(text, "account").String()
+	case "binance":
+		binanceUid = gjson.Get(text, "uid").String()
+		bindIP = gjson.Get(text, "bindIP").String()
+	}
+
+	apiKey = gjson.Get(text, "apiKey").String()
+	apiSecret = gjson.Get(text, "apiSecret").String()
+	alias = gjson.Get(text, "alias").String()
+
+	//下面将apiKey apiSecret RSA加密后存储db
+	apiKeyEncrypt, err := util.RsaEncrypt([]byte(apiKey))
+	if err != nil {
+
+	}
+	apiSecretEncrypt, err := util.RsaEncrypt([]byte(apiSecret))
+	if err != nil {
+
+	}
+
+	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, string(apiKeyEncrypt))
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -133,14 +170,16 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 	nowTime := time.Now()
 	UserBindInfo := types.InsertUserBindInfo{
 		Uid:             uidFormatted,
-		Cex:             payload.Cex,
-		ApiKey:          payload.ApiKey,
-		ApiSecret:       payload.ApiSecret,
-		Passphrase:      payload.Passphrase,
-		Alias:           payload.Alias,
-		Account:         payload.Account,
+		Cex:             cex,
+		ApiKey:          string(apiKeyEncrypt),
+		ApiSecret:       string(apiSecretEncrypt),
+		Passphrase:      passphrase,
+		Alias:           alias,
+		Account:         account,
 		SynchronizeTime: nowTime,
 		Permission:      true,
+		BinanceUid:      binanceUid,
+		BindIP:          bindIP,
 	}
 	if err := db.InsertUserBindInfo(a.dbEngine, &UserBindInfo); err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
