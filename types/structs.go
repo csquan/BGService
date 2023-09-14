@@ -79,7 +79,8 @@ type UserFundIn struct {
 	Id               int64     `xorm:"f_id"`
 	Uid              string    `xorm:"f_uid"`
 	Network          string    `xorm:"f_network"`
-	Addr             string    `xorm:"f_addr"`
+	Addr             string    `xorm:"f_address"`
+	Coin             string    `xorm:"f_coinName"`
 	FundInAmount     string    `xorm:"f_fundInAmount"`
 	AfterFundBalance string    `xorm:"f_balance"`
 	IsCollect        bool      `xorm:"f_isCollect"`
@@ -88,6 +89,73 @@ type UserFundIn struct {
 	CollectRemain    string    `xorm:"f_collectRemain"`
 	CreateTime       time.Time `xorm:"f_createTime"`
 	UpdateTime       time.Time `xorm:"f_updateTime"`
+}
+
+// 用户提币记录表
+type UserFundOut struct {
+	Id         int64     `xorm:"f_id"`
+	FromAddr   string    `xorm:"f_from"`
+	ToAddr     string    `xorm:"f_to"`
+	CoinName   string    `xorm:"f_coinName"`
+	Gas        string    `xorm:"f_gas"`
+	Amount     string    `xorm:"f_amount"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
+// 用户分佣记录表
+type UserShare struct {
+	Id         int64     `xorm:"f_id"`
+	UId        int64     `xorm:"f_uid"`
+	CoinName   string    `xorm:"f_coinName"`
+	Amount     string    `xorm:"f_amount"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
+// 用户体验金记录表
+type UserExperience struct {
+	Id             int64     `xorm:"f_id"`
+	UId            string    `xorm:"f_uid"`
+	CoinName       string    `xorm:"f_coinName"`
+	Type           string    `xorm:"f_type"`
+	ReceiveSum     string    `xorm:"f_receiverSum"`
+	BenefitSum     string    `xorm:"f_benefitSum"`
+	BenefitRatio   string    `xorm:"f_benefitRatio"`
+	ReceiveDays    int64     `xorm:"f_receiveDays"`
+	ValidStartTime string    `xorm:"f_validStartTime"`
+	ValidEndTime   string    `xorm:"f_validEndTime"`
+	Status         string    `xorm:"f_status"`
+	CreateTime     time.Time `xorm:"f_createTime"`
+	UpdateTime     time.Time `xorm:"f_updateTime"`
+}
+
+type RecordOutput struct {
+	Time   string `json:"time"`
+	Addr   string `json:"addr"`
+	Coin   string `json:"coin"`
+	Type   string `json:"type"`
+	Amount string `json:"amount"`
+	Status string `json:"status"`
+}
+
+type RecordOutputAndGas struct {
+	Time   string `json:"time"`
+	Addr   string `json:"addr"`
+	Coin   string `json:"coin"`
+	Type   string `json:"type"`
+	Amount string `json:"amount"`
+	Gas    string `json:"gas"`
+	Status string `json:"status"`
+}
+
+type ExpRecordOutput struct {
+	Time   string `json:"time"`
+	Coin   string `json:"coin"`
+	Type   string `json:"type"`
+	Amount string `json:"amount"`
+	Valid  string `json:"valid"`
+	Status string `json:"status"`
 }
 
 type FundOutParam struct {
@@ -235,15 +303,6 @@ type ForgotPasswordInput struct {
 	Email      string `json:"email" binding:"required"`
 	VerifyCode string `json:"verifyCode" binding:"required"`
 	Password   string `json:"password" binding:"required,min=8"`
-}
-
-// 用户体验金
-type UserExperience struct {
-	Uid          string          `xorm:"f_uid"`
-	ReceiveSum   int64           `xorm:"f_receiveSum"`
-	BenefitSum   decimal.Decimal `xorm:"f_benefitSum"`
-	BenefitRatio decimal.Decimal `xorm:"f_benefitRatio"`
-	ReceiveDays  int             `xorm:"f_receiveDays"`
 }
 
 // 平台体验金信息

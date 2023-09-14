@@ -142,6 +142,15 @@ func (a *ApiService) Run() {
 
 		v7.POST("/haveFundIn", a.haveFundIn)
 		v7.POST("/fundOut", a.fundOut)
+
+		//财务日志-得到充值记录表
+		v7.GET("/getUserPlatformFundIn", authMiddleware(), a.getUserPlatformFundIn)
+		//财务日志-得到提币记录表
+		v7.GET("/getUserPlatformFundOut", authMiddleware(), a.getUserPlatformFundOut)
+		//财务日志-得到分佣记录表
+		v7.GET("/getUserPlatformShare", authMiddleware(), a.getUserPlatformShare)
+		//财务日志-得到分佣记录表
+		v7.GET("/getUserPlatformExperience", authMiddleware(), a.getUserPlatformExperience)
 	}
 
 	v8 := r.Group("/api/product")

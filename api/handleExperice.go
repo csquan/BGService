@@ -193,11 +193,11 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	//首先用户体验金增加一条记录
 	userExperience := types.UserExperience{}
 
-	userExperience.Uid = uid
+	userExperience.UId = uid
 	//userExperience.BenefitRatio = 0
 	//userExperience.BenefitSum = 0
-	userExperience.ReceiveDays = 1
-	userExperience.ReceiveSum = TotalRevenueInfo.PerSum
+	//userExperience.ReceiveDays = 1
+	//userExperience.ReceiveSum = TotalRevenueInfo.PerSum
 
 	_, err = session.Table("userExperience").Insert(userExperience)
 	if err != nil {

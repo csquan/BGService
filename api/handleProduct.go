@@ -342,19 +342,19 @@ func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
-		return err, nil, 0, 0, 0
+		return err, nil, "", "", ""
 	}
 	if userBindInfos == nil {
 		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
 		c.SecureJSON(http.StatusOK, res)
-		return err, nil, 0, 0, 0
+		return err, nil, "", "", ""
 	}
 	// 获取具体产品
 	strategyInfo, err := db.GetStrategy(a.dbEngine, ProductId)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
-		return err, nil, 0, 0, 0
+		return err, nil, "", "", ""
 	}
 	//principalGuaranteeDepositDrop, err := strconv.ParseFloat(strategyInfo.PrincipalGuaranteeDepositDrop, 64)
 	//if err != nil {
@@ -500,6 +500,9 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	//还要根据策略名字解析得到具体交易币种
+	array := strings.Split(strategy.StrategyName, "/")
+
 	switch strategy.CoinName {
 	case "SPOT":
 		//取现货余额
@@ -545,6 +548,9 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 			}
 		}
 	}
+
+	//todo：这里判断权限
+
 	err, _, _, _, _ = a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
 	if err != nil {
 		logrus.Error(err)
@@ -552,7 +558,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// todo 扣除费用
+
 	actualInvest, err := decimal.NewFromString(balance)
 	if err != nil {
 		logrus.Error(err)
