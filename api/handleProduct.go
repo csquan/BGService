@@ -337,7 +337,7 @@ func (a *ApiService) transactionRecords(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string, ProductId string, Balance string) (error, *types.Strategy, float64, float64, float64) {
+func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string, ProductId string, Balance string) (error, *types.Strategy, string, string, string) {
 	userBindInfos, err := db.GetIdUserBindInfos(a.dbEngine, uidFormatted, id)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -372,11 +372,13 @@ func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string
 	//	return err, nil, 0, 0, 0
 	//}
 
-	//shareBonus := Balance * 0 / 100
-	//managementFees := Balance * 0 / 100
-	//principalGuaranteeDeposit := Balance * 0 / 100
-	//return nil, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit
-	return nil, strategyInfo, 0, 0, 0
+	BalanceDec, _ := decimal.NewFromString(Balance)
+	hundredDec, _ := decimal.NewFromString("100")
+	shareBonus := BalanceDec.Div(hundredDec).String()
+
+	managementFees := BalanceDec.Div(hundredDec).String()
+	principalGuaranteeDeposit := BalanceDec.Div(hundredDec).String()
+	return nil, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit
 }
 
 func (a *ApiService) invest(c *gin.Context) {
@@ -384,23 +386,21 @@ func (a *ApiService) invest(c *gin.Context) {
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
 	// 交易所id
-	id := "2"
-	ProductId := "1"
-	//id, ok := c.GetQuery("id")
-	//if !ok {
-	//	logrus.Error("id not exist.")
-	//	res := util.ResponseMsg(-1, "fail", "id not exist.")
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
-	//// 投入产品id
-	//ProductId, ok := c.GetQuery("productId")
-	//if !ok {
-	//	logrus.Error("productId not exist.")
-	//	res := util.ResponseMsg(-1, "fail", "productId not exist.")
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
+	id, ok := c.GetQuery("id")
+	if !ok {
+		logrus.Error("id not exist.")
+		res := util.ResponseMsg(-1, "fail", "id not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// 投入产品id
+	ProductId, ok := c.GetQuery("productId")
+	if !ok {
+		logrus.Error("productId not exist.")
+		res := util.ResponseMsg(-1, "fail", "productId not exist.")
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	var balance string
 	// 根据产品属性 取响应的 现货 U本位 币本位 获取余额
 	strategy, err := db.GetProduct(a.dbEngine, ProductId)
@@ -416,9 +416,6 @@ func (a *ApiService) invest(c *gin.Context) {
 	case "SPOT":
 		//取现货余额
 		userData, err := util.GetBinanceSpotUserData()
-		if err != nil {
-
-		}
 		for {
 			if err == nil {
 				break
@@ -433,9 +430,6 @@ func (a *ApiService) invest(c *gin.Context) {
 	case "CM":
 		//取币本位余额
 		userData, err := util.GetBinanceCMUserData()
-		if err != nil {
-
-		}
 		for {
 			if err == nil {
 				break
@@ -451,9 +445,6 @@ func (a *ApiService) invest(c *gin.Context) {
 	case "UM":
 		//取U本位余额
 		userData, err := util.GetBinanceUMUserData()
-		if err != nil {
-
-		}
 		for {
 			if err == nil {
 				break
@@ -500,9 +491,61 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// TODO 根据用户绑定的交易所获取余额
+	//根据用户绑定的交易所获取余额
 	balance := ""
-	err, _, _, _, _ := a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
+	// 根据产品属性 取响应的 现货 U本位 币本位 获取余额
+	strategy, err := db.GetProduct(a.dbEngine, payload.ProductId)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	switch strategy.CoinName {
+	case "SPOT":
+		//取现货余额
+		userData, err := util.GetBinanceSpotUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceSpotUserData()
+		}
+		for _, data := range userData {
+			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
+				balance = data.Free
+			}
+		}
+	case "CM":
+		//取币本位余额
+		userData, err := util.GetBinanceCMUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceCMUserData()
+		}
+
+		for _, asset := range userData.Assets {
+			if strings.ToLower(asset.Asset) == strings.ToLower(array[0]) {
+				balance = asset.MarginBalance
+			}
+		}
+	case "UM":
+		//取U本位余额
+		userData, err := util.GetBinanceUMUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceUMUserData()
+		}
+		for _, asset := range userData.Assets {
+			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
+				balance = asset.MarginBalance
+			}
+		}
+	}
+	err, _, _, _, _ = a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)
