@@ -1,7 +1,10 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -72,6 +75,22 @@ func (a *ApiService) myApi(c *gin.Context) {
 	var allOkCex []interface{}
 	var allBinanceCex []interface{}
 	for _, value := range userBindInfos {
+		// 先解密APIKEY
+		apiKey := util.AesDecrypt(value.ApiKey, types.AesKey)
+		apiSecret := util.AesDecrypt(value.ApiSecret, types.AesKey)
+		// 查询此apikey交易权限--目前只有币安
+		client := binance.NewClient(apiKey, apiSecret)
+		client.SetApiEndpoint(base_binance_url)
+		var permission *binance.APIKeyPermission
+		err := errors.New("init")
+		for err != nil { //这里有可能一次请求错误，被对方拒绝
+			permission, err = client.NewGetAPIKeyPermission().Do(context.Background())
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+		fmt.Println("permission:", permission)
+
 		if value.Cex == "okex" {
 			oneCex := make(map[string]interface{})
 			oneCex["id"] = value.ID
@@ -82,7 +101,7 @@ func (a *ApiService) myApi(c *gin.Context) {
 			oneCex["account"] = value.Account
 			oneCex["alias"] = value.Alias
 			oneCex["synchronizeTime"] = value.SynchronizeTime
-			oneCex["permission"] = value.Permission
+			oneCex["permission"] = permission
 			allOkCex = append(allOkCex, oneCex)
 		}
 		if value.Cex == "binance" {
@@ -95,10 +114,11 @@ func (a *ApiService) myApi(c *gin.Context) {
 			oneCex["account"] = value.Account
 			oneCex["alias"] = value.Alias
 			oneCex["synchronizeTime"] = value.SynchronizeTime
-			oneCex["permission"] = value.Permission
+			oneCex["permission"] = permission
 			allBinanceCex = append(allBinanceCex, oneCex)
 		}
 	}
+
 	body["okex"] = allOkCex
 	body["binance"] = allBinanceCex
 	res := util.ResponseMsg(1, "success", body)
@@ -106,8 +126,11 @@ func (a *ApiService) myApi(c *gin.Context) {
 	return
 }
 
+// 这里加入解密APIKEY这一套东西 ，然后存储db,再把明文对称解密一起传给前端
 func (a *ApiService) bindingApi(c *gin.Context) {
+
 	uid, _ := c.Get("Uid")
+
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
 	var payload *types.UserBindInfoInput
@@ -117,6 +140,13 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+
+	keyEncrypt := util.AesEncrypt(types.ApiKey, types.AesKey)
+	secretEncrypt := util.AesEncrypt(types.ApiSecret, types.AesKey)
+
+	fmt.Println("keyEncrypt:", keyEncrypt)
+	fmt.Println("secretEncrypt:", secretEncrypt)
+
 	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, payload.ApiKey)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -129,7 +159,6 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// todo 缺一个查询此apikey交易权限
 	nowTime := time.Now()
 	UserBindInfo := types.InsertUserBindInfo{
 		Uid:             uidFormatted,
@@ -140,7 +169,8 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		Alias:           payload.Alias,
 		Account:         payload.Account,
 		SynchronizeTime: nowTime,
-		Permission:      true,
+		BinanceUid:      payload.BinanceUid,
+		BindIP:          payload.BindIP,
 	}
 	if err := db.InsertUserBindInfo(a.dbEngine, &UserBindInfo); err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
