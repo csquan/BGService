@@ -49,8 +49,9 @@ func queryUserStrategy(db *sql.DB) []UserStrategy {
 
 	var StrategyidList []UserStrategy
 
-	var UserStrategynew UserStrategy
 	for rows.Next() {
+		var UserStrategynew UserStrategy
+
 		err = rows.Scan(&UserStrategynew.Uid, &UserStrategynew.joinTime, &UserStrategynew.Strategyid, &UserStrategynew.actualInvest, &UserStrategynew.apiId)
 		StrategyidList = append(StrategyidList, UserStrategynew)
 	}

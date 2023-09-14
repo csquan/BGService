@@ -158,8 +158,6 @@ type InsertUserBindInfo struct {
 	CreateTime      time.Time `xorm:"f_createTime"`
 	UpdateTime      time.Time `xorm:"f_updateTime"`
 	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
-	BinanceUid      string    `xorm:"f_binanceUid"`
-	BindIP          string    `xorm:"f_bindIP"`
 }
 
 type StrategyInput struct {
@@ -206,12 +204,10 @@ type ExecuteStrategyInput struct {
 type UserBindInfoInput struct {
 	Cex        string `json:"cex" binding:"required"`
 	ApiKey     string `json:"apiKey" binding:"required"`
-	ApiSecret  string `json:"apiSecret" binding:"required"`
+	ApiSecret  string `json:"secretKey" binding:"required"`
 	Passphrase string `json:"passphrase" binding:"required"`
 	Account    string `json:"account" binding:"required"`
-	Alias      string `json:"alias" binding:"required"`
-	BinanceUid string `json:"binanceUid" binding:"required"`
-	BindIP     string `json:"bindIP" binding:"required"`
+	Alias      string `json:"alias"`
 }
 
 type UnbindingApiInput struct {

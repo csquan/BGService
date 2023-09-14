@@ -169,8 +169,6 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		Alias:           payload.Alias,
 		Account:         payload.Account,
 		SynchronizeTime: nowTime,
-		BinanceUid:      payload.BinanceUid,
-		BindIP:          payload.BindIP,
 	}
 	if err := db.InsertUserBindInfo(a.dbEngine, &UserBindInfo); err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
