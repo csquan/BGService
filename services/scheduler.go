@@ -21,14 +21,14 @@ func NewServiceScheduler() (t *ServiceScheduler, err error) {
 }
 
 func (t *ServiceScheduler) Start() {
-	UserTxRecordService := NewUserTxRecordService()
 	UserBonusService := NewUserBonusService()
 	UserBenefit := NewUserBenefitService()
+	UserTxRecordService := NewUserTxRecordService()
 
 	t.services = []types.IAsyncService{
-		UserTxRecordService,
 		UserBonusService,
 		UserBenefit,
+		UserTxRecordService,
 	}
 
 	for _, s := range t.services {
