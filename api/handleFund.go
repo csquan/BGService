@@ -156,17 +156,18 @@ func (a *ApiService) fundOut(c *gin.Context) {
 	h256h.Write(rawData)
 	hash := h256h.Sum(nil)
 
-	// btcec.PrivKeyFromBytes only returns a secret key and public key
-
-	//下面取出对应私钥签名，todo：移动到单独的私钥服务器
+	//下面取出对应私钥签名
 	pri, err := db.GetUserKey(a.dbEngine, fromAddr.Addr)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	//先解密
+	priDecrypt := util.AesDecrypt(pri.PrivateKey, types.AesKey)
 
-	privateKeyBytes, _ := hex.DecodeString(pri.PrivateKey)
+	privateKeyBytes, _ := hex.DecodeString(priDecrypt)
+
 	sk, _ := btcec.PrivKeyFromBytes(privateKeyBytes)
 
 	signature, err := crypto.Sign(hash, sk.ToECDSA())
