@@ -112,15 +112,12 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 // 将币对添加/移除个人自选
 func (a *ApiService) addConcern(c *gin.Context) {
 	var userConcern types.UserConcern
-	res := types.HttpRes{}
 
 	err := c.BindJSON(&userConcern)
 	if err != nil {
-		logrus.Info("传递的不是合法的json参数")
+		logrus.Info("not valid json")
 
-		res.Code = -1
-		res.Message = "传递的不是合法的json参数"
-		res.Data = err
+		res := util.ResponseMsg(-1, "not valid json", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -130,15 +127,17 @@ func (a *ApiService) addConcern(c *gin.Context) {
 
 	//参数校验
 	if method != "add" && method != "remove" {
-		res.Code = -1
-		res.Message = "method can not support"
+		logrus.Info("method can not support")
+
+		res := util.ResponseMsg(-1, "method can not support", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if strings.HasPrefix(coinPair, ",") || strings.HasSuffix(coinPair, ",") {
-		res.Code = -1
-		res.Message = "coinPair can not start or end with comma"
+		logrus.Info("coinPair can not start or end with comma")
+
+		res := util.ResponseMsg(-1, "coinPair can not start or end with comma", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -148,9 +147,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if err != nil {
 		logrus.Info("query db error:", err)
 
-		res.Code = -1
-		res.Message = "query db error"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -158,8 +155,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if user == nil {
 		logrus.Info("no user record:", uid)
 
-		res.Code = -1
-		res.Message = "no user record"
+		res := util.ResponseMsg(-1, "no user record:", uid)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -182,8 +178,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 				}
 			}
 			if find == false {
-				res.Code = -1
-				res.Message = "can not find remove record"
+				res := util.ResponseMsg(-1, "can not find remove record", nil)
 				c.SecureJSON(http.StatusOK, res)
 				return
 			}
@@ -192,8 +187,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 		if method == "add" {
 			concern = append(concern, coinPair)
 		} else {
-			res.Code = -1
-			res.Message = "null list can not remove anything"
+			res := util.ResponseMsg(-1, "null list can not remove anything", nil)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
@@ -217,17 +211,12 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if err != nil {
 		logrus.Info("update user concern:", err)
 
-		res.Code = 0
-		res.Message = "update user concern"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "update user concern", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	res.Code = 0
-	res.Message = "add or remove concern success"
-
+	res := util.ResponseMsg(0, "add or remove concern success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -527,7 +516,10 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
-	uid := c.Query("uid")
+
+	uidSession, _ := c.Get("Uid")
+	uid := fmt.Sprintf("%s", uidSession)
+
 	timeType := c.Query("timeType")
 
 	startTime := time.Now()
@@ -632,7 +624,9 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	timeType := c.Query("timeType")
 	sid := c.Query("sid")
-	uid := c.Query("uid")
+
+	uidSession, _ := c.Get("Uid")
+	uid := fmt.Sprintf("%s", uidSession)
 
 	startTime := time.Now().String()
 
