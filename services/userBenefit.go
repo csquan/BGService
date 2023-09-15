@@ -13,6 +13,16 @@ import (
 	//_ "github.com/bmizerany/pq"
 )
 
+type UserBenefitService struct {
+}
+
+func NewUserBenefitService() *UserBenefitService {
+	return &UserBenefitService{}
+}
+func (c *UserBenefitService) Name() string {
+	return "UserBenefit"
+}
+
 const (
 	DB_DSN = "postgres://postgres:12345@127.0.0.1:5432/postgres?sslmode=disable"
 )
@@ -39,8 +49,9 @@ func queryUserStrategy(db *sql.DB) []UserStrategy {
 
 	var StrategyidList []UserStrategy
 
-	var UserStrategynew UserStrategy
 	for rows.Next() {
+		var UserStrategynew UserStrategy
+
 		err = rows.Scan(&UserStrategynew.Uid, &UserStrategynew.joinTime, &UserStrategynew.Strategyid, &UserStrategynew.actualInvest, &UserStrategynew.apiId)
 		StrategyidList = append(StrategyidList, UserStrategynew)
 	}
@@ -77,7 +88,7 @@ func updateEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, uid str
 	fmt.Printf("res = %d", res)
 }
 
-func main() {
+func (c *UserBenefitService) Run() error {
 	// Create DB pool
 	db, err := sql.Open("postgres", DB_DSN)
 	if err != nil {
@@ -138,4 +149,5 @@ func main() {
 		}
 
 	}
+	return nil
 }

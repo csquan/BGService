@@ -22,6 +22,19 @@ func QuerySecret(engine *xorm.Engine, uid string) (error, *types.Users) {
 	return nil, nil
 }
 
+func QueryInvite(engine *xorm.Engine, uid string) (error, *types.Invitation) {
+	var invitation types.Invitation
+	has, err := engine.Where("`f_sonUid`=?", uid).Get(&invitation)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	if has {
+		return nil, &invitation // 返回指向 user 的指针
+	}
+	return nil, nil
+}
+
 func QueryEmail(engine *xorm.Engine, email string) (error, *types.Users) {
 	var user types.Users
 	has, err := engine.Where("`f_mailBox`=?", email).Get(&user)
@@ -405,6 +418,30 @@ func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types
 		return &userStrategy, nil
 	}
 	return nil, nil
+}
+
+// 查询天级产品总收益
+func GetAllStrategyBenefits(engine *xorm.Engine, sid string, startTime string, endTime string) ([]map[string]string, error) {
+	sql := fmt.Sprintf(`select to_char("f_createTime"::DATE, 'YYYY-MM-DD') as day, sum("f_totalBenefit")  as "f_totalBenefit"
+from "userStrategyEarnings" where "f_stragetyID"='%s' and "f_createTime">= '%s' and "f_createTime"<= '%s'  GROUP BY "day" ORDER BY "f_totalBenefit" DESC`, sid, startTime, endTime)
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	return result, nil
+}
+
+// 取出天极产品的实际投资额
+func GetExactlyStrategy(engine *xorm.Engine, sid string, startTime string, endTime string) ([]map[string]string, error) {
+	sql := fmt.Sprintf(`select to_char("f_joinTime"::DATE, 'YYYY-MM-DD') as day, sum("f_actualInvest")  as "f_actualInvest"
+from "userStrategy" where "f_strategyID"='%s'  and "f_joinTime">= '%s' and "f_joinTime"<= '%s' GROUP BY "day"  ORDER BY "f_actualInvest" DESC`, sid, startTime, endTime)
+	result, err := engine.QueryString(sql)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+	return result, nil
 }
 
 func GetUserStrategys(engine *xorm.Engine, uid string) ([]*types.UserStrategy, error) {

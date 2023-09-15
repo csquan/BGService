@@ -523,7 +523,6 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 	var userBenefitNDays types.UserBenefitNDays
 
-	var userBenefit types.UserBenefits
 	var userBenefits []types.UserBenefits
 
 	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
@@ -567,6 +566,7 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	win := 0
 	for _, earning := range earnings {
+		var userBenefit types.UserBenefits
 		darDec, err := decimal.NewFromString(earning.DayBenefit)
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
@@ -585,9 +585,8 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 		userBenefit.Date = earning.CreateTime.String()
 		userBenefit.Benefit = earning.DayBenefit
 		userBenefit.Ratio = earning.DayRatio
+		userBenefits = append(userBenefits, userBenefit)
 	}
-
-	userBenefits = append(userBenefits, userBenefit)
 
 	days := decimal.New(int64(len(earnings)), 32)
 	userBenefitNDays.BenefitRatio = sumRatio.Div(days).String()

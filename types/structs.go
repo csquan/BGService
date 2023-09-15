@@ -11,7 +11,6 @@ type Users struct {
 	UserName            string    `xorm:"f_userName"`
 	Password            string    `xorm:"f_password"`
 	InvitationCode      string    `xorm:"f_invitationCode"`
-	InvitatedCode       string    `xorm:"f_invitatedCode"`
 	MailBox             string    `xorm:"f_mailBox"`
 	CreateTime          time.Time `xorm:"f_createTime"`
 	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
@@ -23,6 +22,14 @@ type Users struct {
 	ConcernCoinList     string    `xorm:"f_concernCoinList"`
 	CollectStragetyList string    `xorm:"f_collectStragetyList"`
 	UpdateTime          time.Time `xorm:"f_updateTime"`
+}
+
+type Invitation struct {
+	Uid        string    `xorm:"f_uid"`
+	SonUid     string    `xorm:"f_sonUid"`
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+	Level      string    `xorm:"f_level"`
 }
 
 type UserStrategy struct {
@@ -37,7 +44,7 @@ type UserStrategy struct {
 type UserStrategyEarnings struct {
 	Id           string    `xorm:"f_id"`
 	Uid          string    `xorm:"f_uid"`
-	StrategyID   string    `xorm:"f_strategyID"`
+	StrategyID   string    `xorm:"f_stragetyID"`
 	DayBenefit   string    `xorm:"f_dayBenefit"`
 	DayRatio     string    `xorm:"f_dayRatio"`
 	TotalBenefit string    `xorm:"f_totalBenefit"`
@@ -219,8 +226,6 @@ type InsertUserBindInfo struct {
 	CreateTime      time.Time `xorm:"f_createTime"`
 	UpdateTime      time.Time `xorm:"f_updateTime"`
 	SynchronizeTime time.Time `xorm:"f_synchronizeTime"`
-	BinanceUid      string    `xorm:"f_binanceUid"`
-	BindIP          string    `xorm:"f_bindIP"`
 }
 
 type StrategyInput struct {
@@ -267,12 +272,10 @@ type ExecuteStrategyInput struct {
 type UserBindInfoInput struct {
 	Cex        string `json:"cex" binding:"required"`
 	ApiKey     string `json:"apiKey" binding:"required"`
-	ApiSecret  string `json:"apiSecret" binding:"required"`
+	ApiSecret  string `json:"secretKey" binding:"required"`
 	Passphrase string `json:"passphrase" binding:"required"`
 	Account    string `json:"account" binding:"required"`
-	Alias      string `json:"alias" binding:"required"`
-	BinanceUid string `json:"binanceUid" binding:"required"`
-	BindIP     string `json:"bindIP" binding:"required"`
+	Alias      string `json:"alias"`
 }
 
 type UnbindingApiInput struct {
@@ -410,16 +413,16 @@ type StrategyStats struct {
 }
 
 type UserBenefits struct {
-	Date    string `json:"date"`
-	Benefit string `json:"benefit"`
-	Ratio   string `json:"ratio"`
+	Date    string `json:"time"`
+	Benefit string `json:"price"`
+	Ratio   string `json:"yield"`
 }
 type UserBenefitNDays struct {
-	BenefitSum   decimal.Decimal `json:"benefitSum"`
-	BenefitRatio string          `json:"benefitRatio"`
-	WinRatio     string          `json:"winRatio"`
-	Huiche       string          `json:"huiche"`
-	Benefitlist  []UserBenefits  `json:"benefitlist"`
+	BenefitSum   decimal.Decimal `json:"statEarnings"`
+	BenefitRatio string          `json:"statYield"`
+	WinRatio     string          `json:"statWinRate"`
+	Huiche       string          `json:"statMaxWithdrawalRate"`
+	Benefitlist  []UserBenefits  `json:"list"`
 }
 
 type Balance_Erc20 struct {

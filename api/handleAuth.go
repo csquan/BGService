@@ -114,8 +114,9 @@ func (a *ApiService) register(c *gin.Context) {
 	} else {
 		username = payload.UserName
 	}
-	// 用户填写了邀请码，给邀请码的用户邀请好友数量加1
+	// 用户填写了邀请码，加入邀请等级表
 	if payload.InviteCode != "" {
+		// 根据邀请码查邀请人用户信息
 		err, user := db.QueryInviteCode(a.dbEngine, payload.InviteCode)
 		if err != nil {
 			// 处理错误
@@ -123,13 +124,39 @@ func (a *ApiService) register(c *gin.Context) {
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		if user != nil {
-			if err := db.AddUserInvite(a.dbEngine, user.Uid); err != nil {
+		// 根据邀请人的信息查邀请人是否有上级邀请(处理二级邀请)
+		err, Invite := db.QueryInvite(a.dbEngine, user.Uid)
+		if err != nil {
+			// 处理错误
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		if Invite != nil {
+			newSecondInvitation := types.Invitation{
+				Uid:    Invite.Uid,
+				SonUid: uid,
+				Level:  "2",
+			}
+			err = db.InsertInvitation(a.dbEngine, &newSecondInvitation)
+			if err != nil {
 				res := util.ResponseMsg(-1, "fail", err)
 				c.SecureJSON(http.StatusOK, res)
 				return
 			}
-		} else {
+		}
+		newInvitation := types.Invitation{
+			Uid:    user.Uid,
+			SonUid: uid,
+			Level:  "1",
+		}
+		err = db.InsertInvitation(a.dbEngine, &newInvitation)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		if user == nil {
 			res := util.ResponseMsg(-1, "fail", "Incorrect invitation code")
 			c.SecureJSON(http.StatusOK, res)
 			return
@@ -140,7 +167,6 @@ func (a *ApiService) register(c *gin.Context) {
 		UserName:            username,
 		Password:            payload.Password,
 		InvitationCode:      inviteCode,
-		InvitatedCode:       payload.InviteCode,
 		MailBox:             payload.Email,
 		ConcernCoinList:     "{}",
 		CollectStragetyList: "{}",
@@ -187,18 +213,10 @@ func (a *ApiService) register(c *gin.Context) {
 
 	_, err = session.Table("userAddr").Insert(userAddr)
 	if err != nil {
-		err := session.Rollback()
-		if err != nil {
-			return
-		}
-		logrus.Fatal(err)
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
-
-	err = session.Commit()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-
 	body := make(map[string]interface{})
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
@@ -291,22 +309,20 @@ func (a *ApiService) forgotPassword(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	body := map[string]int{
-		"status": 1,
-	}
+	body := make(map[string]interface{})
 	// 是否谷歌验证
 	if user.IsBindGoogle {
-		res := util.ResponseMsg(1, "fail", body)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		body["status"] = 1
+	} else {
+		body["status"] = 0
+		// 修改密码
+		user.Password = payload.Password
+		err = db.UpdateUser(a.dbEngine, user.Uid, user)
+		if err != nil {
+			return
+		}
 	}
-	// 修改密码
-	user.Password = payload.Password
-	err = db.UpdateUser(a.dbEngine, user.Uid, user)
-	if err != nil {
-		return
-	}
-	body["status"] = 0
+	body["uid"] = user.Uid
 	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return

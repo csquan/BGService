@@ -43,7 +43,7 @@ func main() {
 	RedisEngine := db.GetRedisEngine(&config.Conf)
 
 	//setup scheduler
-	scheduler, err := services.NewServiceScheduler(&config.Conf, dbEngine)
+	scheduler, err := services.NewServiceScheduler()
 	if err != nil {
 		return
 	}
