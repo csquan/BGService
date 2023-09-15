@@ -115,33 +115,33 @@ func (a *ApiService) Run() {
 	v6 := r.Group("/api/experienceActivity")
 	{
 		//检查领取体验金资格
-		v6.GET("/checkoutQualification", a.checkoutQualification)
+		v6.GET("/checkoutQualification", authMiddleware(), a.checkoutQualification)
 		//领取体验金
-		v6.GET("/getExperienceFund", a.getExperienceFund)
+		v6.GET("/getExperienceFund", authMiddleware(), a.getExperienceFund)
 
 		//获得用户的体验金收益率
-		v6.GET("/getUserExperience", a.getUserExperience)
+		v6.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
 		//获取平台的体验金收益率
-		v6.GET("/getPlatformExperience", a.getPlatformExperience)
+		v6.GET("/getPlatformExperience", authMiddleware(), a.getPlatformExperience)
 	}
 
 	v7 := r.Group("/api/wallet")
 	{
 		//得到用户的策略列表
-		v7.GET("/getTradeList", a.getTradeList)
+		v7.GET("/getTradeList", authMiddleware(), a.getTradeList)
 		//得到用户的产品详情
-		v7.GET("/getTradeDetail", a.getTradeDetail)
+		v7.GET("/getTradeDetail", authMiddleware(), a.getTradeDetail)
 		//得到特定策略的信息
-		v7.GET("/getStragetyDetail", a.getStragetyDetail)
+		v7.GET("/getStragetyDetail", authMiddleware(), a.getStragetyDetail)
 
-		v7.GET("/getTradeHistory", a.getTradeHistory)
+		v7.GET("/getTradeHistory", authMiddleware(), a.getTradeHistory)
 
-		v7.GET("/getUserDaysBenefit", a.getUserDaysBenefit)
+		v7.GET("/getUserDaysBenefit", authMiddleware(), a.getUserDaysBenefit)
 
-		v7.GET("/getUserBeneiftInfo", a.getUserBeneiftInfo)
+		v7.GET("/getUserBeneiftInfo", authMiddleware(), a.getUserBeneiftInfo)
 
-		v7.POST("/haveFundIn", a.haveFundIn)
-		v7.POST("/fundOut", a.fundOut)
+		v7.POST("/haveFundIn", authMiddleware(), a.haveFundIn)
+		v7.POST("/fundOut", authMiddleware(), a.fundOut)
 
 		//财务日志-得到充值记录表
 		v7.GET("/getUserPlatformFundIn", authMiddleware(), a.getUserPlatformFundIn)
@@ -149,7 +149,7 @@ func (a *ApiService) Run() {
 		v7.GET("/getUserPlatformFundOut", authMiddleware(), a.getUserPlatformFundOut)
 		//财务日志-得到分佣记录表
 		v7.GET("/getUserPlatformShare", authMiddleware(), a.getUserPlatformShare)
-		//财务日志-得到分佣记录表
+		//财务日志-得到体验金记录表
 		v7.GET("/getUserPlatformExperience", authMiddleware(), a.getUserPlatformExperience)
 	}
 

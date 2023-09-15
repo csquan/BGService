@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -274,7 +275,9 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	var tradeDetails types.TradeDetails
 	var tradeList []types.TradeDetails
 	//首先得到我的策略
-	uid := c.Query("uid")
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	//status := c.Query("status")
 	//一期先不处理status
 	//首先得到我的仓位
@@ -287,7 +290,7 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	}
 
 	//查询用户策略表得到用户对应得所有策略
-	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uidFormatted)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -297,7 +300,7 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	//一个稳定币只可能存在一个策略
 	for _, userStrategy := range userStrategys {
 		//查询量化收益表
-		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uidFormatted, userStrategy.StrategyID)
 
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
@@ -378,7 +381,9 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 
 	var tradeDetails types.TradeDetails
 	//首先得到我的策略
-	uid := c.Query("uid")
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	productID := c.Query("productID")
 	//一期先不处理status
 	//首先得到我的仓位
@@ -391,7 +396,7 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 	}
 
 	//查询用户策略表得到具体的策略
-	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uid, productID)
+	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uidFormatted, productID)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -400,7 +405,7 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 
 	//一个稳定币只可能存在一个策略
 	//查询量化收益表
-	latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+	latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uidFormatted, userStrategy.StrategyID)
 
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -480,7 +485,9 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 
 	strategy, err := db.GetStrategy(a.dbEngine, productID)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
 	symbol := util.RemoveElement(strategy.StrategyName, "/")

@@ -119,7 +119,7 @@ type UserExperience struct {
 	UId            string    `xorm:"f_uid"`
 	CoinName       string    `xorm:"f_coinName"`
 	Type           string    `xorm:"f_type"`
-	ReceiveSum     string    `xorm:"f_receiverSum"`
+	ReceiveSum     int64     `xorm:"f_receiverSum"`
 	BenefitSum     string    `xorm:"f_benefitSum"`
 	BenefitRatio   string    `xorm:"f_benefitRatio"`
 	ReceiveDays    int64     `xorm:"f_receiveDays"`
