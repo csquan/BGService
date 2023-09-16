@@ -1,7 +1,10 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -75,7 +78,7 @@ func strToInt(strList []string) []int {
 	for i, str := range strList {
 		num, err := strconv.Atoi(str)
 		if err != nil {
-			logrus.Error("无法将字符串转换为整数：", str)
+			logrus.Error("can not convert from str to int：", str)
 			return []int{}
 		}
 		intList[i] = num
@@ -549,7 +552,30 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		}
 	}
 
-	//todo：这里判断权限
+	// 这里判断权限-todo:如何取用户和产品对应的唯一 APIKEY APISECRET?用户可能在binance绑定多个API 怎么知道该用哪一个？
+	ApiKey := ""
+	ApiSecret := ""
+	apiKey := util.AesDecrypt(ApiKey, types.AesKey)
+	apiSecret := util.AesDecrypt(ApiSecret, types.AesKey)
+	// 查询此apikey交易权限--目前只有币安
+	client := binance.NewClient(apiKey, apiSecret)
+	client.SetApiEndpoint(base_binance_url)
+	var permission *binance.APIKeyPermission
+	err = errors.New("init")
+	for err != nil { //这里有可能一次请求错误，被对方拒绝
+		permission, err = client.NewGetAPIKeyPermission().Do(context.Background())
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	fmt.Println("permission:", permission)
+
+	if permission.EnableFutures == false {
+		logrus.Error("no permission,future permission:", permission.EnableFutures)
+		res := util.ResponseMsg(-1, "no permission,future permission:", permission.EnableFutures)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 
 	err, _, _, _, _ = a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
 	if err != nil {
