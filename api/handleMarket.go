@@ -24,30 +24,21 @@ var base_cmc_url = "https://pro-api.coinmarketcap.com/"
 
 var test_cmc_key = "b6f2d5f6-21c5-4a54-a61a-e85853d8a043"
 
-// 默认展示币安交易所的行情
-// 这里交给交易所直接校验
+// 这里参数交给交易所直接校验
 func (a *ApiService) getBinancePrice(c *gin.Context) {
 	symbols := c.Query("symbols")
 
-	res := types.HttpRes{}
+	binanceUrl := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
 
-	url := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
-
-	data, err := util.Get(url)
+	data, err := util.Get(binanceUrl)
 	if err != nil {
-		logrus.Info("获取币价失败", err)
+		logrus.Info("get price fail", err)
 
-		res.Code = 0
-		res.Message = "成功获取价格"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "get price fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "成功获取价格"
-	res.Data = data
-
+	res := util.ResponseMsg(0, "get price fail", data)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -56,25 +47,17 @@ func (a *ApiService) getBinancePrice(c *gin.Context) {
 func (a *ApiService) getBinance24hInfos(c *gin.Context) {
 	symbols := c.Query("symbols")
 
-	res := types.HttpRes{}
+	binanceUrl := base_binance_url + "/api/v3/ticker/24hr?symbols=" + symbols
 
-	url := base_binance_url + "/api/v3/ticker/24hr?symbols=" + symbols
-
-	data, err := util.Get(url)
+	data, err := util.Get(binanceUrl)
 	if err != nil {
-		logrus.Info("获取24小时涨跌失败", err)
+		logrus.Info("get 24 hours info fail", err)
 
-		res.Code = 0
-		res.Message = "获取24小时涨跌失败"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "get price fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "获取24小时涨跌成功"
-	res.Data = data
-
+	res := util.ResponseMsg(0, "get 24 hour success", data)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -83,8 +66,6 @@ func (a *ApiService) getBinance24hInfos(c *gin.Context) {
 func (a *ApiService) getCoinInfos(c *gin.Context) {
 	//symbols := c.Query("symbols")
 
-	res := types.HttpRes{}
-
 	cmcUrl := base_cmc_url + "v1/cryptocurrency/map"
 
 	params := url.Values{}
@@ -92,19 +73,13 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	data, err := util.GetWithDataHeader(cmcUrl, params, test_cmc_key)
 	if err != nil {
-		logrus.Info("获取币价失败", err)
+		logrus.Info("get price fail", err)
 
-		res.Code = 0
-		res.Message = "成功获取价格"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "get price fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "成功获取价格"
-	res.Data = data
-
+	res := util.ResponseMsg(0, "get price success", data)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -640,7 +615,6 @@ func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	default:
 		startTime = time.Now().AddDate(100, 0, 0).Format("2006-01-02")
 	}
-	//todo 取出用户每日收益
 	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime, time.Now().String())
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
