@@ -552,11 +552,18 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		}
 	}
 
-	// 这里判断权限-todo:如何取用户和产品对应的唯一 APIKEY APISECRET?用户可能在binance绑定多个API 怎么知道该用哪一个？
-	ApiKey := ""
-	ApiSecret := ""
-	apiKey := util.AesDecrypt(ApiKey, types.AesKey)
-	apiSecret := util.AesDecrypt(ApiSecret, types.AesKey)
+	// 这里判断权限-目前一期一个交易所只绑定一个，后期可能绑定多个，让用户选
+	bindInfo, err := db.GetUserBindInfoByUidCex(a.dbEngine, uidFormatted, "binance")
+	if err != nil {
+		logrus.Error("no found apikey:", err)
+
+		res := util.ResponseMsg(-1, "no found apikey:", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//先解密再使用
+	apiKey := util.AesDecrypt(bindInfo.ApiKey, types.AesKey)
+	apiSecret := util.AesDecrypt(bindInfo.ApiSecret, types.AesKey)
 	// 查询此apikey交易权限--目前只有币安
 	client := binance.NewClient(apiKey, apiSecret)
 	client.SetApiEndpoint(base_binance_url)
