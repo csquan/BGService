@@ -141,6 +141,10 @@ func (a *ApiService) Run() {
 		v7.GET("/getUserBeneiftInfo", authMiddleware(), a.getUserBeneiftInfo)
 
 		v7.POST("/haveFundIn", authMiddleware(), a.haveFundIn)
+
+		//得到用户地址
+		v7.GET("/getUserAddress", authMiddleware(), a.getUserAddress)
+
 		v7.POST("/fundOut", authMiddleware(), a.fundOut)
 
 		//得到用户的体验金

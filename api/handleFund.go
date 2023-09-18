@@ -189,6 +189,16 @@ func (a *ApiService) fundOut(c *gin.Context) {
 	return
 }
 
+// 得到用户地址
+func (a *ApiService) getUserAddress(c *gin.Context) {
+	//uid, _ := c.Get("Uid")
+	//uidFormatted := fmt.Sprintf("%s", uid)
+
+	res := util.ResponseMsg(0, "getUserAddress success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
 // 得到用户体验金-从用户体验表中取出即可
 func (a *ApiService) getUserExperience(c *gin.Context) {
 	//uid, _ := c.Get("Uid")
