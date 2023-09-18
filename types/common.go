@@ -31,7 +31,7 @@ JmD2FGyrrbzy+HbspLQP7hL2rexmW0m9zcGjvMGfZE+JAItNAcXTNQyrmzNBPw2Y
 `)
 
 var AesKey = "cure-d111y=1ziukr07k*!r$q=zcgto%" //AES密钥
-var base_binance_url = "https://api.binance.com"
+var Base_binance_url = "https://api.binance.com"
 
 var ApiSecret = "ZWfi7cEzDnG6jUvk3aK9tW53WZweiHLttC4jN2ZQqo5uIklPSSLmfzuDCflUJJFM"
 var ApiKey = "CaVXeFXYYkpygoacCuQihH5QIpTP0Y00J3UdC3eEj3wrnq0s9KDBa7V6msNBI16l"

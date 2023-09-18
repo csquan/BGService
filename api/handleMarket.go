@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -23,30 +24,22 @@ var base_cmc_url = "https://pro-api.coinmarketcap.com/"
 
 var test_cmc_key = "b6f2d5f6-21c5-4a54-a61a-e85853d8a043"
 
-// 默认展示币安交易所的行情
-// 这里交给交易所直接校验
+// 这里参数交给交易所直接校验
 func (a *ApiService) getBinancePrice(c *gin.Context) {
 	symbols := c.Query("symbols")
 
-	res := types.HttpRes{}
+	binanceUrl := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
+	//binanceUrl := base_binance_url + "api/v3/ticker/price"
 
-	url := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
-
-	data, err := util.Get(url)
+	data, err := util.Get(binanceUrl)
 	if err != nil {
-		logrus.Info("获取币价失败", err)
+		logrus.Info("get price fail", err)
 
-		res.Code = 0
-		res.Message = "成功获取价格"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "get price fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "成功获取价格"
-	res.Data = data
-
+	res := util.ResponseMsg(0, "get price fail", data)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -55,25 +48,17 @@ func (a *ApiService) getBinancePrice(c *gin.Context) {
 func (a *ApiService) getBinance24hInfos(c *gin.Context) {
 	symbols := c.Query("symbols")
 
-	res := types.HttpRes{}
+	binanceUrl := base_binance_url + "/api/v3/ticker/24hr?symbols=" + symbols
 
-	url := base_binance_url + "/api/v3/ticker/24hr?symbols=" + symbols
-
-	data, err := util.Get(url)
+	data, err := util.Get(binanceUrl)
 	if err != nil {
-		logrus.Info("获取24小时涨跌失败", err)
+		logrus.Info("get 24 hours info fail", err)
 
-		res.Code = 0
-		res.Message = "获取24小时涨跌失败"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "get price fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "获取24小时涨跌成功"
-	res.Data = data
-
+	res := util.ResponseMsg(0, "get 24 hour success", data)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -82,8 +67,6 @@ func (a *ApiService) getBinance24hInfos(c *gin.Context) {
 func (a *ApiService) getCoinInfos(c *gin.Context) {
 	//symbols := c.Query("symbols")
 
-	res := types.HttpRes{}
-
 	cmcUrl := base_cmc_url + "v1/cryptocurrency/map"
 
 	params := url.Values{}
@@ -91,19 +74,13 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 
 	data, err := util.GetWithDataHeader(cmcUrl, params, test_cmc_key)
 	if err != nil {
-		logrus.Info("获取币价失败", err)
+		logrus.Info("get price fail", err)
 
-		res.Code = 0
-		res.Message = "成功获取价格"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "get price fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "成功获取价格"
-	res.Data = data
-
+	res := util.ResponseMsg(0, "get price success", data)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -111,15 +88,12 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 // 将币对添加/移除个人自选
 func (a *ApiService) addConcern(c *gin.Context) {
 	var userConcern types.UserConcern
-	res := types.HttpRes{}
 
 	err := c.BindJSON(&userConcern)
 	if err != nil {
-		logrus.Info("传递的不是合法的json参数")
+		logrus.Info("not valid json")
 
-		res.Code = -1
-		res.Message = "传递的不是合法的json参数"
-		res.Data = err
+		res := util.ResponseMsg(-1, "not valid json", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -129,15 +103,17 @@ func (a *ApiService) addConcern(c *gin.Context) {
 
 	//参数校验
 	if method != "add" && method != "remove" {
-		res.Code = -1
-		res.Message = "method can not support"
+		logrus.Info("method can not support")
+
+		res := util.ResponseMsg(-1, "method can not support", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if strings.HasPrefix(coinPair, ",") || strings.HasSuffix(coinPair, ",") {
-		res.Code = -1
-		res.Message = "coinPair can not start or end with comma"
+		logrus.Info("coinPair can not start or end with comma")
+
+		res := util.ResponseMsg(-1, "coinPair can not start or end with comma", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -147,9 +123,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if err != nil {
 		logrus.Info("query db error:", err)
 
-		res.Code = -1
-		res.Message = "query db error"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -157,8 +131,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if user == nil {
 		logrus.Info("no user record:", uid)
 
-		res.Code = -1
-		res.Message = "no user record"
+		res := util.ResponseMsg(-1, "no user record:", uid)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -181,8 +154,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 				}
 			}
 			if find == false {
-				res.Code = -1
-				res.Message = "can not find remove record"
+				res := util.ResponseMsg(-1, "can not find remove record", nil)
 				c.SecureJSON(http.StatusOK, res)
 				return
 			}
@@ -191,8 +163,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 		if method == "add" {
 			concern = append(concern, coinPair)
 		} else {
-			res.Code = -1
-			res.Message = "null list can not remove anything"
+			res := util.ResponseMsg(-1, "null list can not remove anything", nil)
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
@@ -216,17 +187,12 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if err != nil {
 		logrus.Info("update user concern:", err)
 
-		res.Code = 0
-		res.Message = "update user concern"
-		res.Data = err
-
+		res := util.ResponseMsg(-1, "update user concern", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	res.Code = 0
-	res.Message = "add or remove concern success"
-
+	res := util.ResponseMsg(0, "add or remove concern success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -274,7 +240,9 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	var tradeDetails types.TradeDetails
 	var tradeList []types.TradeDetails
 	//首先得到我的策略
-	uid := c.Query("uid")
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	//status := c.Query("status")
 	//一期先不处理status
 	//首先得到我的仓位
@@ -287,7 +255,7 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	}
 
 	//查询用户策略表得到用户对应得所有策略
-	userStrategys, err := db.GetUserStrategys(a.dbEngine, uid)
+	userStrategys, err := db.GetUserStrategys(a.dbEngine, uidFormatted)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -297,7 +265,7 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	//一个稳定币只可能存在一个策略
 	for _, userStrategy := range userStrategys {
 		//查询量化收益表
-		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uidFormatted, userStrategy.StrategyID)
 
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
@@ -378,7 +346,9 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 
 	var tradeDetails types.TradeDetails
 	//首先得到我的策略
-	uid := c.Query("uid")
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	productID := c.Query("productID")
 	//一期先不处理status
 	//首先得到我的仓位
@@ -391,7 +361,7 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 	}
 
 	//查询用户策略表得到具体的策略
-	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uid, productID)
+	userStrategy, err := db.GetExactlyUserStrategy(a.dbEngine, uidFormatted, productID)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -400,7 +370,7 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 
 	//一个稳定币只可能存在一个策略
 	//查询量化收益表
-	latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uid, userStrategy.StrategyID)
+	latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uidFormatted, userStrategy.StrategyID)
 
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -480,7 +450,9 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 
 	strategy, err := db.GetStrategy(a.dbEngine, productID)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
 	symbol := util.RemoveElement(strategy.StrategyName, "/")
@@ -520,7 +492,10 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
-	uid := c.Query("uid")
+
+	uidSession, _ := c.Get("Uid")
+	uid := fmt.Sprintf("%s", uidSession)
+
 	timeType := c.Query("timeType")
 
 	startTime := time.Now()
@@ -625,7 +600,9 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	timeType := c.Query("timeType")
 	sid := c.Query("sid")
-	uid := c.Query("uid")
+
+	uidSession, _ := c.Get("Uid")
+	uid := fmt.Sprintf("%s", uidSession)
 
 	startTime := time.Now().String()
 
@@ -639,7 +616,6 @@ func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	default:
 		startTime = time.Now().AddDate(100, 0, 0).Format("2006-01-02")
 	}
-	//todo 取出用户每日收益
 	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime, time.Now().String())
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)

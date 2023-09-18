@@ -169,6 +169,18 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 	return nil, nil
 }
 
+func GetProduct(engine *xorm.Engine, productID string) (*types.Strategy, error) {
+	var strategy types.Strategy
+	has, err := engine.Where("`f_strategyID`=?", productID).Get(&strategy)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &strategy, nil
+	}
+	return nil, nil
+}
+
 func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	var userAsset types.UserAsset
 	coinName := "usdt"
@@ -196,7 +208,7 @@ func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
 
 func GetUserFundIn(engine *xorm.Engine, uid string, network string) (*types.UserFundIn, error) {
 	var userFundIn types.UserFundIn
-	has, err := engine.Table("userFundIn").Where("f_uid=? and f_network=?", uid, network).OrderBy("f_id desc").Limit(1).Get(&userFundIn)
+	has, err := engine.Table("fundIn").Where("f_uid=? and f_network=?", uid, network).OrderBy("f_id desc").Limit(1).Get(&userFundIn)
 	if err != nil {
 		return nil, err
 	}
@@ -204,6 +216,42 @@ func GetUserFundIn(engine *xorm.Engine, uid string, network string) (*types.User
 		return &userFundIn, nil
 	}
 	return nil, nil
+}
+
+func GetUserAllFundIn(engine *xorm.Engine, uid string) (*[]types.UserFundIn, error) {
+	var userFundIns []types.UserFundIn
+	err := engine.Table("fundIn").Where("`f_uid`=?", uid).Desc("f_id").Find(&userFundIns)
+	if err != nil {
+		return nil, err
+	}
+	return &userFundIns, nil
+}
+
+func GetUserAllFundOut(engine *xorm.Engine, userAddr string) (*[]types.UserFundOut, error) {
+	var userFundOuts []types.UserFundOut
+	err := engine.Table("fundOut").Where("f_from= ?", userAddr).Desc("f_id").Find(&userFundOuts)
+	if err != nil {
+		return nil, err
+	}
+	return &userFundOuts, nil
+}
+
+func GetUserAllShare(engine *xorm.Engine, uid string) (*[]types.UserShare, error) {
+	var userShares []types.UserShare
+	err := engine.Table("shareRecords").Where("`f_uid`=?", uid).Desc("f_id").Find(&userShares)
+	if err != nil {
+		return nil, err
+	}
+	return &userShares, nil
+}
+
+func GetUserAllExperience(engine *xorm.Engine, uid string) (*[]types.UserExperience, error) {
+	var userExperiences []types.UserExperience
+	err := engine.Table("userExperience").Where("`f_uid`=?", uid).Desc("f_id").Find(&userExperiences)
+	if err != nil {
+		return nil, err
+	}
+	return &userExperiences, nil
 }
 
 func GetUserKey(engine *xorm.Engine, addr string) (*types.UserKey, error) {
@@ -221,6 +269,18 @@ func GetUserKey(engine *xorm.Engine, addr string) (*types.UserKey, error) {
 func GetUserBindInfos(engine *xorm.Engine, uid string) (*types.UserBindInfos, error) {
 	var userBindInfos types.UserBindInfos
 	has, err := engine.Table("userBindInfos").Where("f_uid=?", uid).Get(&userBindInfos)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userBindInfos, nil
+	}
+	return nil, nil
+}
+
+func GetUserBindInfoByUidCex(engine *xorm.Engine, uid string, cex string) (*types.UserBindInfos, error) {
+	var userBindInfos types.UserBindInfos
+	has, err := engine.Table("userBindInfos").Where("f_uid=? and f_cex=?", uid, cex).Get(&userBindInfos)
 	if err != nil {
 		return nil, err
 	}

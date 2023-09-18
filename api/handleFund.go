@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -123,7 +124,7 @@ func (a *ApiService) fundOut(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//查询uid对应的地址
+	//查询uid对应的地址--todo：ADD平台奖励账户地址  应该从平台账户地址打出钱
 	fromAddr, err := db.GetUserAddr(a.dbEngine, fundOutParam.Uid)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -155,17 +156,18 @@ func (a *ApiService) fundOut(c *gin.Context) {
 	h256h.Write(rawData)
 	hash := h256h.Sum(nil)
 
-	// btcec.PrivKeyFromBytes only returns a secret key and public key
-
-	//下面取出对应私钥签名，todo：移动到单独的私钥服务器
+	//下面取出对应私钥签名
 	pri, err := db.GetUserKey(a.dbEngine, fromAddr.Addr)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	//先解密
+	priDecrypt := util.AesDecrypt(pri.PrivateKey, types.AesKey)
 
-	privateKeyBytes, _ := hex.DecodeString(pri.PrivateKey)
+	privateKeyBytes, _ := hex.DecodeString(priDecrypt)
+
 	sk, _ := btcec.PrivKeyFromBytes(privateKeyBytes)
 
 	signature, err := crypto.Sign(hash, sk.ToECDSA())
@@ -180,8 +182,176 @@ func (a *ApiService) fundOut(c *gin.Context) {
 			break
 		}
 	}
+	//todo:这里将记录插入提币记录表tx.EnergyUsed 是手续费么？？
 
 	res := util.ResponseMsg(0, "success to send tx", "hash："+hex.EncodeToString(tx.Txid))
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到用户地址
+func (a *ApiService) getUserAddress(c *gin.Context) {
+	//uid, _ := c.Get("Uid")
+	//uidFormatted := fmt.Sprintf("%s", uid)
+
+	res := util.ResponseMsg(0, "getUserAddress success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到用户体验金-从用户体验表中取出即可
+func (a *ApiService) getUserExperience(c *gin.Context) {
+	//uid, _ := c.Get("Uid")
+	//uidFormatted := fmt.Sprintf("%s", uid)
+
+	res := util.ResponseMsg(0, "getUserPlatformFundIn success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到用户佣金--从用户分佣记录表中取出即可
+func (a *ApiService) getUserShare(c *gin.Context) {
+	//uid, _ := c.Get("Uid")
+	//uidFormatted := fmt.Sprintf("%s", uid)
+
+	res := util.ResponseMsg(0, "getUserShare success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到充值记录--转入
+func (a *ApiService) getUserPlatformFundIn(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+	fundIns, err := db.GetUserAllFundIn(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var recordOutputs []types.RecordOutput
+
+	for _, fundIn := range *fundIns {
+		var recordOutput types.RecordOutput
+
+		recordOutput.Time = fundIn.CreateTime.String()
+		recordOutput.Coin = fundIn.Coin
+		recordOutput.Type = "Fund IN"
+		recordOutput.Amount = fundIn.FundInAmount
+		recordOutput.Addr = fundIn.Addr
+		recordOutput.Status = "Arrived"
+
+		recordOutputs = append(recordOutputs, recordOutput)
+	}
+
+	res := util.ResponseMsg(0, "getUserPlatformFundIn success", recordOutputs)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到充值记录--转出
+func (a *ApiService) getUserPlatformFundOut(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	//先根据UID查询对应的用户地址
+
+	userAddr, err := db.GetUserAddr(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	fundOuts, err := db.GetUserAllFundOut(a.dbEngine, userAddr.Addr)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var recordOutputAndGases []types.RecordOutputAndGas
+
+	for _, fundout := range *fundOuts {
+		var recordOutputGas types.RecordOutputAndGas
+
+		recordOutputGas.Time = fundout.CreateTime.String()
+		recordOutputGas.Coin = fundout.CoinName
+		recordOutputGas.Type = "Fund OUT"
+		recordOutputGas.Amount = fundout.Amount
+		recordOutputGas.Addr = fundout.ToAddr
+		recordOutputGas.Status = "Arrived"
+		recordOutputGas.Gas = fundout.Gas
+
+		recordOutputAndGases = append(recordOutputAndGases, recordOutputGas)
+	}
+
+	res := util.ResponseMsg(0, "getUserPlatformFundOut success", recordOutputAndGases)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到分佣记录
+func (a *ApiService) getUserPlatformShare(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	userShares, err := db.GetUserAllShare(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	var recordOutputs []types.RecordOutput
+
+	for _, userShare := range *userShares {
+		var recordOutput types.RecordOutput
+
+		recordOutput.Time = userShare.CreateTime.String()
+		recordOutput.Coin = userShare.CoinName
+		recordOutput.Type = "SHARE"
+		userShare.Amount = userShare.Amount
+		recordOutput.Status = "Arrived"
+
+		recordOutputs = append(recordOutputs, recordOutput)
+	}
+	res := util.ResponseMsg(0, "getUserPlatformFundOut success", recordOutputs)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到体验金记录
+func (a *ApiService) getUserPlatformExperience(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	userExperiences, err := db.GetUserAllExperience(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	var expRecordOutputs []types.ExpRecordOutput
+
+	for _, userExperience := range *userExperiences {
+		var expRecordOutput types.ExpRecordOutput
+
+		expRecordOutput.Time = userExperience.CreateTime.String()
+		expRecordOutput.Coin = userExperience.CoinName
+
+		switch userExperience.Type {
+		case "1":
+			expRecordOutput.Type = "quart product exp"
+		}
+		//expRecordOutput.Amount = userExperience.ReceiverSum
+		expRecordOutput.Status = "not used"
+		expRecordOutput.Valid = userExperience.ValidStartTime + "-" + userExperience.ValidEndTime
+
+		expRecordOutputs = append(expRecordOutputs, expRecordOutput)
+	}
+
+	res := util.ResponseMsg(0, "getUserPlatformFundOut success", expRecordOutputs)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

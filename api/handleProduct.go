@@ -1,7 +1,10 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -75,7 +78,7 @@ func strToInt(strList []string) []int {
 	for i, str := range strList {
 		num, err := strconv.Atoi(str)
 		if err != nil {
-			logrus.Error("无法将字符串转换为整数：", str)
+			logrus.Error("can not convert from str to int：", str)
 			return []int{}
 		}
 		intList[i] = num
@@ -337,24 +340,24 @@ func (a *ApiService) transactionRecords(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string, ProductId string, Balance float64) (error, *types.Strategy, float64, float64, float64) {
+func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string, ProductId string, Balance string) (error, *types.Strategy, string, string, string) {
 	userBindInfos, err := db.GetIdUserBindInfos(a.dbEngine, uidFormatted, id)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
-		return err, nil, 0, 0, 0
+		return err, nil, "", "", ""
 	}
 	if userBindInfos == nil {
 		res := util.ResponseMsg(-1, "fail", "apiKey is not exist")
 		c.SecureJSON(http.StatusOK, res)
-		return err, nil, 0, 0, 0
+		return err, nil, "", "", ""
 	}
 	// 获取具体产品
 	strategyInfo, err := db.GetStrategy(a.dbEngine, ProductId)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
-		return err, nil, 0, 0, 0
+		return err, nil, "", "", ""
 	}
 	//principalGuaranteeDepositDrop, err := strconv.ParseFloat(strategyInfo.PrincipalGuaranteeDepositDrop, 64)
 	//if err != nil {
@@ -371,9 +374,13 @@ func (a *ApiService) investHandle(c *gin.Context, uidFormatted string, id string
 	//	logrus.Error(err)
 	//	return err, nil, 0, 0, 0
 	//}
-	shareBonus := Balance * 0 / 100
-	managementFees := Balance * 0 / 100
-	principalGuaranteeDeposit := Balance * 0 / 100
+
+	BalanceDec, _ := decimal.NewFromString(Balance)
+	hundredDec, _ := decimal.NewFromString("100")
+	shareBonus := BalanceDec.Div(hundredDec).String()
+
+	managementFees := BalanceDec.Div(hundredDec).String()
+	principalGuaranteeDeposit := BalanceDec.Div(hundredDec).String()
 	return nil, strategyInfo, shareBonus, managementFees, principalGuaranteeDeposit
 }
 
@@ -397,10 +404,64 @@ func (a *ApiService) invest(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// TODO 根据用户绑定的交易所获取余额
-	var Balance float64
-	Balance = 100
-	err, _, shareBonus, managementFees, principalGuaranteeDeposit := a.investHandle(c, uidFormatted, id, ProductId, Balance)
+	var balance string
+	// 根据产品属性 取响应的 现货 U本位 币本位 获取余额
+	strategy, err := db.GetProduct(a.dbEngine, ProductId)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//还要根据策略名字解析得到具体交易币种
+	array := strings.Split(strategy.StrategyName, "/")
+
+	switch strategy.CoinName {
+	case "SPOT":
+		//取现货余额
+		userData, err := util.GetBinanceSpotUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceSpotUserData()
+		}
+		for _, data := range userData {
+			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
+				balance = data.Free
+			}
+		}
+	case "CM":
+		//取币本位余额
+		userData, err := util.GetBinanceCMUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceCMUserData()
+		}
+
+		for _, asset := range userData.Assets {
+			if strings.ToLower(asset.Asset) == strings.ToLower(array[0]) {
+				balance = asset.MarginBalance
+			}
+		}
+	case "UM":
+		//取U本位余额
+		userData, err := util.GetBinanceUMUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceUMUserData()
+		}
+		for _, asset := range userData.Assets {
+			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
+				balance = asset.MarginBalance
+			}
+		}
+	}
+
+	err, _, shareBonus, managementFees, principalGuaranteeDeposit := a.investHandle(c, uidFormatted, id, ProductId, balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)
@@ -408,8 +469,8 @@ func (a *ApiService) invest(c *gin.Context) {
 		return
 	}
 	body := make(map[string]interface{})
-	body["usableBalance"] = Balance
-	body["investBudget"] = Balance
+	body["usableBalance"] = balance
+	body["investBudget"] = balance
 	body["shareBonusDrop"] = 0
 	body["managementFeesDrop"] = 0
 	body["principalGuaranteeDepositDrop"] = 0
@@ -433,19 +494,105 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// TODO 根据用户绑定的交易所获取余额
-	var Balance float64
-	Balance = 100
-	err, _, _, _, _ := a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, Balance)
+	//根据用户绑定的交易所获取余额
+	balance := ""
+	// 根据产品属性 取响应的 现货 U本位 币本位 获取余额
+	strategy, err := db.GetProduct(a.dbEngine, payload.ProductId)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//还要根据策略名字解析得到具体交易币种
+	array := strings.Split(strategy.StrategyName, "/")
+
+	switch strategy.CoinName {
+	case "SPOT":
+		//取现货余额
+		userData, err := util.GetBinanceSpotUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceSpotUserData()
+		}
+		for _, data := range userData {
+			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
+				balance = data.Free
+			}
+		}
+	case "CM":
+		//取币本位余额
+		userData, err := util.GetBinanceCMUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceCMUserData()
+		}
+
+		for _, asset := range userData.Assets {
+			if strings.ToLower(asset.Asset) == strings.ToLower(array[0]) {
+				balance = asset.MarginBalance
+			}
+		}
+	case "UM":
+		//取U本位余额
+		userData, err := util.GetBinanceUMUserData()
+		for {
+			if err == nil {
+				break
+			}
+			userData, err = util.GetBinanceUMUserData()
+		}
+		for _, asset := range userData.Assets {
+			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
+				balance = asset.MarginBalance
+			}
+		}
+	}
+
+	// 这里判断权限-目前一期一个交易所只绑定一个，后期可能绑定多个，让用户选
+	bindInfo, err := db.GetUserBindInfoByUidCex(a.dbEngine, uidFormatted, "binance")
+	if err != nil {
+		logrus.Error("no found apikey:", err)
+
+		res := util.ResponseMsg(-1, "no found apikey:", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//先解密再使用
+	apiKey := util.AesDecrypt(bindInfo.ApiKey, types.AesKey)
+	apiSecret := util.AesDecrypt(bindInfo.ApiSecret, types.AesKey)
+	// 查询此apikey交易权限--目前只有币安
+	client := binance.NewClient(apiKey, apiSecret)
+	client.SetApiEndpoint(base_binance_url)
+	var permission *binance.APIKeyPermission
+	err = errors.New("init")
+	for err != nil { //这里有可能一次请求错误，被对方拒绝
+		permission, err = client.NewGetAPIKeyPermission().Do(context.Background())
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	fmt.Println("permission:", permission)
+
+	if permission.EnableFutures == false {
+		logrus.Error("no permission,future permission:", permission.EnableFutures)
+		res := util.ResponseMsg(-1, "no permission,future permission:", permission.EnableFutures)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	err, _, _, _, _ = a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	// todo 扣除费用
-	FormatBalance := strconv.FormatFloat(Balance, 2, -1, 64)
-	actualInvest, err := decimal.NewFromString(FormatBalance)
+
+	actualInvest, err := decimal.NewFromString(balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)

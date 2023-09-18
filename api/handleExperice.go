@@ -4,150 +4,136 @@ import (
 	"fmt"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
+	"github.com/ethereum/BGService/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
+// 活动资格--绑定google 绑定APIKEY todo：少个邀请人
 func (a *ApiService) checkoutQualification(c *gin.Context) {
-	uid := c.Query("uid")
-	res := types.HttpRes{}
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	// 查询三个条件-查询数据库
-	user, err := db.GetUser(a.dbEngine, uid)
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if user == nil {
-		logrus.Info("未找到用户记录", uid)
+		logrus.Info("find no user", uid)
 
-		res.Code = -1
-		res.Message = "未找到用户记录"
+		res := util.ResponseMsg(-1, "find no user", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if user.IsBindGoogle == false {
-		logrus.Info("条件不满足，google未绑定", user.IsBindGoogle)
+		logrus.Info("google is not bind", user.IsBindGoogle)
 
-		res.Code = -1
-		res.Message = "条件不满足，google未绑定"
+		res := util.ResponseMsg(-1, "google is not bind", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uid)
+	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if userBindInfos == nil {
-		logrus.Info("未找到用户绑定记录")
+		logrus.Info("find no user bind info")
 
-		res.Code = -1
-		res.Message = "未找到用户绑定记录"
-		res.Data = err
+		res := util.ResponseMsg(-1, "find no user bind info", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if len(userBindInfos.ApiKey) == 0 || len(userBindInfos.ApiSecret) == 0 {
-		logrus.Info("找到该用户的绑定记录，但是其中有一项apikey或者apiSecret为空", uid)
+		logrus.Info("find user bind info,but apikey or apiSecret is null", uid)
 
-		res.Code = -1
-		res.Message = "找到该用户的绑定记录，但是其中有一项apikey或者apiSecret为空"
+		res := util.ResponseMsg(-1, "find user bind info,but apikey or apiSecret is null", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	if user.InviteNumber < 1 {
-		logrus.Info("条件不满足，当前未邀请人", user.InviteNumber)
+		logrus.Info("condition is not satisfied,no invite person", user.InviteNumber)
 
-		res.Code = -1
-		res.Message = "条件不满足，当前未邀请人"
+		res := util.ResponseMsg(-1, "condition is not satisfied,no invite person", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	res.Code = 1
-	res.Message = "当前符合领取体验金资格"
-	res.Data = ""
+	res := util.ResponseMsg(-1, "checkoutQualification success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
 
 func (a *ApiService) getExperienceFund(c *gin.Context) {
-	uid := c.Query("uid")
-
-	res := types.HttpRes{}
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
 
 	// 查询三个条件-查询数据库
-	user, err := db.GetUser(a.dbEngine, uid)
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	if user == nil {
-		logrus.Info("未找到用户记录")
+		logrus.Info("find no user")
 
-		res.Code = -1
-		res.Message = "未找到用户记录"
-		res.Data = err
+		res := util.ResponseMsg(-1, "find no user", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	//这里首先也要检查资格
 	if user.IsBindGoogle == false {
-		logrus.Info("条件不满足，google未绑定", user.IsBindGoogle)
-		res.Code = -1
-		res.Message = "领取体验金失败：未绑定google"
+		logrus.Info("google is not bind", user.IsBindGoogle)
+
+		res := util.ResponseMsg(-1, "google is not bind", nil)
 		c.SecureJSON(http.StatusOK, res)
+		return
 	}
-	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uid)
+	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if len(userBindInfos.ApiKey) == 0 || len(userBindInfos.ApiSecret) == 0 {
-		logrus.Info("找到该用户的绑定记录，但是其中有一项apikey或者apiSecret为空", uid)
+		logrus.Info("find user bind info,but apikey or apiSecret is null", uid)
 
-		res.Code = -1
-		res.Message = "领取体验金失败：找到该用户的绑定记录，但是其中有一项apikey或者apiSecret为空"
+		res := util.ResponseMsg(-1, "find user bind info,but apikey or apiSecret is null", nil)
 		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 	if user.InviteNumber < 1 {
-		logrus.Info("条件不满足，当前未邀请人", user.InviteNumber)
-		res.Code = -1
-		res.Message = "领取体验金失败：当前未邀请人"
+		logrus.Info("condition is not satisfied,no invite person", user.InviteNumber)
+
+		res := util.ResponseMsg(-1, "condition is not satisfied,no invite person", nil)
 		c.SecureJSON(http.StatusOK, res)
+		return
 	}
-	logrus.Info("条件符合。可以领取体验金", uid)
+	logrus.Info("condition is satisfied,can get money", uid)
 
 	session := a.dbEngine.NewSession()
 	err = session.Begin()
@@ -158,21 +144,17 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if TotalRevenueInfo == nil {
-		logrus.Info("平台体验金信息不存在，请核对")
+		logrus.Info("platform exp info not exist")
 
-		res.Code = -1
-		res.Message = "平台体验金信息不存在，请核对"
-		res.Data = err
+		res := util.ResponseMsg(-1, "platform exp info not exist", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -185,17 +167,18 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(0, "internal db session rollback error", err)
+			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		logrus.Fatal(err)
 	}
 
 	//首先用户体验金增加一条记录
 	userExperience := types.UserExperience{}
 
-	userExperience.Uid = uid
-	//userExperience.BenefitRatio = 0
-	//userExperience.BenefitSum = 0
+	userExperience.UId = uidFormatted
 	userExperience.ReceiveDays = 1
 	userExperience.ReceiveSum = TotalRevenueInfo.PerSum
 
@@ -203,84 +186,74 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(0, "internal db session rollback error", err)
+			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		logrus.Fatal(err)
 	}
 
 	err = session.Commit()
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Error(err)
+
+		res := util.ResponseMsg(0, "internal db session commit  error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
-	res.Code = 0
-	res.Message = "领取体验金成功"
+	res := util.ResponseMsg(0, "get exp success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
 
-func (a *ApiService) getUserExperience(c *gin.Context) {
-	uid := c.Query("uid")
-	fmt.Println(uid)
+func (a *ApiService) getUserExperienceRatio(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
 
-	res := types.HttpRes{}
-
-	userExperience, err := db.GetUserExperience(a.dbEngine, uid)
+	userExperience, err := db.GetUserExperience(a.dbEngine, uidFormatted)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
 	if userExperience == nil {
-		logrus.Info("用户体验信息记录不存在")
+		logrus.Info("user exp info not exist")
 
-		res.Code = -1
-		res.Message = "用户体验信息记录不存在"
-		res.Data = err
+		res := util.ResponseMsg(-1, "user exp info not exist", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	res.Code = 0
-	res.Message = "获取用户体验金信息成功"
-	res.Data = userExperience
-
+	res := util.ResponseMsg(0, "user get exp success", userExperience)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
-func (a *ApiService) getPlatformExperience(c *gin.Context) {
-	res := types.HttpRes{}
 
+func (a *ApiService) getPlatformExperienceRatio(c *gin.Context) {
 	platformExperience, err := db.GetPlatformExperience(a.dbEngine)
 
 	if err != nil {
-		logrus.Info("查询db发生错误", err)
+		logrus.Info("query db error", err)
 
-		res.Code = -1
-		res.Message = "查询db发生错误"
-		res.Data = err
+		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 	if platformExperience == nil {
-		logrus.Info("平台体验信息不存在，请核对")
+		logrus.Info("platform exp not exist")
 
-		res.Code = -1
-		res.Message = "平台体验信息不存在，请核对"
-		res.Data = err
+		res := util.ResponseMsg(-1, "platform exp not exist", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	res.Code = 0
-	res.Message = "获取平台体验金信息成功"
-	res.Data = platformExperience
 
+	res := util.ResponseMsg(0, "get platform exp success", platformExperience)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

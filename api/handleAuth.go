@@ -183,18 +183,19 @@ func (a *ApiService) register(c *gin.Context) {
 		return
 	}
 
-	//todo:下面先地址本工程产生（为了快速），下周移动到另个工程-专门产生地址存储私钥
+	//下面私钥加密存储
 	addr, privateKey, name, err := services.CreateAccount()
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//todo：后期密文存储 移动到单独私钥服务器
+	priEncrypt := util.AesEncrypt(privateKey, types.AesKey)
+
 	userKey := types.UserKey{
 		Addr:       addr,
 		Name:       name,
-		PrivateKey: privateKey,
+		PrivateKey: priEncrypt,
 	}
 	_, err = session.Table("userKey").Insert(userKey)
 	if err != nil {

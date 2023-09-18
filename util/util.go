@@ -5,14 +5,6 @@ import (
 	"strings"
 )
 
-type CoinInfo struct {
-	Name         string `yaml:"name"`
-	Symbol       string `yaml:"symbol"`
-	ContractAddr string `yaml:"contract_addr"`
-	Decimal      string `yaml:"decimal"`
-	Total_Supply string `yaml:"total_supply"`
-}
-
 type HolderInfo struct {
 	Addr          string `yaml:"addr"`
 	Balance       string `yaml:"balance"`
