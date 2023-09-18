@@ -124,7 +124,7 @@ func (a *ApiService) fundOut(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//查询uid对应的地址
+	//查询uid对应的地址--todo：ADD平台奖励账户地址  应该从平台账户地址打出钱
 	fromAddr, err := db.GetUserAddr(a.dbEngine, fundOutParam.Uid)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -185,6 +185,26 @@ func (a *ApiService) fundOut(c *gin.Context) {
 	//todo:这里将记录插入提币记录表tx.EnergyUsed 是手续费么？？
 
 	res := util.ResponseMsg(0, "success to send tx", "hash："+hex.EncodeToString(tx.Txid))
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到用户体验金-从用户体验表中取出即可
+func (a *ApiService) getUserExperience(c *gin.Context) {
+	//uid, _ := c.Get("Uid")
+	//uidFormatted := fmt.Sprintf("%s", uid)
+
+	res := util.ResponseMsg(0, "getUserPlatformFundIn success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到用户佣金--从用户分佣记录表中取出即可
+func (a *ApiService) getUserShare(c *gin.Context) {
+	//uid, _ := c.Get("Uid")
+	//uidFormatted := fmt.Sprintf("%s", uid)
+
+	res := util.ResponseMsg(0, "getUserShare success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

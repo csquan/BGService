@@ -10,6 +10,7 @@ import (
 	"net/http"
 )
 
+// 活动资格--绑定google 绑定APIKEY todo：少个邀请人
 func (a *ApiService) checkoutQualification(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
@@ -207,7 +208,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) getUserExperience(c *gin.Context) {
+func (a *ApiService) getUserExperienceRatio(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
@@ -234,7 +235,7 @@ func (a *ApiService) getUserExperience(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) getPlatformExperience(c *gin.Context) {
+func (a *ApiService) getPlatformExperienceRatio(c *gin.Context) {
 	platformExperience, err := db.GetPlatformExperience(a.dbEngine)
 
 	if err != nil {

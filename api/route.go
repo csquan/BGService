@@ -120,9 +120,9 @@ func (a *ApiService) Run() {
 		v6.GET("/getExperienceFund", authMiddleware(), a.getExperienceFund)
 
 		//获得用户的体验金收益率
-		v6.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
+		v6.GET("/getUserExperienceRatio", authMiddleware(), a.getUserExperienceRatio)
 		//获取平台的体验金收益率
-		v6.GET("/getPlatformExperience", authMiddleware(), a.getPlatformExperience)
+		v6.GET("/getPlatformExperienceRatio", authMiddleware(), a.getPlatformExperienceRatio)
 	}
 
 	v7 := r.Group("/api/wallet")
@@ -142,6 +142,11 @@ func (a *ApiService) Run() {
 
 		v7.POST("/haveFundIn", authMiddleware(), a.haveFundIn)
 		v7.POST("/fundOut", authMiddleware(), a.fundOut)
+
+		//得到用户的体验金
+		v6.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
+		//得到用户的佣金
+		v6.GET("/getUserShare", authMiddleware(), a.getUserShare)
 
 		//财务日志-得到充值记录表
 		v7.GET("/getUserPlatformFundIn", authMiddleware(), a.getUserPlatformFundIn)
