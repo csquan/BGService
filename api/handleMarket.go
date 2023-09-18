@@ -29,6 +29,7 @@ func (a *ApiService) getBinancePrice(c *gin.Context) {
 	symbols := c.Query("symbols")
 
 	binanceUrl := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
+	//binanceUrl := base_binance_url + "api/v3/ticker/price"
 
 	data, err := util.Get(binanceUrl)
 	if err != nil {
