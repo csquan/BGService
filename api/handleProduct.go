@@ -487,6 +487,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
+
 	var payload *types.ExecuteStrategyInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
@@ -612,6 +613,15 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+
+	err = util.CreateServiceAndPod(apiKey, apiSecret, uidFormatted)
+
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
 	body := make(map[string]interface{})
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)

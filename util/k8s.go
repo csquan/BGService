@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -12,7 +11,7 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-func CreateServiceAndPod(apiKey string, apiSecret string, account_name string) {
+func CreateServiceAndPod(apiKey string, apiSecret string, accountName string) error {
 	gv := apiv1.SchemeGroupVersion
 	config := &rest.Config{ // K8s主机地址
 		Host: "485d-18-177-9-140.ngrok-free.app",
@@ -24,6 +23,7 @@ func CreateServiceAndPod(apiKey string, apiSecret string, account_name string) {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		logrus.Info("failed to create K8s REST client: %v", err)
+		return err
 	}
 
 	deploymentsClient := client.AppsV1().Deployments(apiv1.NamespaceDefault)
@@ -35,22 +35,23 @@ func CreateServiceAndPod(apiKey string, apiSecret string, account_name string) {
 	secret.Kind = "Secret"
 	secret.APIVersion = "v1"
 	secret.ObjectMeta = metav1.ObjectMeta{
-		Name:      uid,
+		Name:      accountName,
 		Namespace: "default",
 	}
 	dataMap := make(map[string][]byte)
 	dataMap["API_KEY"] = []byte(apiKey)
 	dataMap["API_SECRET"] = []byte(apiSecret)
-	dataMap["Account_Name"] = []byte(account_name)
+	dataMap["Account_Name"] = []byte(accountName)
 	secret.Data = dataMap
 
 	result, err := client.CoreV1().Secrets("default").Create(context.TODO(), &secret, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Println(err.Error())
+		logrus.Info(err.Error())
+		return err
 	} else {
-		fmt.Printf("Created Secret %q.\n", secret.GetObjectMeta().GetName())
+		logrus.Info("Created Secret %q.\n", secret.GetObjectMeta().GetName())
 	}
-	fmt.Printf(" * secret create: %v\n", result)
+	logrus.Info(" * secret create: %v\n", result)
 
 	//下面开始部署pod
 	deployment := &appsv1.Deployment{
@@ -59,7 +60,7 @@ func CreateServiceAndPod(apiKey string, apiSecret string, account_name string) {
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "maxpy-user", //自定义的名字
+			Name: accountName, //自定义的名字
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: pointer.Int32Ptr(1),
@@ -99,14 +100,17 @@ func CreateServiceAndPod(apiKey string, apiSecret string, account_name string) {
 			},
 		},
 	} //end deployment
-	fmt.Println(deployment)
+	logrus.Info(deployment)
 
 	//创建流程
-	result, err := deploymentsClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
+	result1, err := deploymentsClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Println(err)
+		logrus.Info(err)
+		return err
 	}
-	logrus.Info("created deployment %q.\n", result.GetObjectMeta().GetName())
+	logrus.Info("created deployment success %q.\n", result1.GetObjectMeta().GetName())
+
+	return nil
 
 	// create deployment
 
