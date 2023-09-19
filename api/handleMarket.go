@@ -241,12 +241,8 @@ func (a *ApiService) getStragetyDetail(c *gin.Context) {
 	return
 }
 
-// 得到交易账户列表--遍历我的策略产品列表
+// 得到交易账户列表--遍历我的策略产品列表--
 func (a *ApiService) getTradeList(c *gin.Context) {
-	accountTotalAssets := make(map[string]string)
-	initAssets := make(map[string]string)
-	todayBenefits := make(map[string]string)
-
 	var tradeDetails types.TradeDetails
 	var tradeList []types.TradeDetails
 	//首先得到我的策略
@@ -304,34 +300,34 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdt" || asset.Asset == "USDT" {
-					accountTotalAssets["usdt"] = asset.MarginBalance
-					initAssets["usdt"] = userStrategy.ActualInvest
-					todayBenefits["usdt"] = dayBefinit.String()
+					tradeDetails.AccountTotalAssets = asset.MarginBalance
+					tradeDetails.InitAssets = userStrategy.ActualInvest
+					tradeDetails.CurBenefit = dayBefinit.String()
+					tradeDetails.Name = strategyInfo.StrategyName
 				}
 			}
 		}
 		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdc" || asset.Asset == "USDC" {
-					accountTotalAssets["usdc"] = asset.MarginBalance
-					initAssets["usdc"] = userStrategy.ActualInvest
-					todayBenefits["usdc"] = dayBefinit.String()
+					tradeDetails.AccountTotalAssets = asset.MarginBalance
+					tradeDetails.InitAssets = userStrategy.ActualInvest
+					tradeDetails.CurBenefit = dayBefinit.String()
+					tradeDetails.Name = strategyInfo.StrategyName
 				}
 			}
 		}
 		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "busd" || asset.Asset == "BUSD" {
-					accountTotalAssets["busd"] = asset.MarginBalance
-					initAssets["busd"] = userStrategy.ActualInvest
-					todayBenefits["busd"] = dayBefinit.String()
+					tradeDetails.AccountTotalAssets = asset.MarginBalance
+					tradeDetails.InitAssets = userStrategy.ActualInvest
+					tradeDetails.CurBenefit = dayBefinit.String()
+					tradeDetails.Name = strategyInfo.StrategyName
 				}
 			}
 		}
 		tradeDetails.ProductID = userStrategy.StrategyID
-		tradeDetails.AccountTotalAssets = accountTotalAssets
-		tradeDetails.InitAssets = initAssets
-		tradeDetails.CurBenefit = todayBenefits
 		tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
 
 		tradeDetails.Source = strategyInfo.Source
@@ -350,10 +346,6 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 
 // 得到特定产品的详情
 func (a *ApiService) getTradeDetail(c *gin.Context) {
-	accountTotalAssets := make(map[string]string)
-	initAssets := make(map[string]string)
-	todayBenefits := make(map[string]string)
-
 	var tradeDetails types.TradeDetails
 	//首先得到我的策略
 	uid, _ := c.Get("Uid")
@@ -409,35 +401,34 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
 		for _, asset := range userData.Assets {
 			if asset.Asset == "usdt" || asset.Asset == "USDT" {
-				accountTotalAssets["usdt"] = asset.MarginBalance
-				initAssets["usdt"] = userStrategy.ActualInvest
-				todayBenefits["usdt"] = dayBefinit.String()
+				tradeDetails.AccountTotalAssets = asset.MarginBalance
+				tradeDetails.InitAssets = userStrategy.ActualInvest
+				tradeDetails.CurBenefit = dayBefinit.String()
+				tradeDetails.Name = strategyInfo.StrategyName
 			}
 		}
 	}
 	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
 		for _, asset := range userData.Assets {
 			if asset.Asset == "usdc" || asset.Asset == "USDC" {
-				accountTotalAssets["usdc"] = asset.MarginBalance
-				initAssets["usdc"] = userStrategy.ActualInvest
-				todayBenefits["usdc"] = dayBefinit.String()
+				tradeDetails.AccountTotalAssets = asset.MarginBalance
+				tradeDetails.InitAssets = userStrategy.ActualInvest
+				tradeDetails.CurBenefit = dayBefinit.String()
+				tradeDetails.Name = strategyInfo.StrategyName
 			}
 		}
 	}
 	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
 		for _, asset := range userData.Assets {
 			if asset.Asset == "busd" || asset.Asset == "BUSD" {
-				accountTotalAssets["busd"] = asset.MarginBalance
-				initAssets["busd"] = userStrategy.ActualInvest
-				todayBenefits["busd"] = dayBefinit.String()
+				tradeDetails.AccountTotalAssets = asset.MarginBalance
+				tradeDetails.InitAssets = userStrategy.ActualInvest
+				tradeDetails.CurBenefit = dayBefinit.String()
+				tradeDetails.Name = strategyInfo.StrategyName
 			}
 		}
 	}
-	tradeDetails.Name = strategyInfo.StrategyName
 	tradeDetails.ProductID = userStrategy.StrategyID
-	tradeDetails.AccountTotalAssets = accountTotalAssets
-	tradeDetails.InitAssets = initAssets
-	tradeDetails.CurBenefit = todayBenefits
 	tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
 
 	tradeDetails.Source = strategyInfo.Source

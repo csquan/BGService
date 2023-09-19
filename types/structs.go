@@ -43,7 +43,7 @@ type UserStrategy struct {
 type UserStrategyEarnings struct {
 	Id           string    `xorm:"f_id"`
 	Uid          string    `xorm:"f_uid"`
-	StrategyID   string    `xorm:"f_stragetyID"`
+	StrategyID   string    `xorm:"f_strategyID"`
 	DayBenefit   string    `xorm:"f_dayBenefit"`
 	DayRatio     string    `xorm:"f_dayRatio"`
 	TotalBenefit string    `xorm:"f_totalBenefit"`
@@ -391,18 +391,18 @@ type TransactionTask struct {
 }
 
 type TradeDetails struct {
-	AccountTotalAssets map[string]string `json:"accountTotalAssets"`
-	InitAssets         map[string]string `json:"initAssets"`
-	CurBenefit         map[string]string `json:"curBenefit"`
-	WithdrawalSum      map[string]string `json:"withdrawalSum"`
-	InDays             string            `json:"inDays"`
-	Source             string            `json:"source"`
-	Type               string            `json:"type"`
-	ShareRatio         string            `json:"shareRatio"`
-	DividePeriod       string            `json:"dividePeriod"`
-	AgreementPeriod    string            `json:"agreementPeriod"`
-	ProductID          string            `json:"productID"`
-	Name               string            `json:"name"`
+	AccountTotalAssets string `json:"accountTotalAssets"`
+	InitAssets         string `json:"initAssets"`
+	CurBenefit         string `json:"curBenefit"`
+	WithdrawalSum      string `json:"withdrawalSum"`
+	InDays             string `json:"inDays"`
+	Source             string `json:"source"`
+	Type               string `json:"type"`
+	ShareRatio         string `json:"shareRatio"`
+	DividePeriod       string `json:"dividePeriod"`
+	AgreementPeriod    string `json:"agreementPeriod"`
+	ProductID          string `json:"productID"`
+	Name               string `json:"name"`
 }
 
 type StrategyStats struct {
