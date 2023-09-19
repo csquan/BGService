@@ -99,8 +99,8 @@ type UserFundIn struct {
 // 用户提币记录表
 type UserFundOut struct {
 	Id         int64     `xorm:"f_id"`
-	FromAddr   string    `xorm:"f_from"`
-	ToAddr     string    `xorm:"f_to"`
+	FromAddr   string    `xorm:"f_fromAddr"`
+	ToAddr     string    `xorm:"f_toAddr"`
 	CoinName   string    `xorm:"f_coinName"`
 	Gas        string    `xorm:"f_gas"`
 	Amount     string    `xorm:"f_amount"`
@@ -210,7 +210,7 @@ type News struct {
 	CreateTime time.Time `xorm:"f_createTime"`
 	UpdateTime time.Time `xorm:"f_updateTime"`
 	Hotspot    bool      `xorm:"f_hotspot "`
-	Cover      string    `xorm:"f_cover "`
+	Cover      string    `xorm:"f_cover"`
 }
 
 type InsertUserBindInfo struct {

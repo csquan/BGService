@@ -396,7 +396,7 @@ func GetConcernList(engine *xorm.Engine, uid string) (tags []string) {
 
 func GetStrategy(engine *xorm.Engine, sid string) (*types.Strategy, error) {
 	var strategy types.Strategy
-	has, err := engine.Table("strategy").Where("`f_strategyID`=? and `f_isValid`=?", sid, true).Get(&strategy)
+	has, err := engine.Table("strategys").Where("`f_strategyID`=? and `f_isValid`=?", sid, true).Get(&strategy)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
