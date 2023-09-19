@@ -165,9 +165,10 @@ type ExpRecordOutput struct {
 }
 
 type FundOutParam struct {
-	Uid    string
-	ToAddr string
-	Amount string
+	Uid     string
+	ToAddr  string
+	Amount  string
+	Network string
 }
 
 type AccountIdentifier struct {

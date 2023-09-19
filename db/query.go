@@ -194,9 +194,32 @@ func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	return nil, nil
 }
 
-func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
+func GetUserShare(engine *xorm.Engine, uid string) (*types.UserShare, error) {
+	var userShare types.UserShare
+	coinName := "usdt"
+	has, err := engine.Table("shareRecords").Where("f_uid=? and `f_coinName`=?", uid, coinName).Get(&userShare)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &userShare, nil
+	}
+	return nil, nil
+}
+
+func GetUserAddrs(engine *xorm.Engine, uid string) (error, []types.UserAddr) {
+	var userAddrs []types.UserAddr
+	err := engine.Table("userAddr").Where("f_uid=?", uid).Find(&userAddrs)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, userAddrs
+}
+
+func GetUserAddr(engine *xorm.Engine, uid string, network string) (*types.UserAddr, error) {
 	var userAddr types.UserAddr
-	has, err := engine.Table("userAddr").Where("f_uid=?", uid).Get(&userAddr)
+	has, err := engine.Table("userAddr").Where("f_uid=? and f_network=?", uid, network).Get(&userAddr)
 	if err != nil {
 		return nil, err
 	}
