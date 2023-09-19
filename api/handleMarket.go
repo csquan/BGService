@@ -88,6 +88,9 @@ func (a *ApiService) getCoinInfos(c *gin.Context) {
 // 将币对添加/移除个人自选
 func (a *ApiService) addConcern(c *gin.Context) {
 	var userConcern types.UserConcern
+	Uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", Uid)
 
 	err := c.BindJSON(&userConcern)
 	if err != nil {
@@ -97,9 +100,9 @@ func (a *ApiService) addConcern(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	uid := userConcern.Uid
-	coinPair := userConcern.CoinPair
-	method := userConcern.Method
+	uid := uidFormatted
+	coinPair := strings.ToLower(userConcern.CoinPair)
+	method := strings.ToLower(userConcern.Method)
 
 	//参数校验
 	if method != "add" && method != "remove" {
@@ -141,6 +144,13 @@ func (a *ApiService) addConcern(c *gin.Context) {
 		concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
 		logrus.Info(concern)
 		if method == "add" {
+			//判断，该币种列表是否已经存在
+			if strings.Contains(user.ConcernCoinList, coinPair) == true {
+				res := util.ResponseMsg(-1, "coinPair is already exist", nil)
+				c.SecureJSON(http.StatusOK, res)
+				return
+			}
+
 			concern = append(concern, coinPair)
 			logrus.Info(concern)
 		} else {

@@ -108,9 +108,8 @@ func (a *ApiService) Run() {
 
 	v4 := r.Group("/api/market")
 	{
-		v4.GET("/getBinancePrice", a.getBinancePrice)
 		//添加/移除自选
-		v4.POST("/addConcern", a.addConcern)
+		v4.POST("/addConcern", authMiddleware(), a.addConcern)
 	}
 
 	v6 := r.Group("/api/experienceActivity")

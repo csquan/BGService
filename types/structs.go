@@ -248,7 +248,6 @@ type UserCodeInfos struct {
 }
 
 type UserConcern struct {
-	Uid      string `json:"uid"`
 	CoinPair string `json:"coinPair"`
 	Method   string `json:"method"`
 }
