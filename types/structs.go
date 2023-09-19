@@ -17,7 +17,6 @@ type Users struct {
 	IsIDVerify          bool      `xorm:"f_isIDVerify "`
 	Mobile              string    `xorm:"f_mobile"`
 	InviteNumber        int       `xorm:"f_inviteNumber"`
-	ClaimRewardNumber   int       `xorm:"f_claimRewardNumber "`
 	ConcernCoinList     string    `xorm:"f_concernCoinList"`
 	CollectStragetyList string    `xorm:"f_collectStragetyList"`
 	UpdateTime          time.Time `xorm:"f_updateTime"`

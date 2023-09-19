@@ -141,13 +141,13 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		return
 	}
 
-	keyEncrypt := util.AesEncrypt(types.ApiKey, types.AesKey)
-	secretEncrypt := util.AesEncrypt(types.ApiSecret, types.AesKey)
+	keyEncrypt := util.AesEncrypt(payload.ApiKey, types.AesKey)
+	secretEncrypt := util.AesEncrypt(payload.ApiSecret, types.AesKey)
 
 	fmt.Println("keyEncrypt:", keyEncrypt)
 	fmt.Println("secretEncrypt:", secretEncrypt)
 
-	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, payload.ApiKey)
+	userBindInfos, err := db.GetApiKeyUserBindInfos(a.dbEngine, keyEncrypt)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -274,26 +274,18 @@ func (a *ApiService) inviteRanking(c *gin.Context) {
 	}
 	var inviteUserList []interface{}
 	var myPlaced int
-	var myCommission int
 	if len(inviteUserNum) > 0 {
 		for i := 0; i < len(inviteUserNum); i++ {
 			value := inviteUserNum[i]
 			// 邀请到人的情况能查到排名
 			if value.Uid == uidFormatted {
 				myPlaced = i + 1
-				myCommission = value.ClaimRewardNumber * 10
 			}
 			inviteUserInfo := make(map[string]interface{})
 			inviteUserInfo["placed"] = i + 1
 			inviteUserInfo["username"] = value.UserName
-			inviteUserInfo["commission"] = value.ClaimRewardNumber * 10
 			inviteUserList = append(inviteUserList, inviteUserInfo)
 		}
-	}
-	// 没邀请到人的情况排名在邀请人的最后一名，佣金为0
-	if myPlaced == 0 && myCommission == 0 {
-		myPlaced = len(inviteUserNum) + 1
-		myCommission = 0
 	}
 	var inviteUserListRes []interface{}
 	if len(inviteUserList) < totalInt {
@@ -305,7 +297,7 @@ func (a *ApiService) inviteRanking(c *gin.Context) {
 	body["total"] = len(inviteUserListRes)
 	body["ranking"] = inviteUserListRes
 	body["myPlaced"] = myPlaced
-	body["myCommission"] = myCommission
+	body["myCommission"] = 0
 	res := util.ResponseMsg(1, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
