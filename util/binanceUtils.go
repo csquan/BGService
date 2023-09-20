@@ -10,8 +10,6 @@ import (
 )
 
 var (
-	secretKey                       = "bd03129b1d27f3818a5ffd363424f9bc6ed655848d063ebfecf220f3037c03da"
-	apiKey                          = "da7bab67305b2037c103c1c97d7f192c11401606cf3947769340e3a1e4e7e9c6"
 	base_future_testnet_binance_url = "https://testnet.binancefuture.com"
 	base_future_binance_url         = "https://fapi.binance.com"
 )
@@ -31,8 +29,8 @@ func GetBinanceUMUserData(apiKey, apiSecret string) (*futures.Account, error) {
 }
 
 // 币本位合约--得到账户余额
-func GetBinanceCMUserData() (*delivery.Account, error) {
-	binanceClient := delivery.NewClient(apiKey, secretKey) // USDT-M Futures
+func GetBinanceCMUserData(apiKey, apiSecret string) (*delivery.Account, error) {
+	binanceClient := delivery.NewClient(apiKey, apiSecret) // USDT-M Futures
 	binanceClient.SetApiEndpoint(base_future_testnet_binance_url)
 
 	ret, err := binanceClient.NewGetAccountService().Do(context.Background())
@@ -46,9 +44,8 @@ func GetBinanceCMUserData() (*delivery.Account, error) {
 }
 
 // 现货--得到账户余额
-func GetBinanceSpotUserData() ([]*binance.CoinInfo, error) {
-	//binance.UseTestnet = true
-	client := binance.NewClient(types.ApiKey, types.ApiSecret)
+func GetBinanceSpotUserData(apiKey, apiSecret string) ([]*binance.CoinInfo, error) {
+	client := binance.NewClient(apiKey, apiSecret)
 	client.SetApiEndpoint(types.Base_binance_url)
 
 	ret, err := client.NewGetAllCoinsInfoService().Do(context.Background())
