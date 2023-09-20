@@ -31,20 +31,21 @@ func NewApiService(dbEngine *xorm.Engine, RedisEngine db.CustomizedRedis, cfg *c
 
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// todo 登录校验
-		//session := sessions.Default(c)
-		//Uid := session.Get("Uid")
-		//if Uid == nil {
-		//	c.JSON(http.StatusUnauthorized, gin.H{
-		//		"error": "Unauthorized",
-		//	})
-		//	c.Abort()
-		//	return
-		//}
-		//// 用户已登录，将用户 ID 传递给后续的处理函数
-		//c.Set("Uid", Uid)
-		c.Set("Uid", "24670980929080")
-		c.Set("invitationCode", "VCZ34Z71")
+		session := sessions.Default(c)
+		Uid := session.Get("Uid")
+		if Uid == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			c.Abort()
+			return
+		}
+		invitationCode := session.Get("invitationCode")
+		// 用户已登录，将用户 ID 传递给后续的处理函数
+		c.Set("Uid", Uid)
+		c.Set("invitationCode", invitationCode)
+		//c.Set("Uid", "24670980929080")
+		//c.Set("invitationCode", "VCZ34Z71")
 		c.Next()
 	}
 }
