@@ -10,7 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -21,70 +20,9 @@ var base_binance_url = "https://api.binance.com/"
 
 //var base_future_binance_url = "https://fapi.binance.com"
 
-var base_cmc_url = "https://pro-api.coinmarketcap.com/"
-
-var test_cmc_key = "b6f2d5f6-21c5-4a54-a61a-e85853d8a043"
-
-// 这里参数交给交易所直接校验
-func (a *ApiService) getBinancePrice(c *gin.Context) {
-	symbols := c.Query("symbols")
-
-	binanceUrl := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
-	//binanceUrl := base_binance_url + "api/v3/ticker/price"
-
-	data, err := util.Get(binanceUrl)
-	if err != nil {
-		logrus.Info("get price fail", err)
-
-		res := util.ResponseMsg(-1, "get price fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	res := util.ResponseMsg(0, "get price fail", data)
-	c.SecureJSON(http.StatusOK, res)
-	return
-}
-
-// 这里交给交易所直接校验
-func (a *ApiService) getBinance24hInfos(c *gin.Context) {
-	symbols := c.Query("symbols")
-
-	binanceUrl := base_binance_url + "/api/v3/ticker/24hr?symbols=" + symbols
-
-	data, err := util.Get(binanceUrl)
-	if err != nil {
-		logrus.Info("get 24 hours info fail", err)
-
-		res := util.ResponseMsg(-1, "get price fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	res := util.ResponseMsg(0, "get 24 hour success", data)
-	c.SecureJSON(http.StatusOK, res)
-	return
-}
-
-// 这里交给CMC直接校验
-func (a *ApiService) getCoinInfos(c *gin.Context) {
-	//symbols := c.Query("symbols")
-
-	cmcUrl := base_cmc_url + "v1/cryptocurrency/map"
-
-	params := url.Values{}
-	params.Add("symbol", "BTC")
-
-	data, err := util.GetWithDataHeader(cmcUrl, params, test_cmc_key)
-	if err != nil {
-		logrus.Info("get price fail", err)
-
-		res := util.ResponseMsg(-1, "get price fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	res := util.ResponseMsg(0, "get price success", data)
-	c.SecureJSON(http.StatusOK, res)
-	return
-}
+//var base_cmc_url = "https://pro-api.coinmarketcap.com/"
+//
+//var test_cmc_key = "b6f2d5f6-21c5-4a54-a61a-e85853d8a043"
 
 // 将币对添加/移除个人自选
 func (a *ApiService) addConcern(c *gin.Context) {
@@ -538,7 +476,6 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	var userBenefits []types.UserBenefits
 
-	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
 
 	uidSession, _ := c.Get("Uid")
@@ -622,22 +559,28 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	maxDec, err := decimal.NewFromString(maxEarning)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 	minDec, err := decimal.NewFromString(minEarning)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 	capitalDec, err := decimal.NewFromString(capital)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
 	//净值
 	maxNetValue := decimal.Sum(capitalDec, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
 
-	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
+	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //最大回撤率
 	userBenefitNDays.Benefitlist = userBenefits
 
 	res := util.ResponseMsg(0, "getUserDaysBenefit success", userBenefitNDays)

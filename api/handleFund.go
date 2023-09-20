@@ -56,7 +56,7 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 			logrus.Fatal(err)
 		}
 	}
-	//下面更新用户资产表
+	//下面更新用户资产表--todo：目前GetUserAsset只取出U得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
 	userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
