@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -249,10 +250,30 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
+	//apiKey1 := cryptor.AesSimpleEncrypt(types.ApiKey, types.AesKey)
+	//apiSecret1 := cryptor.AesSimpleEncrypt(types.ApiSecret, types.AesKey)
+	//
+	//fmt.Println(apiKey1)
+	//fmt.Println(apiSecret1)
 	//status := c.Query("status")
 	//一期先不处理status
+
+	//由UID得到用户的APIKEY
+
+	//查询用户策略表得到用户对应得所有策略
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//这里再进行解密
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
+
 	//首先得到我的仓位
-	userData, err := util.GetBinanceUMUserData()
+	userData, err := util.GetBinanceUMUserData(apiKey, apiSecret)
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)
@@ -353,8 +374,19 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 
 	productID := c.Query("productID")
 	//一期先不处理status
+
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
+
 	//首先得到我的仓位
-	userData, err := util.GetBinanceUMUserData()
+	userData, err := util.GetBinanceUMUserData(apiKey, apiSecret)
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)
@@ -449,16 +481,31 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 	//首先得到我的策略
 	productID := c.Query("productID")
 
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	strategy, err := db.GetStrategy(a.dbEngine, productID)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	//
+	//查询用户策略表得到用户对应得所有策略
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//这里再进行解密
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
 
 	symbol := util.RemoveElement(strategy.StrategyName, "/")
 
-	userHistorys, err := util.GetBinanceUMUserTxHistory(symbol, 1000)
+	userHistorys, err := util.GetBinanceUMUserTxHistory(apiKey, apiSecret, symbol, 1000)
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)

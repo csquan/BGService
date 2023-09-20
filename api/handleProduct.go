@@ -448,12 +448,12 @@ func (a *ApiService) invest(c *gin.Context) {
 		}
 	case "UM":
 		//取U本位余额
-		userData, err := util.GetBinanceUMUserData()
+		userData, err := util.GetBinanceUMUserData("", "")
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceUMUserData()
+			userData, err = util.GetBinanceUMUserData("", "")
 		}
 		for _, asset := range userData.Assets {
 			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
@@ -540,12 +540,12 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		}
 	case "UM":
 		//取U本位余额
-		userData, err := util.GetBinanceUMUserData()
+		userData, err := util.GetBinanceUMUserData("", "")
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceUMUserData()
+			userData, err = util.GetBinanceUMUserData("", "")
 		}
 		for _, asset := range userData.Assets {
 			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
