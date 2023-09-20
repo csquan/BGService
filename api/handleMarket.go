@@ -605,19 +605,20 @@ func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	uidSession, _ := c.Get("Uid")
 	uid := fmt.Sprintf("%s", uidSession)
 
-	startTime := time.Now().String()
+	startTime := time.Now()
 
 	switch timeType {
 	case "1":
-		startTime = time.Now().AddDate(0, -1, 0).Format("2006-01-02")
-	case "2":
-		startTime = time.Now().AddDate(0, -3, 0).Format("2006-01-02")
+		startTime = time.Now().AddDate(0, -1, 0)
 	case "3":
-		startTime = time.Now().AddDate(1, 0, 0).Format("2006-01-02")
+		startTime = time.Now().AddDate(0, -3, 0)
+	case "12":
+		startTime = time.Now().AddDate(1, 0, 0)
 	default:
-		startTime = time.Now().AddDate(100, 0, 0).Format("2006-01-02")
+		startTime = time.Now().AddDate(100, 0, 0)
 	}
-	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime, time.Now().String())
+
+	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime.Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
