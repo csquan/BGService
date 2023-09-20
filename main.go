@@ -27,7 +27,7 @@ func init() {
 
 func main() {
 	var err error
-	if config.Conf, err = config.LoadConfig("./configTest"); err != nil {
+	if config.Conf, err = config.LoadConfig("./conf"); err != nil {
 		logrus.Error("🚀 Could not load environment variables")
 		panic(err)
 	}
