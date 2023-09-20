@@ -21,10 +21,10 @@ log:
       - "kafka-1.spb.com:9092"
     level: 3
 email:
-  smtpServer: "smtp.exmail.qq.com"
+  smtpServer: "smtp.gmail.com"
   smtpPort: 465
-  smtpUsername: "BG@black-golden.net"
-  smtpPassword: "mbc7JegLPAmhLxUV"
+  smtpUsername: "callmelwb@gmail.com"
+  smtpPassword: "kafywgqmcsriiljl"
 Redis:
   addr: "localhost:6379"
   password: ""
