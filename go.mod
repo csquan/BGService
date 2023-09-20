@@ -45,6 +45,7 @@ require (
 )
 
 require (
+	github.com/LinkinStars/go-scaffold/contrib/cryptor v0.0.0-20230905093116-45e3413e0f9e // indirect
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/bytedance/sonic v1.10.0 // indirect

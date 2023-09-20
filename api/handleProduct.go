@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -563,8 +564,9 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		return
 	}
 	//先解密再使用
-	apiKey := util.AesDecrypt(bindInfo.ApiKey, types.AesKey)
-	apiSecret := util.AesDecrypt(bindInfo.ApiSecret, types.AesKey)
+	apiKey := cryptor.AesSimpleDecrypt(bindInfo.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(bindInfo.ApiSecret, types.AesKey)
+
 	// 查询此apikey交易权限--目前只有币安
 	client := binance.NewClient(apiKey, apiSecret)
 	client.SetApiEndpoint(base_binance_url)
