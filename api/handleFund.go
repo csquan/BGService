@@ -228,7 +228,7 @@ func (a *ApiService) getUserShare(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
-	userShare, err := db.GetUserShare(a.dbEngine, uidFormatted)
+	userShare, err := db.GetUserAllShare(a.dbEngine, uidFormatted)
 	if err != nil {
 		res := util.ResponseMsg(-1, "getUserShare fail", err)
 		c.SecureJSON(http.StatusOK, res)
