@@ -124,6 +124,11 @@ func (a *ApiService) register(c *gin.Context) {
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
+		if user == nil {
+			res := util.ResponseMsg(-1, "fail", "Incorrect invitation code")
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		// 根据邀请人的信息查邀请人是否有上级邀请(处理二级邀请)
 		err, Invite := db.QueryInvite(a.dbEngine, user.Uid)
 		if err != nil {
@@ -153,11 +158,6 @@ func (a *ApiService) register(c *gin.Context) {
 		err = db.InsertInvitation(a.dbEngine, &newInvitation)
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
-			c.SecureJSON(http.StatusOK, res)
-			return
-		}
-		if user == nil {
-			res := util.ResponseMsg(-1, "fail", "Incorrect invitation code")
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
