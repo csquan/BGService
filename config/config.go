@@ -87,7 +87,7 @@ func Readconfig(filename string) (*Config, error) {
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigType("yaml")
-	viper.SetConfigName("configTest")
+	viper.SetConfigName("config")
 
 	viper.AutomaticEnv()
 

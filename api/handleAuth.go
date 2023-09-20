@@ -23,16 +23,16 @@ func (a *ApiService) email(c *gin.Context) {
 	email := c.Query("email")
 	// 构建电子邮件内容
 	to := []string{email}
-	subject := "BG verifyCode!"
+	subject := "BG 認証コード"
 	verifyCode := util.GenerateCode(6)
-	sendBody := fmt.Sprintf("verifyCode :%s", verifyCode)
+	sendBody := fmt.Sprintf("ユーザー %s 様<br/> こんにちは！<br/> BG をご利用いただきありがとうございます。認証コードを入力して認証を完了してください。<br/> 認証コード：%s<br/> 有効期限は 3 分間です。公開しないでください。", email, verifyCode)
 	err := util.SendEmail(a.config, to, subject, sendBody)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	err = a.RedisEngine.Set(c, email, verifyCode, 1*time.Minute).Err()
+	err = a.RedisEngine.Set(c, email, verifyCode, 3*time.Minute).Err()
 	if err != nil {
 		logrus.Error("设置值失败:", err)
 		res := util.ResponseMsg(-1, "fail", err)
