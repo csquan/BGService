@@ -10,71 +10,45 @@ import (
 	"net/http"
 )
 
-// 活动资格--绑定google 绑定APIKEY todo：少个邀请人
+// 活动资格-注册-绑定google 绑定APIKEY
 func (a *ApiService) checkoutQualification(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
-
-	// 查询三个条件-查询数据库
+	body := make(map[string]interface{})
+	body["apiBinding"] = false
+	body["isBindGoogle"] = false
+	// 查询两个条件-查询数据库
+	// 谷歌绑定检查
 	user, err := db.GetUser(a.dbEngine, uidFormatted)
-
 	if err != nil {
 		logrus.Info("query db error", err)
-
 		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-
 	if user == nil {
 		logrus.Info("find no user", uid)
-
 		res := util.ResponseMsg(-1, "find no user", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-
-	if user.IsBindGoogle == false {
-		logrus.Info("google is not bind", user.IsBindGoogle)
-
-		res := util.ResponseMsg(-1, "google is not bind", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
+	if user.IsBindGoogle == true {
+		body["isBindGoogle"] = true
 	}
+	// api绑定检查
 	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
-
 	if err != nil {
 		logrus.Info("query db error", err)
-
 		res := util.ResponseMsg(-1, "query db error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-
-	if userBindInfos == nil {
-		logrus.Info("find no user bind info")
-
-		res := util.ResponseMsg(-1, "find no user bind info", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
+	if userBindInfos != nil {
+		if len(userBindInfos.ApiKey) > 0 || len(userBindInfos.ApiSecret) > 0 {
+			body["apiBinding"] = true
+		}
 	}
-
-	if len(userBindInfos.ApiKey) == 0 || len(userBindInfos.ApiSecret) == 0 {
-		logrus.Info("find user bind info,but apikey or apiSecret is null", uid)
-
-		res := util.ResponseMsg(-1, "find user bind info,but apikey or apiSecret is null", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	if user.InviteNumber < 1 {
-		logrus.Info("condition is not satisfied,no invite person", user.InviteNumber)
-
-		res := util.ResponseMsg(-1, "condition is not satisfied,no invite person", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	res := util.ResponseMsg(-1, "checkoutQualification success", nil)
+	res := util.ResponseMsg(-1, "checkoutQualification success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

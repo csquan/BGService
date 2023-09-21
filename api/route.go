@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/ethereum/BGService/util"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 
@@ -33,10 +34,10 @@ func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		Uid := session.Get("Uid")
+		body := make(map[string]interface{})
 		if Uid == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
+			res := util.ResponseMsg(-1, "Unauthorized", body)
+			c.SecureJSON(http.StatusOK, res)
 			c.Abort()
 			return
 		}
