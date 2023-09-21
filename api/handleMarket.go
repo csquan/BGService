@@ -170,71 +170,15 @@ func (a *ApiService) getConcern(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//var concern []string
-	//
-	//if user.ConcernCoinList != "{}" && len(user.ConcernCoinList) != 0 {
-	//	concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
-	//	logrus.Info(concern)
-	//	if method == "add" {
-	//		//判断，该币种列表是否已经存在
-	//		if strings.Contains(user.ConcernCoinList, coinPair) == true {
-	//			res := util.ResponseMsg(-1, "coinPair is already exist", nil)
-	//			c.SecureJSON(http.StatusOK, res)
-	//			return
-	//		}
-	//
-	//		concern = append(concern, coinPair)
-	//		logrus.Info(concern)
-	//	} else {
-	//		//首先找到这个remove位置，找不到返回错误，找到按照这个位置remove
-	//		find := false
-	//		for index, value := range concern {
-	//			if value == coinPair {
-	//				concern = append(concern[:index], concern[index+1:]...)
-	//				find = true
-	//				break
-	//			}
-	//		}
-	//		if find == false {
-	//			res := util.ResponseMsg(-1, "can not find remove record", nil)
-	//			c.SecureJSON(http.StatusOK, res)
-	//			return
-	//		}
-	//	}
-	//} else {
-	//	if method == "add" {
-	//		concern = append(concern, coinPair)
-	//	} else {
-	//		res := util.ResponseMsg(-1, "null list can not remove anything", nil)
-	//		c.SecureJSON(http.StatusOK, res)
-	//		return
-	//	}
-	//}
-	//
-	//concernStr := "{"
-	//length := len(concern)
-	////再将这个数组转化为字串，更新数据库
-	//for index, value := range concern {
-	//	concernStr = concernStr + value
-	//
-	//	if index+1 < length {
-	//		concernStr = concernStr + ","
-	//	}
-	//}
-	//concernStr = concernStr + "}"
-	//
-	//user.ConcernCoinList = concernStr
-	//
-	//err = db.UpdateUser(a.dbEngine, uid, user)
-	//if err != nil {
-	//	logrus.Info("update user concern:", err)
-	//
-	//	res := util.ResponseMsg(-1, "update user concern", err)
-	//	c.SecureJSON(http.StatusOK, res)
-	//	return
-	//}
+	var concern []string
 
-	res := util.ResponseMsg(0, "getConcern success", user)
+	if user.ConcernCoinList != "{}" && len(user.ConcernCoinList) != 0 {
+		concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
+		logrus.Info(concern)
+	}
+	body := make(map[string]interface{})
+	body["list"] = concern
+	res := util.ResponseMsg(0, "getConcern success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
