@@ -697,3 +697,15 @@ func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
+
+func (a *ApiService) getBinanceHighPercent(c *gin.Context) {
+	ret, err := util.GetBinanceHighPercent()
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	res := util.ResponseMsg(0, "getUserBeneift success", ret)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
