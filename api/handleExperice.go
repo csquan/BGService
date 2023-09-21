@@ -44,11 +44,11 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 		return
 	}
 	if userBindInfos != nil {
-		if len(userBindInfos.ApiKey) > 0 || len(userBindInfos.ApiSecret) > 0 {
+		if len(userBindInfos.ApiKey) > 0 && len(userBindInfos.ApiSecret) > 0 {
 			body["apiBinding"] = true
 		}
 	}
-	res := util.ResponseMsg(-1, "checkoutQualification success", body)
+	res := util.ResponseMsg(0, "checkoutQualification success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
