@@ -240,7 +240,7 @@ func (a *ApiService) getConcern(c *gin.Context) {
 }
 
 // 得到特定策略的信息--总收益 总收益率 运行时长--查询用户策略收益表，统计这个策略的信息
-func (a *ApiService) GetKlinesHistory(c *gin.Context) {
+func (a *ApiService) getKlinesHistory(c *gin.Context) {
 	interval := c.Query("interval")
 	startTimeParam := c.Query("startTime")
 	endTimeParam := c.Query("endTime")
