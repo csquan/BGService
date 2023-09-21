@@ -59,7 +59,7 @@ func (a *ApiService) overview(c *gin.Context) {
 	body["globalUserCount"] = UserCount
 	body["globalUserIncome"] = UserIncome
 
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -162,7 +162,7 @@ func (a *ApiService) productList(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["list"] = ScreenStrategyList
 	body["total"] = len(ScreenStrategyList)
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -219,7 +219,7 @@ func (a *ApiService) collect(c *gin.Context) {
 		}
 	}
 	body := make(map[string]interface{})
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -279,7 +279,7 @@ func (a *ApiService) productInfo(c *gin.Context) {
 	body["divideIntoPeriods"] = strategyInfo.DividePeriod
 	body["protocolPeriod"] = strategyInfo.AgreementPeriod
 	body["hostingPlatform"] = strategyInfo.HostPlatform
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -335,7 +335,7 @@ func (a *ApiService) transactionRecords(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["total"] = len(Records)
 	body["list"] = RecordsList
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -478,7 +478,7 @@ func (a *ApiService) invest(c *gin.Context) {
 	body["managementFees"] = managementFees
 	body["principalGuaranteeDeposit"] = principalGuaranteeDeposit
 
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -623,7 +623,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	}
 
 	body := make(map[string]interface{})
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -734,7 +734,7 @@ func (a *ApiService) productRanking(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["revenueAmount"] = ProductRevenueList
 	body["revenueAmountRatio"] = RevenueRatio
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

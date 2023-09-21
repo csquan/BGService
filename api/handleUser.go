@@ -56,7 +56,7 @@ func (a *ApiService) info(c *gin.Context) {
 	body["apiBinding"] = bindNum
 	body["email"] = user.MailBox
 	body["inviteCode"] = user.InvitationCode
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -121,7 +121,7 @@ func (a *ApiService) myApi(c *gin.Context) {
 
 	body["okex"] = allOkCex
 	body["binance"] = allBinanceCex
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -176,7 +176,7 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		return
 	}
 	body := make(map[string]interface{})
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -212,7 +212,7 @@ func (a *ApiService) unbindingApi(c *gin.Context) {
 		return
 	}
 	body := make(map[string]interface{})
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -249,7 +249,7 @@ func (a *ApiService) invite(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["total"] = len(inviteUser)
 	body["List"] = inviteUserList
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -298,7 +298,7 @@ func (a *ApiService) inviteRanking(c *gin.Context) {
 	body["ranking"] = inviteUserListRes
 	body["myPlaced"] = myPlaced
 	body["myCommission"] = 0
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -313,7 +313,7 @@ func (a *ApiService) getStrategy(c *gin.Context) {
 		return
 	}
 
-	res := util.ResponseMsg(1, "success", userStrategys)
+	res := util.ResponseMsg(0, "success", userStrategys)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

@@ -67,7 +67,7 @@ func (a *ApiService) list(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["total"] = len(msg)
 	body["list"] = msgInfoList
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -114,7 +114,7 @@ func (a *ApiService) hotSpotList(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["total"] = len(msg)
 	body["list"] = msgInfoList
-	res := util.ResponseMsg(1, "success", body)
+	res := util.ResponseMsg(0, "success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -144,7 +144,7 @@ func (a *ApiService) details(c *gin.Context) {
 	msgInfo["content"] = msg.Content
 	msgInfo["image"] = msg.Cover
 	msgInfo["datetime"] = msg.CreateTime
-	res := util.ResponseMsg(1, "success", msgInfo)
+	res := util.ResponseMsg(0, "success", msgInfo)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
