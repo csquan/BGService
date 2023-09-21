@@ -147,8 +147,6 @@ func (c *UserBenefitService) Run() error {
 
 			totalDay := totalBenefit - totalBenefitFloat
 			updateEarning(db, totalDay, totalBenefit, value.Uid, value.Strategyid)
-			//todo:根据value.actualInvest投资金额在一定时间内返佣
-			//1.在用户邀请关系表中 找到邀请我的UID 2.然后在分佣记录表中 插入一条记录--判断条件：当前是否在返佣起始期间内 是的话 按照投资金额返佣
 		}
 
 	}

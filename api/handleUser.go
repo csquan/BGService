@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -76,8 +77,9 @@ func (a *ApiService) myApi(c *gin.Context) {
 	var allBinanceCex []interface{}
 	for _, value := range userBindInfos {
 		// 先解密APIKEY
-		apiKey := util.AesDecrypt(value.ApiKey, types.AesKey)
-		apiSecret := util.AesDecrypt(value.ApiSecret, types.AesKey)
+		apiKey := cryptor.AesSimpleDecrypt(value.ApiKey, types.AesKey)
+		apiSecret := cryptor.AesSimpleDecrypt(value.ApiSecret, types.AesKey)
+
 		// 查询此apikey交易权限--目前只有币安
 		client := binance.NewClient(apiKey, apiSecret)
 		client.SetApiEndpoint(base_binance_url)
@@ -126,7 +128,6 @@ func (a *ApiService) myApi(c *gin.Context) {
 	return
 }
 
-// 这里加入解密APIKEY这一套东西 ，然后存储db,再把明文对称解密一起传给前端
 func (a *ApiService) bindingApi(c *gin.Context) {
 
 	uid, _ := c.Get("Uid")

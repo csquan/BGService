@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/ethereum/BGService/util"
@@ -9,7 +10,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -20,74 +20,16 @@ var base_binance_url = "https://api.binance.com/"
 
 //var base_future_binance_url = "https://fapi.binance.com"
 
-var base_cmc_url = "https://pro-api.coinmarketcap.com/"
-
-var test_cmc_key = "b6f2d5f6-21c5-4a54-a61a-e85853d8a043"
-
-// 这里参数交给交易所直接校验
-func (a *ApiService) getBinancePrice(c *gin.Context) {
-	symbols := c.Query("symbols")
-
-	binanceUrl := base_binance_url + "api/v3/ticker/price?symbols=" + symbols
-	//binanceUrl := base_binance_url + "api/v3/ticker/price"
-
-	data, err := util.Get(binanceUrl)
-	if err != nil {
-		logrus.Info("get price fail", err)
-
-		res := util.ResponseMsg(-1, "get price fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	res := util.ResponseMsg(0, "get price fail", data)
-	c.SecureJSON(http.StatusOK, res)
-	return
-}
-
-// 这里交给交易所直接校验
-func (a *ApiService) getBinance24hInfos(c *gin.Context) {
-	symbols := c.Query("symbols")
-
-	binanceUrl := base_binance_url + "/api/v3/ticker/24hr?symbols=" + symbols
-
-	data, err := util.Get(binanceUrl)
-	if err != nil {
-		logrus.Info("get 24 hours info fail", err)
-
-		res := util.ResponseMsg(-1, "get price fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	res := util.ResponseMsg(0, "get 24 hour success", data)
-	c.SecureJSON(http.StatusOK, res)
-	return
-}
-
-// 这里交给CMC直接校验
-func (a *ApiService) getCoinInfos(c *gin.Context) {
-	//symbols := c.Query("symbols")
-
-	cmcUrl := base_cmc_url + "v1/cryptocurrency/map"
-
-	params := url.Values{}
-	params.Add("symbol", "BTC")
-
-	data, err := util.GetWithDataHeader(cmcUrl, params, test_cmc_key)
-	if err != nil {
-		logrus.Info("get price fail", err)
-
-		res := util.ResponseMsg(-1, "get price fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	res := util.ResponseMsg(0, "get price success", data)
-	c.SecureJSON(http.StatusOK, res)
-	return
-}
+//var base_cmc_url = "https://pro-api.coinmarketcap.com/"
+//
+//var test_cmc_key = "b6f2d5f6-21c5-4a54-a61a-e85853d8a043"
 
 // 将币对添加/移除个人自选
 func (a *ApiService) addConcern(c *gin.Context) {
 	var userConcern types.UserConcern
+	Uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", Uid)
 
 	err := c.BindJSON(&userConcern)
 	if err != nil {
@@ -97,9 +39,9 @@ func (a *ApiService) addConcern(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	uid := userConcern.Uid
-	coinPair := userConcern.CoinPair
-	method := userConcern.Method
+	uid := uidFormatted
+	coinPair := strings.ToLower(userConcern.CoinPair)
+	method := strings.ToLower(userConcern.Method)
 
 	//参数校验
 	if method != "add" && method != "remove" {
@@ -141,6 +83,13 @@ func (a *ApiService) addConcern(c *gin.Context) {
 		concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
 		logrus.Info(concern)
 		if method == "add" {
+			//判断，该币种列表是否已经存在
+			if strings.Contains(user.ConcernCoinList, coinPair) == true {
+				res := util.ResponseMsg(-1, "coinPair is already exist", nil)
+				c.SecureJSON(http.StatusOK, res)
+				return
+			}
+
 			concern = append(concern, coinPair)
 			logrus.Info(concern)
 		} else {
@@ -231,22 +180,38 @@ func (a *ApiService) getStragetyDetail(c *gin.Context) {
 	return
 }
 
-// 得到交易账户列表--遍历我的策略产品列表
+// 得到交易账户列表--遍历我的策略产品列表--
 func (a *ApiService) getTradeList(c *gin.Context) {
-	accountTotalAssets := make(map[string]string)
-	initAssets := make(map[string]string)
-	todayBenefits := make(map[string]string)
-
 	var tradeDetails types.TradeDetails
 	var tradeList []types.TradeDetails
 	//首先得到我的策略
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
+	//apiKey1 := cryptor.AesSimpleEncrypt(types.ApiKey, types.AesKey)
+	//apiSecret1 := cryptor.AesSimpleEncrypt(types.ApiSecret, types.AesKey)
+	//
+	//fmt.Println(apiKey1)
+	//fmt.Println(apiSecret1)
 	//status := c.Query("status")
 	//一期先不处理status
+
+	//由UID得到用户的APIKEY
+
+	//查询用户策略表得到用户对应得所有策略
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//这里再进行解密
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
+
 	//首先得到我的仓位
-	userData, err := util.GetBinanceUMUserData()
+	userData, err := util.GetBinanceUMUserData(apiKey, apiSecret)
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)
@@ -294,34 +259,34 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdt" || asset.Asset == "USDT" {
-					accountTotalAssets["usdt"] = asset.MarginBalance
-					initAssets["usdt"] = userStrategy.ActualInvest
-					todayBenefits["usdt"] = dayBefinit.String()
+					tradeDetails.AccountTotalAssets = asset.MarginBalance
+					tradeDetails.InitAssets = userStrategy.ActualInvest
+					tradeDetails.CurBenefit = dayBefinit.String()
+					tradeDetails.Name = strategyInfo.StrategyName
 				}
 			}
 		}
 		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "usdc" || asset.Asset == "USDC" {
-					accountTotalAssets["usdc"] = asset.MarginBalance
-					initAssets["usdc"] = userStrategy.ActualInvest
-					todayBenefits["usdc"] = dayBefinit.String()
+					tradeDetails.AccountTotalAssets = asset.MarginBalance
+					tradeDetails.InitAssets = userStrategy.ActualInvest
+					tradeDetails.CurBenefit = dayBefinit.String()
+					tradeDetails.Name = strategyInfo.StrategyName
 				}
 			}
 		}
 		if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
 			for _, asset := range userData.Assets {
 				if asset.Asset == "busd" || asset.Asset == "BUSD" {
-					accountTotalAssets["busd"] = asset.MarginBalance
-					initAssets["busd"] = userStrategy.ActualInvest
-					todayBenefits["busd"] = dayBefinit.String()
+					tradeDetails.AccountTotalAssets = asset.MarginBalance
+					tradeDetails.InitAssets = userStrategy.ActualInvest
+					tradeDetails.CurBenefit = dayBefinit.String()
+					tradeDetails.Name = strategyInfo.StrategyName
 				}
 			}
 		}
 		tradeDetails.ProductID = userStrategy.StrategyID
-		tradeDetails.AccountTotalAssets = accountTotalAssets
-		tradeDetails.InitAssets = initAssets
-		tradeDetails.CurBenefit = todayBenefits
 		tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
 
 		tradeDetails.Source = strategyInfo.Source
@@ -340,10 +305,6 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 
 // 得到特定产品的详情
 func (a *ApiService) getTradeDetail(c *gin.Context) {
-	accountTotalAssets := make(map[string]string)
-	initAssets := make(map[string]string)
-	todayBenefits := make(map[string]string)
-
 	var tradeDetails types.TradeDetails
 	//首先得到我的策略
 	uid, _ := c.Get("Uid")
@@ -351,8 +312,19 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 
 	productID := c.Query("productID")
 	//一期先不处理status
+
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
+
 	//首先得到我的仓位
-	userData, err := util.GetBinanceUMUserData()
+	userData, err := util.GetBinanceUMUserData(apiKey, apiSecret)
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)
@@ -399,35 +371,34 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdt") == true {
 		for _, asset := range userData.Assets {
 			if asset.Asset == "usdt" || asset.Asset == "USDT" {
-				accountTotalAssets["usdt"] = asset.MarginBalance
-				initAssets["usdt"] = userStrategy.ActualInvest
-				todayBenefits["usdt"] = dayBefinit.String()
+				tradeDetails.AccountTotalAssets = asset.MarginBalance
+				tradeDetails.InitAssets = userStrategy.ActualInvest
+				tradeDetails.CurBenefit = dayBefinit.String()
+				tradeDetails.Name = strategyInfo.StrategyName
 			}
 		}
 	}
 	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "usdc") == true {
 		for _, asset := range userData.Assets {
 			if asset.Asset == "usdc" || asset.Asset == "USDC" {
-				accountTotalAssets["usdc"] = asset.MarginBalance
-				initAssets["usdc"] = userStrategy.ActualInvest
-				todayBenefits["usdc"] = dayBefinit.String()
+				tradeDetails.AccountTotalAssets = asset.MarginBalance
+				tradeDetails.InitAssets = userStrategy.ActualInvest
+				tradeDetails.CurBenefit = dayBefinit.String()
+				tradeDetails.Name = strategyInfo.StrategyName
 			}
 		}
 	}
 	if strings.Contains(strings.ToLower(strategyInfo.StrategyName), "busd") == true {
 		for _, asset := range userData.Assets {
 			if asset.Asset == "busd" || asset.Asset == "BUSD" {
-				accountTotalAssets["busd"] = asset.MarginBalance
-				initAssets["busd"] = userStrategy.ActualInvest
-				todayBenefits["busd"] = dayBefinit.String()
+				tradeDetails.AccountTotalAssets = asset.MarginBalance
+				tradeDetails.InitAssets = userStrategy.ActualInvest
+				tradeDetails.CurBenefit = dayBefinit.String()
+				tradeDetails.Name = strategyInfo.StrategyName
 			}
 		}
 	}
-	tradeDetails.Name = strategyInfo.StrategyName
 	tradeDetails.ProductID = userStrategy.StrategyID
-	tradeDetails.AccountTotalAssets = accountTotalAssets
-	tradeDetails.InitAssets = initAssets
-	tradeDetails.CurBenefit = todayBenefits
 	tradeDetails.InDays = time.Now().Sub(userStrategy.JoinTime).String()
 
 	tradeDetails.Source = strategyInfo.Source
@@ -448,16 +419,31 @@ func (a *ApiService) getTradeHistory(c *gin.Context) {
 	//首先得到我的策略
 	productID := c.Query("productID")
 
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	strategy, err := db.GetStrategy(a.dbEngine, productID)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	//
+	//查询用户策略表得到用户对应得所有策略
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//这里再进行解密
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
 
 	symbol := util.RemoveElement(strategy.StrategyName, "/")
 
-	userHistorys, err := util.GetBinanceUMUserTxHistory(symbol, 1000)
+	userHistorys, err := util.GetBinanceUMUserTxHistory(apiKey, apiSecret, symbol, 1000)
 
 	if err != nil { //经常报 Timestamp for this request is outside of the recvWindow.
 		res := util.ResponseMsg(-1, "fail", err)
@@ -490,7 +476,6 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	var userBenefits []types.UserBenefits
 
-	//todo 取出用户每日收益-得到当前日期的前30天内最高和最低的收益
 	sid := c.Query("sid")
 
 	uidSession, _ := c.Get("Uid")
@@ -574,22 +559,28 @@ func (a *ApiService) getUserDaysBenefit(c *gin.Context) {
 
 	maxDec, err := decimal.NewFromString(maxEarning)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 	minDec, err := decimal.NewFromString(minEarning)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 	capitalDec, err := decimal.NewFromString(capital)
 	if err != nil {
-
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
 	}
 
 	//净值
 	maxNetValue := decimal.Sum(capitalDec, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
 
-	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //30日最大回撤率
+	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //最大回撤率
 	userBenefitNDays.Benefitlist = userBenefits
 
 	res := util.ResponseMsg(0, "getUserDaysBenefit success", userBenefitNDays)
@@ -604,19 +595,20 @@ func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 	uidSession, _ := c.Get("Uid")
 	uid := fmt.Sprintf("%s", uidSession)
 
-	startTime := time.Now().String()
+	startTime := time.Now()
 
 	switch timeType {
 	case "1":
-		startTime = time.Now().AddDate(0, -1, 0).Format("2006-01-02")
-	case "2":
-		startTime = time.Now().AddDate(0, -3, 0).Format("2006-01-02")
+		startTime = time.Now().AddDate(0, -1, 0)
 	case "3":
-		startTime = time.Now().AddDate(1, 0, 0).Format("2006-01-02")
+		startTime = time.Now().AddDate(0, -3, 0)
+	case "12":
+		startTime = time.Now().AddDate(1, 0, 0)
 	default:
-		startTime = time.Now().AddDate(100, 0, 0).Format("2006-01-02")
+		startTime = time.Now().AddDate(100, 0, 0)
 	}
-	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime, time.Now().String())
+
+	earnings, err := db.GetStrategyBenefits(a.dbEngine, sid, uid, startTime.Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)

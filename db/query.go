@@ -194,9 +194,19 @@ func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	return nil, nil
 }
 
-func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
+func GetUserAddrs(engine *xorm.Engine, uid string) (error, []types.UserAddr) {
+	var userAddrs []types.UserAddr
+	err := engine.Table("userAddr").Where("f_uid=?", uid).Find(&userAddrs)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, userAddrs
+}
+
+func GetUserAddr(engine *xorm.Engine, uid string, network string) (*types.UserAddr, error) {
 	var userAddr types.UserAddr
-	has, err := engine.Table("userAddr").Where("f_uid=?", uid).Get(&userAddr)
+	has, err := engine.Table("userAddr").Where("f_uid=? and f_network=?", uid, network).Get(&userAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -489,16 +499,6 @@ func GetStrategyTotalBenefits(engine *xorm.Engine, sid string) (float64, error) 
 		return 0, err
 	}
 	return total, nil
-}
-
-func GetStrategyBenefits1(engine *xorm.Engine) ([]*types.UserStrategyEarnings, error) {
-	var userStrategyEarnings []*types.UserStrategyEarnings
-	start := "2023-08-12 16:26:02"
-	err := engine.Table("userStrategyEarnings").Where("`f_createTime`<= ?", start).Find(&userStrategyEarnings)
-	if err != nil {
-		return nil, err
-	}
-	return userStrategyEarnings, nil
 }
 
 func GetStrategyBenefits(engine *xorm.Engine, sid, uid string, startTime string, endTime string) ([]*types.UserStrategyEarnings, error) {

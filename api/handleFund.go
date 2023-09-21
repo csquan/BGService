@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -32,7 +33,7 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		return
 	}
 
-	userAddr, err := db.GetUserAddr(a.dbEngine, fundInParam.Uid)
+	userAddr, err := db.GetUserAddr(a.dbEngine, fundInParam.Uid, fundInParam.Network)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -55,7 +56,7 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 			logrus.Fatal(err)
 		}
 	}
-	//下面更新用户资产表
+	//下面更新用户资产表--todo：目前GetUserAsset只取出U得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
 	userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
@@ -124,8 +125,8 @@ func (a *ApiService) fundOut(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//查询uid对应的地址--todo：ADD平台奖励账户地址  应该从平台账户地址打出钱
-	fromAddr, err := db.GetUserAddr(a.dbEngine, fundOutParam.Uid)
+	//查询uid对应的地址--todo：有可能这个用户地址上得钱被归集走了，所以应该从平台账户？？？？？
+	fromAddr, err := db.GetUserAddr(a.dbEngine, fundOutParam.Uid, fundOutParam.Network)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -191,35 +192,70 @@ func (a *ApiService) fundOut(c *gin.Context) {
 
 // 得到用户地址
 func (a *ApiService) getUserAddress(c *gin.Context) {
-	//uid, _ := c.Get("Uid")
-	//uidFormatted := fmt.Sprintf("%s", uid)
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+	network := c.Query("network")
 
-	res := util.ResponseMsg(0, "getUserAddress success", nil)
+	useAddr, err := db.GetUserAddr(a.dbEngine, uidFormatted, strings.ToLower(network))
+	if err != nil {
+		res := util.ResponseMsg(-1, "getUserAddress fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+
+	res := util.ResponseMsg(0, "getUserAddress success", useAddr)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
 
 // 得到用户体验金-从用户体验表中取出即可
 func (a *ApiService) getUserExperience(c *gin.Context) {
-	//uid, _ := c.Get("Uid")
-	//uidFormatted := fmt.Sprintf("%s", uid)
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
 
-	res := util.ResponseMsg(0, "getUserPlatformFundIn success", nil)
+	userExp, err := db.GetUserExperience(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "getUserExperience fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+
+	res := util.ResponseMsg(0, "getUserExperience success", userExp)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
 
 // 得到用户佣金--从用户分佣记录表中取出即可
 func (a *ApiService) getUserShare(c *gin.Context) {
-	//uid, _ := c.Get("Uid")
-	//uidFormatted := fmt.Sprintf("%s", uid)
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
 
-	res := util.ResponseMsg(0, "getUserShare success", nil)
+	userShare, err := db.GetUserAllShare(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "getUserShare fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+
+	res := util.ResponseMsg(0, "getUserShare success", userShare)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
 
-// 得到充值记录--转入
+// 得到用户佣金--从用户分佣记录表中取出即可
+func (a *ApiService) getUserAsset(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	userAsset, err := db.GetUserAsset(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "getUserAsset fail", err)
+		c.SecureJSON(http.StatusOK, res)
+	}
+
+	res := util.ResponseMsg(0, "getUserAsset success", userAsset)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到充值记录
 func (a *ApiService) getUserPlatformFundIn(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
@@ -249,40 +285,42 @@ func (a *ApiService) getUserPlatformFundIn(c *gin.Context) {
 	return
 }
 
-// 得到充值记录--转出
+// 得到转出记录
 func (a *ApiService) getUserPlatformFundOut(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
-	//先根据UID查询对应的用户地址
-
-	userAddr, err := db.GetUserAddr(a.dbEngine, uidFormatted)
+	//先根据UID查询对应的用户地址,这里得到得地址是一系列地址,
+	err, userAddrs := db.GetUserAddrs(a.dbEngine, uidFormatted)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
 
-	fundOuts, err := db.GetUserAllFundOut(a.dbEngine, userAddr.Addr)
-	if err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
 	var recordOutputAndGases []types.RecordOutputAndGas
 
-	for _, fundout := range *fundOuts {
-		var recordOutputGas types.RecordOutputAndGas
+	for _, userAddr := range userAddrs {
+		fundOuts, err := db.GetUserAllFundOut(a.dbEngine, userAddr.Addr)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 
-		recordOutputGas.Time = fundout.CreateTime.String()
-		recordOutputGas.Coin = fundout.CoinName
-		recordOutputGas.Type = "Fund OUT"
-		recordOutputGas.Amount = fundout.Amount
-		recordOutputGas.Addr = fundout.ToAddr
-		recordOutputGas.Status = "Arrived"
-		recordOutputGas.Gas = fundout.Gas
+		for _, fundout := range *fundOuts {
+			var recordOutputGas types.RecordOutputAndGas
 
-		recordOutputAndGases = append(recordOutputAndGases, recordOutputGas)
+			recordOutputGas.Time = fundout.CreateTime.String()
+			recordOutputGas.Coin = fundout.CoinName
+			recordOutputGas.Type = "Fund OUT"
+			recordOutputGas.Amount = fundout.Amount
+			recordOutputGas.Addr = fundout.ToAddr
+			recordOutputGas.Status = "Arrived"
+			recordOutputGas.Gas = fundout.Gas
+
+			recordOutputAndGases = append(recordOutputAndGases, recordOutputGas)
+		}
 	}
 
 	res := util.ResponseMsg(0, "getUserPlatformFundOut success", recordOutputAndGases)

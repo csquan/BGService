@@ -109,9 +109,8 @@ func (a *ApiService) Run() {
 
 	v4 := r.Group("/api/market")
 	{
-		v4.GET("/getBinancePrice", a.getBinancePrice)
 		//添加/移除自选
-		v4.POST("/addConcern", a.addConcern)
+		v4.POST("/addConcern", authMiddleware(), a.addConcern)
 	}
 
 	v6 := r.Group("/api/experienceActivity")
@@ -150,9 +149,9 @@ func (a *ApiService) Run() {
 		v7.POST("/fundOut", authMiddleware(), a.fundOut)
 
 		//得到用户的体验金
-		v6.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
+		v7.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
 		//得到用户的佣金
-		v6.GET("/getUserShare", authMiddleware(), a.getUserShare)
+		v7.GET("/getUserShare", authMiddleware(), a.getUserShare)
 
 		//财务日志-得到充值记录表
 		v7.GET("/getUserPlatformFundIn", authMiddleware(), a.getUserPlatformFundIn)
@@ -162,6 +161,10 @@ func (a *ApiService) Run() {
 		v7.GET("/getUserPlatformShare", authMiddleware(), a.getUserPlatformShare)
 		//财务日志-得到体验金记录表
 		v7.GET("/getUserPlatformExperience", authMiddleware(), a.getUserPlatformExperience)
+
+		//得到用户资金信息
+		v7.GET("/getUserAsset", authMiddleware(), a.getUserAsset)
+
 	}
 
 	v8 := r.Group("/api/product")
