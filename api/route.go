@@ -110,6 +110,10 @@ func (a *ApiService) Run() {
 	{
 		//添加/移除自选
 		v4.POST("/addConcern", authMiddleware(), a.addConcern)
+		//添加/移除自选
+		v4.GET("/getConcern", authMiddleware(), a.getConcern)
+		//添加/移除自选
+		v4.GET("/GetKlinesHistory", authMiddleware(), a.GetKlinesHistory)
 	}
 
 	v6 := r.Group("/api/experienceActivity")

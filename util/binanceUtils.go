@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"fmt"
 	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/delivery"
 	"github.com/adshao/go-binance/v2/futures"
@@ -71,4 +72,36 @@ func GetBinanceUMUserTxHistory(apiKey, apiSecret, symbol string, limit int) ([]*
 	}
 
 	return listAccountTrades, nil
+}
+
+// 1D 5分钟--288条 1W 1h--168条 1M 6h
+func GetBinanceKlinesHistory(interval string, startTime int64, endTime int64, KlineType int, symbol string) ([]*binance.Kline, error) {
+	//首先参数检验
+	err := CheckGetKlineParam(interval, startTime, endTime, KlineType)
+	if err != nil {
+		logrus.Info(err)
+		return nil, err
+	}
+	var klines []*binance.Kline
+	client := binance.NewClient(types.ApiKey, types.ApiSecret)
+	switch KlineType {
+	case 1:
+		//1D 5分钟--288
+		klines, err = client.NewKlinesService().Symbol(symbol).
+			Interval(interval).StartTime(startTime).EndTime(endTime).Do(context.Background())
+	case 2:
+		//1W 1h--168条
+		klines, err = client.NewKlinesService().Symbol(symbol).
+			Interval(interval).StartTime(startTime).EndTime(endTime).Do(context.Background())
+	case 3:
+		//1M 6h--120条左右
+		klines, err = client.NewKlinesService().Symbol(symbol).
+			Interval(interval).StartTime(startTime).EndTime(endTime).Do(context.Background())
+	}
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return klines, nil
 }

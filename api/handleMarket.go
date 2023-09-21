@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -142,6 +143,140 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	}
 
 	res := util.ResponseMsg(0, "add or remove concern success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到我得自选
+func (a *ApiService) getConcern(c *gin.Context) {
+	Uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", Uid)
+
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
+
+	if err != nil {
+		logrus.Info("query db error:", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if user == nil {
+		logrus.Info("no user record:", uidFormatted)
+
+		res := util.ResponseMsg(-1, "no user record:", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//var concern []string
+	//
+	//if user.ConcernCoinList != "{}" && len(user.ConcernCoinList) != 0 {
+	//	concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
+	//	logrus.Info(concern)
+	//	if method == "add" {
+	//		//判断，该币种列表是否已经存在
+	//		if strings.Contains(user.ConcernCoinList, coinPair) == true {
+	//			res := util.ResponseMsg(-1, "coinPair is already exist", nil)
+	//			c.SecureJSON(http.StatusOK, res)
+	//			return
+	//		}
+	//
+	//		concern = append(concern, coinPair)
+	//		logrus.Info(concern)
+	//	} else {
+	//		//首先找到这个remove位置，找不到返回错误，找到按照这个位置remove
+	//		find := false
+	//		for index, value := range concern {
+	//			if value == coinPair {
+	//				concern = append(concern[:index], concern[index+1:]...)
+	//				find = true
+	//				break
+	//			}
+	//		}
+	//		if find == false {
+	//			res := util.ResponseMsg(-1, "can not find remove record", nil)
+	//			c.SecureJSON(http.StatusOK, res)
+	//			return
+	//		}
+	//	}
+	//} else {
+	//	if method == "add" {
+	//		concern = append(concern, coinPair)
+	//	} else {
+	//		res := util.ResponseMsg(-1, "null list can not remove anything", nil)
+	//		c.SecureJSON(http.StatusOK, res)
+	//		return
+	//	}
+	//}
+	//
+	//concernStr := "{"
+	//length := len(concern)
+	////再将这个数组转化为字串，更新数据库
+	//for index, value := range concern {
+	//	concernStr = concernStr + value
+	//
+	//	if index+1 < length {
+	//		concernStr = concernStr + ","
+	//	}
+	//}
+	//concernStr = concernStr + "}"
+	//
+	//user.ConcernCoinList = concernStr
+	//
+	//err = db.UpdateUser(a.dbEngine, uid, user)
+	//if err != nil {
+	//	logrus.Info("update user concern:", err)
+	//
+	//	res := util.ResponseMsg(-1, "update user concern", err)
+	//	c.SecureJSON(http.StatusOK, res)
+	//	return
+	//}
+
+	res := util.ResponseMsg(0, "getConcern success", user)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到特定策略的信息--总收益 总收益率 运行时长--查询用户策略收益表，统计这个策略的信息
+func (a *ApiService) GetKlinesHistory(c *gin.Context) {
+	interval := c.Query("interval")
+	startTimeParam := c.Query("startTime")
+	endTimeParam := c.Query("endTime")
+	KlineTypeParam := c.Query("KlineType")
+	symbol := c.Query("symbol")
+
+	startTime, err := strconv.ParseInt(startTimeParam, 10, 64)
+	if err != nil {
+		res := util.ResponseMsg(-1, "startTime ParseInt fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	endTime, err := strconv.ParseInt(endTimeParam, 10, 64)
+	if err != nil {
+		res := util.ResponseMsg(-1, "endTime ParseInt fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	KlineType, err := strconv.Atoi(KlineTypeParam)
+	if err != nil {
+		res := util.ResponseMsg(-1, "KlineType ParseInt fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	klines, err := util.GetBinanceKlinesHistory(interval, startTime, endTime, KlineType, symbol)
+
+	if err != nil {
+		res := util.ResponseMsg(-1, "GetKlinesHistory fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(0, "GetKlinesHistory success", klines)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
