@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -142,6 +143,84 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	}
 
 	res := util.ResponseMsg(0, "add or remove concern success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到我得自选
+func (a *ApiService) getConcern(c *gin.Context) {
+	Uid, _ := c.Get("Uid")
+	// 根据uid查询用户信息
+	uidFormatted := fmt.Sprintf("%s", Uid)
+
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
+
+	if err != nil {
+		logrus.Info("query db error:", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if user == nil {
+		logrus.Info("no user record:", uidFormatted)
+
+		res := util.ResponseMsg(-1, "no user record:", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	var concern []string
+
+	if user.ConcernCoinList != "{}" && len(user.ConcernCoinList) != 0 {
+		concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
+		logrus.Info(concern)
+	}
+	body := make(map[string]interface{})
+	body["list"] = concern
+	res := util.ResponseMsg(0, "getConcern success", body)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到特定策略的信息--总收益 总收益率 运行时长--查询用户策略收益表，统计这个策略的信息
+func (a *ApiService) getKlinesHistory(c *gin.Context) {
+	interval := c.Query("interval")
+	startTimeParam := c.Query("startTime")
+	endTimeParam := c.Query("endTime")
+	KlineTypeParam := c.Query("KlineType")
+	symbol := c.Query("symbol")
+
+	startTime, err := strconv.ParseInt(startTimeParam, 10, 64)
+	if err != nil {
+		res := util.ResponseMsg(-1, "startTime ParseInt fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	endTime, err := strconv.ParseInt(endTimeParam, 10, 64)
+	if err != nil {
+		res := util.ResponseMsg(-1, "endTime ParseInt fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	KlineType, err := strconv.Atoi(KlineTypeParam)
+	if err != nil {
+		res := util.ResponseMsg(-1, "KlineType ParseInt fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	klines, err := util.GetBinanceKlinesHistory(interval, startTime, endTime, KlineType, symbol)
+
+	if err != nil {
+		res := util.ResponseMsg(-1, "GetKlinesHistory fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(0, "GetKlinesHistory success", klines)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
@@ -615,6 +694,18 @@ func (a *ApiService) getUserBeneiftInfo(c *gin.Context) {
 		return
 	}
 	res := util.ResponseMsg(0, "getUserBeneift success", earnings)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) getBinanceHighPercent(c *gin.Context) {
+	ret, err := util.GetBinanceHighPercent()
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	res := util.ResponseMsg(0, "getUserBeneift success", ret)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

@@ -393,11 +393,13 @@ func (a *ApiService) resetPassword(c *gin.Context) {
 
 // 引导下载google时调用，产生secret，保存进db
 func (a *ApiService) generateSecret(c *gin.Context) {
-	uid := c.Query("uid")
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	res := types.HttpRes{}
 
 	//首先查询出这个用户
-	user, err := db.GetUser(a.dbEngine, uid)
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
 
 	if err != nil {
 		logrus.Info(err)
@@ -417,7 +419,7 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	//产生secret
 	user.Secret = GetSecret()
 
-	err = db.UpdateUser(a.dbEngine, uid, user)
+	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		res = util.ResponseMsg(-1, "update secret err", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -432,6 +434,9 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 
 // 输入google验证码，确认后触发后端验证
 func (a *ApiService) verifyCode(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	res := types.HttpRes{}
 
 	var userCode types.UserCodeInfos
@@ -442,10 +447,9 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	uid := userCode.Uid
 	code := userCode.Code
 
-	_, secret := db.QuerySecret(a.dbEngine, uid)
+	_, secret := db.QuerySecret(a.dbEngine, uidFormatted)
 
 	codeint, err := strconv.ParseInt(code, 10, 64)
 

@@ -85,7 +85,7 @@ func (a *ApiService) Run() {
 		v1.POST("/forgotPassword", a.forgotPassword)
 		v1.POST("/resetPassword", authMiddleware(), a.resetPassword)
 		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
-		v1.POST("/verifyCode", a.verifyCode)
+		v1.POST("/verifyCode", authMiddleware(), a.verifyCode)
 	}
 	v2 := r.Group("/api/user")
 	{
@@ -111,6 +111,12 @@ func (a *ApiService) Run() {
 	{
 		//添加/移除自选
 		v4.POST("/addConcern", authMiddleware(), a.addConcern)
+		//添加/移除自选
+		v4.GET("/getConcern", authMiddleware(), a.getConcern)
+		//添加/移除自选
+		v4.GET("/getKlinesHistory", authMiddleware(), a.getKlinesHistory)
+		//添加/移除自选
+		v4.GET("/getBinanceHighPercent", authMiddleware(), a.getBinanceHighPercent)
 	}
 
 	v6 := r.Group("/api/experienceActivity")

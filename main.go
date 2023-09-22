@@ -28,15 +28,15 @@ func init() {
 func main() {
 	var err error
 	if config.Conf, err = config.LoadConfig("./conf"); err != nil {
-		logrus.Error("🚀 Could not load environment variables")
-		panic(err)
+		logrus.Info("🚀 Could not load environment variables")
+		return
 	}
 
 	flag.Parse()
 
 	err = log.Init("BGService", &config.Conf)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Info(err)
 	}
 
 	dbEngine := db.GetDBEngine(&config.Conf)

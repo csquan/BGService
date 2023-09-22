@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
 	"github.com/go-xorm/xorm"
@@ -80,4 +81,16 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 		}
 	}
 	return userFundIn.FundInAmount, nil
+}
+
+func CheckGetKlineParam(interval string, startTime int64, endTime int64, KlineType int) error {
+	if interval != "5m" && interval != "1h" && interval != "6h" {
+		logrus.Info("interval not right ")
+		return errors.New("")
+	}
+	if KlineType != 1 && KlineType != 2 && KlineType != 3 {
+		logrus.Info("KlineType not right ")
+		return errors.New("")
+	}
+	return nil
 }

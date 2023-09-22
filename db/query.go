@@ -193,6 +193,16 @@ func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	return nil, nil
 }
 
+func GetUserAllAsset(engine *xorm.Engine, uid string) (error, []types.UserAsset) {
+	var userAssets []types.UserAsset
+	err := engine.Table("userAsset").Where("`f_uid`=?", uid).Find(&userAssets)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, userAssets
+}
+
 func GetUserAddrs(engine *xorm.Engine, uid string) (error, []types.UserAddr) {
 	var userAddrs []types.UserAddr
 	err := engine.Table("userAddr").Where("f_uid=?", uid).Find(&userAddrs)

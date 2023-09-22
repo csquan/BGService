@@ -56,6 +56,7 @@ type UserAsset struct {
 	Network    string    `xorm:"f_network"`
 	CoinName   string    `xorm:"f_coinName"`
 	Available  string    `xorm:"f_available"`
+	Lock       string    `xorm:"f_lock"`
 	Total      string    `xorm:"f_total"`
 	CreateTime time.Time `xorm:"f_createTime"`
 	UpdateTime time.Time `xorm:"f_updateTime"`
@@ -161,6 +162,15 @@ type ExpRecordOutput struct {
 	Amount string `json:"amount"`
 	Valid  string `json:"valid"`
 	Status string `json:"status"`
+}
+
+type UserAssetOutput struct {
+	Uid       string `json:"uid"`
+	Network   string `json:"network"`
+	CoinName  string `json:"coinName"`
+	Available string `json:"available"`
+	Lock      string `json:"lock"`
+	Total     string `json:"total"`
 }
 
 type FundOutParam struct {
@@ -427,4 +437,50 @@ type HttpRes struct {
 	Code    int         `json:"code"`
 	Message string      `json:"msg"`
 	Data    interface{} `json:"body"`
+}
+
+// 涨幅榜结果
+type CoinStats struct {
+	Symbol  string `json:"symbol"`
+	Percent string `json:"percent"`
+}
+
+// PriceChangeStats define price change stats
+type PriceChangeStats struct {
+	Symbol             string          `json:"symbol"`
+	PriceChange        string          `json:"priceChange"`
+	PriceChangePercent decimal.Decimal `json:"priceChangePercent"`
+	WeightedAvgPrice   string          `json:"weightedAvgPrice"`
+	PrevClosePrice     string          `json:"prevClosePrice"`
+	LastPrice          string          `json:"lastPrice"`
+	LastQty            string          `json:"lastQty"`
+	BidPrice           string          `json:"bidPrice"`
+	BidQty             string          `json:"bidQty"`
+	AskPrice           string          `json:"askPrice"`
+	AskQty             string          `json:"askQty"`
+	OpenPrice          string          `json:"openPrice"`
+	HighPrice          string          `json:"highPrice"`
+	LowPrice           string          `json:"lowPrice"`
+	Volume             string          `json:"volume"`
+	QuoteVolume        string          `json:"quoteVolume"`
+	OpenTime           int64           `json:"openTime"`
+	CloseTime          int64           `json:"closeTime"`
+	FristID            int64           `json:"firstId"`
+	LastID             int64           `json:"lastId"`
+	Count              int64           `json:"count"`
+}
+
+type PriceChangeStatss []PriceChangeStats
+
+func (s PriceChangeStatss) Len() int {
+	return len(s)
+}
+
+func (s PriceChangeStatss) Less(i, j int) bool {
+	return s[i].PriceChangePercent.GreaterThan(s[j].PriceChangePercent)
+}
+
+// Swap()
+func (s PriceChangeStatss) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }

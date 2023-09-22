@@ -244,13 +244,27 @@ func (a *ApiService) getUserAsset(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
-	userAsset, err := db.GetUserAsset(a.dbEngine, uidFormatted)
+	err, userAssets := db.GetUserAllAsset(a.dbEngine, uidFormatted)
 	if err != nil {
 		res := util.ResponseMsg(-1, "getUserAsset fail", err)
 		c.SecureJSON(http.StatusOK, res)
 	}
 
-	res := util.ResponseMsg(0, "getUserAsset success", userAsset)
+	var arr []types.UserAssetOutput
+
+	for _, userAsset := range userAssets {
+		asset := types.UserAssetOutput{
+			Uid:       userAsset.Uid,
+			Network:   userAsset.Total,
+			CoinName:  userAsset.CoinName,
+			Available: userAsset.Available,
+			Lock:      userAsset.Lock,
+			Total:     userAsset.Total,
+		}
+		arr = append(arr, asset)
+	}
+
+	res := util.ResponseMsg(0, "getUserAsset success", arr)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
