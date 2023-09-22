@@ -57,6 +57,7 @@ type UserAsset struct {
 	Network    string    `xorm:"f_network"`
 	CoinName   string    `xorm:"f_coinName"`
 	Available  string    `xorm:"f_available"`
+	Lock       string    `xorm:"f_lock"`
 	Total      string    `xorm:"f_total"`
 	CreateTime time.Time `xorm:"f_createTime"`
 	UpdateTime time.Time `xorm:"f_updateTime"`
@@ -162,6 +163,15 @@ type ExpRecordOutput struct {
 	Amount string `json:"amount"`
 	Valid  string `json:"valid"`
 	Status string `json:"status"`
+}
+
+type UserAssetOutput struct {
+	Uid       string `json:"uid"`
+	Network   string `json:"network"`
+	CoinName  string `json:"coinName"`
+	Available string `json:"available"`
+	Lock      string `json:"lock"`
+	Total     string `json:"total"`
 }
 
 type FundOutParam struct {

@@ -84,7 +84,7 @@ func (a *ApiService) Run() {
 		v1.POST("/forgotPassword", a.forgotPassword)
 		v1.POST("/resetPassword", authMiddleware(), a.resetPassword)
 		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
-		v1.POST("/verifyCode", a.verifyCode)
+		v1.POST("/verifyCode", authMiddleware(), a.verifyCode)
 	}
 	v2 := r.Group("/api/user")
 	{
