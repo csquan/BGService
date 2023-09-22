@@ -41,12 +41,15 @@ func (a *ApiService) info(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	var bindNum bool
-	if len(userBindInfos.Uid) < 1 {
-		bindNum = false
-	} else {
-		bindNum = true
+	bindNum := false
+	if userBindInfos != nil {
+		if len(userBindInfos.Uid) < 1 {
+			bindNum = false
+		} else {
+			bindNum = true
+		}
 	}
+
 	body := make(map[string]interface{})
 	body["uid"] = user.Uid
 	body["userName"] = user.UserName
