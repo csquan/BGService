@@ -110,7 +110,7 @@ func (a *ApiService) productList(c *gin.Context) {
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
 		CollectStragetyListInt = strToInt(CollectStragetyList)
-	} else if payload.Strategy == "1" {
+	} else if payload.Strategy == 1 {
 		res := util.ResponseMsg(-1, "fail", "Please log in")
 		c.SecureJSON(http.StatusOK, res)
 		return

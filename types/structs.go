@@ -228,16 +228,16 @@ type InsertUserBindInfo struct {
 }
 
 type StrategyInput struct {
-	PageSize             string `json:"pageSize" binding:"required"`
-	PageIndex            string `json:"pageIndex" binding:"required"`
-	Strategy             string `json:"strategy"`
+	PageSize             int    `json:"pageSize" binding:"required"`
+	PageIndex            int    `json:"pageIndex" binding:"required"`
+	Strategy             int    `json:"strategy"`
 	Currency             string `json:"currency"`
-	StrategySource       string `json:"strategySource"`
-	ProductCategory      string `json:"productCategory"`
-	RunTime              string `json:"runTime"`
-	ExpectedYield        string `json:"expectedYield"`
-	MaxWithdrawalRate    string `json:"maxWithdrawalRate"`
-	ComprehensiveSorting string `json:"comprehensiveSorting"`
+	StrategySource       int    `json:"strategySource"`
+	ProductCategory      int    `json:"productCategory"`
+	RunTime              int    `json:"runTime"`
+	ExpectedYield        int    `json:"expectedYield"`
+	MaxWithdrawalRate    int    `json:"maxWithdrawalRate"`
+	ComprehensiveSorting int    `json:"comprehensiveSorting"`
 	Keywords             string `json:"keywords"`
 }
 
