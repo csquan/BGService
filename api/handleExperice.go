@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 )
 
 // 活动资格-注册-绑定google 绑定APIKEY
@@ -83,7 +84,8 @@ func userBind(a *ApiService, uidFormatted string) error {
 func (a *ApiService) getExperienceFund(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
-	experienceType := c.Query("type")
+	experience := c.Query("type")
+	experienceType := fmt.Sprintf("%s", experience)
 	// 查询三个条件-查询数据库
 	body := make(map[string]interface{})
 	var user *types.Users
@@ -114,53 +116,29 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	}
 
 	logrus.Info("condition is satisfied,can get money", uid)
-
 	session := a.dbEngine.NewSession()
-	err = session.Begin()
+	err := session.Begin()
 	if err != nil {
 		return
 	}
-	//平台体验金资金池减少相应的数额
-	TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
-
-	if err != nil {
-		logrus.Info("query db error", err)
-
-		res := util.ResponseMsg(-1, "query db error", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	if TotalRevenueInfo == nil {
-		logrus.Info("platform exp info not exist")
-
-		res := util.ResponseMsg(-1, "platform exp info not exist", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	//总金额减少
-	TotalRevenueInfo.TotalSum = TotalRevenueInfo.TotalSum - TotalRevenueInfo.PerSum
-	//接收人数+1
-	TotalRevenueInfo.ReceivePersons = TotalRevenueInfo.ReceivePersons + 1
-	//更新
-	_, err = session.Table("platformExperience").Update(TotalRevenueInfo)
-	if err != nil {
-		err := session.Rollback()
-		if err != nil {
-			logrus.Error(err)
-
-			res := util.ResponseMsg(0, "internal db session rollback error", err)
-			c.SecureJSON(http.StatusOK, res)
-			return
-		}
+	receiveSum := map[string]string{
+		"1": "30",
+		"2": "30",
+		"3": "40",
 	}
 
 	//首先用户体验金增加一条记录
 	userExperience := types.UserExperience{}
-
+	timeNow := time.Now()
+	sevenDayAgo := timeNow.AddDate(0, 0, 7)
 	userExperience.UId = uidFormatted
-	userExperience.ReceiveDays = 1
-	userExperience.ReceiveSum = TotalRevenueInfo.PerSum
+	userExperience.Type = "1" // 新人有礼
+	userExperience.ReceiveSum = receiveSum[experienceType]
+	userExperience.CoinName = "USDT"
+	userExperience.ValidTime = timeNow
+	userExperience.ValidStartTime = timeNow
+	userExperience.ValidStartTime = sevenDayAgo
+	userExperience.Status = true
 
 	_, err = session.Table("userExperience").Insert(userExperience)
 	if err != nil {
@@ -177,7 +155,6 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	err = session.Commit()
 	if err != nil {
 		logrus.Error(err)
-
 		res := util.ResponseMsg(0, "internal db session commit  error", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
