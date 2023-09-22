@@ -201,9 +201,11 @@ func (a *ApiService) register(c *gin.Context) {
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		logrus.Fatal(err)
 	}
 
 	userAddr := types.UserAddr{
