@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"github.com/ethereum/BGService/util"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 
@@ -32,21 +31,21 @@ func NewApiService(dbEngine *xorm.Engine, RedisEngine db.CustomizedRedis, cfg *c
 
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		Uid := session.Get("Uid")
-		body := make(map[string]interface{})
-		if Uid == nil {
-			res := util.ResponseMsg(-1, "Unauthorized", body)
-			c.SecureJSON(http.StatusOK, res)
-			c.Abort()
-			return
-		}
-		invitationCode := session.Get("invitationCode")
-		// 用户已登录，将用户 ID 传递给后续的处理函数
-		c.Set("Uid", Uid)
-		c.Set("invitationCode", invitationCode)
-		//c.Set("Uid", "24670980929080")
-		//c.Set("invitationCode", "VCZ34Z71")
+		//session := sessions.Default(c)
+		//Uid := session.Get("Uid")
+		//body := make(map[string]interface{})
+		//if Uid == nil {
+		//	res := util.ResponseMsg(-1, "Unauthorized", body)
+		//	c.SecureJSON(http.StatusOK, res)
+		//	c.Abort()
+		//	return
+		//}
+		//invitationCode := session.Get("invitationCode")
+		//// 用户已登录，将用户 ID 传递给后续的处理函数
+		//c.Set("Uid", Uid)
+		//c.Set("invitationCode", invitationCode)
+		c.Set("Uid", "24670980929080")
+		c.Set("invitationCode", "VCZ34Z71")
 		c.Next()
 	}
 }
@@ -122,10 +121,10 @@ func (a *ApiService) Run() {
 		//领取体验金
 		v6.GET("/getExperienceFund", authMiddleware(), a.getExperienceFund)
 
-		//获得用户的体验金收益率
-		v6.GET("/getUserExperienceRatio", authMiddleware(), a.getUserExperienceRatio)
-		//获取平台的体验金收益率
-		v6.GET("/getPlatformExperienceRatio", authMiddleware(), a.getPlatformExperienceRatio)
+		////获得用户的体验金收益率
+		//v6.GET("/getUserExperienceRatio", authMiddleware(), a.getUserExperienceRatio)
+		////获取平台的体验金收益率
+		//v6.GET("/getPlatformExperienceRatio", authMiddleware(), a.getPlatformExperienceRatio)
 	}
 
 	v7 := r.Group("/api/wallet")

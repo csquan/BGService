@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -53,60 +54,65 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 	return
 }
 
-func (a *ApiService) getExperienceFund(c *gin.Context) {
-	uid, _ := c.Get("Uid")
-	uidFormatted := fmt.Sprintf("%s", uid)
-
-	// 查询三个条件-查询数据库
+func userRegisterFund(a *ApiService, uidFormatted string) (error, *types.Users) {
 	user, err := db.GetUser(a.dbEngine, uidFormatted)
-
 	if err != nil {
 		logrus.Info("query db error", err)
-
-		res := util.ResponseMsg(-1, "query db error", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		return err, nil
 	}
 	if user == nil {
 		logrus.Info("find no user")
-
-		res := util.ResponseMsg(-1, "find no user", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		return errors.New("find no user"), nil
 	}
+	return nil, user
+}
 
-	//这里首先也要检查资格
-	if user.IsBindGoogle == false {
-		logrus.Info("google is not bind", user.IsBindGoogle)
-
-		res := util.ResponseMsg(-1, "google is not bind", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
+func userBind(a *ApiService, uidFormatted string) error {
 	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
-
 	if err != nil {
 		logrus.Info("query db error", err)
-
-		res := util.ResponseMsg(-1, "query db error", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		return err
 	}
-
 	if len(userBindInfos.ApiKey) == 0 || len(userBindInfos.ApiSecret) == 0 {
-		logrus.Info("find user bind info,but apikey or apiSecret is null", uid)
-
-		res := util.ResponseMsg(-1, "find user bind info,but apikey or apiSecret is null", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		logrus.Info("find user bind info,but apikey or apiSecret is null", uidFormatted)
+		return errors.New("find user bind info,but apikey or apiSecret is null")
 	}
-	if user.InviteNumber < 1 {
-		logrus.Info("condition is not satisfied,no invite person", user.InviteNumber)
+	return nil
+}
 
-		res := util.ResponseMsg(-1, "condition is not satisfied,no invite person", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
+func (a *ApiService) getExperienceFund(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+	experienceType := c.Query("type")
+	// 查询三个条件-查询数据库
+	body := make(map[string]interface{})
+	var user *types.Users
+	if experienceType == "1" {
+		// 注册校验
+		var err error
+		err, user = userRegisterFund(a, uidFormatted)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	} else if experienceType == "2" {
+		//谷歌绑定校验
+		if user.IsBindGoogle == false {
+			logrus.Info("google is not bind", user.IsBindGoogle)
+			res := util.ResponseMsg(-1, "google is not bind", body)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	} else if experienceType == "3" {
+		err := userBind(a, uidFormatted)
+		if err != nil {
+			res := util.ResponseMsg(-1, "api is not bind", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 	}
+
 	logrus.Info("condition is satisfied,can get money", uid)
 
 	session := a.dbEngine.NewSession()
@@ -177,7 +183,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 		return
 	}
 
-	res := util.ResponseMsg(0, "get exp success", nil)
+	res := util.ResponseMsg(0, "get exp success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
