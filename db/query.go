@@ -127,14 +127,14 @@ func QueryInviteCode(engine *xorm.Engine, InviteCode string) (error, *types.User
 	return nil, nil
 }
 
-func QueryInviteNum(engine *xorm.Engine, InviteCode string) (error, []types.Users) {
-	var users []types.Users
-	err := engine.Table("users").Where("`f_invitatedCode`=?", InviteCode).Find(&users)
+func QueryInviteNum(engine *xorm.Engine, InviteCode string) (error, []types.Invitation) {
+	var invitation []types.Invitation
+	err := engine.Table("invitation").Where("`f_uid`=?", InviteCode).Find(&invitation)
 	if err != nil {
 		logrus.Error(err)
 		return err, nil
 	}
-	return nil, users
+	return nil, invitation
 }
 
 func QueryInviteNumLimit(engine *xorm.Engine, InviteCode string, total int) (error, []types.Users) {
