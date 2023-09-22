@@ -252,6 +252,7 @@ func (a *ApiService) login(c *gin.Context) {
 	// 获取数据库中的密码
 	err, has := db.QueryEmail(a.dbEngine, payload.Email)
 	if err != nil {
+		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", "User does not exist.")
 		c.SecureJSON(http.StatusOK, res)
 		return
