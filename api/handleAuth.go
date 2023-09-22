@@ -178,9 +178,13 @@ func (a *ApiService) register(c *gin.Context) {
 		return
 	}
 	if _, err := session.Insert(newUser); err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 	}
 
 	//下面私钥加密存储
@@ -215,6 +219,16 @@ func (a *ApiService) register(c *gin.Context) {
 	}
 
 	_, err = session.Table("userAddr").Insert(userAddr)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+	err = session.Commit()
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
