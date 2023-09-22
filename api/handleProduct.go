@@ -144,16 +144,51 @@ func (a *ApiService) productList(c *gin.Context) {
 	var isCollect = false
 	for _, value := range ScreenStrategys {
 		ScreenStrategy := make(map[string]interface{})
-		ScreenStrategy["id"] = value.StrategyID
+		id, err := strconv.Atoi(value.StrategyID)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		ScreenStrategy["id"] = id
 		ScreenStrategy["name"] = value.StrategyName
-		ScreenStrategy["productCategory"] = value.Type
-		ScreenStrategy["recommendRate"] = value.RecommendRate
+		Category, err := strconv.Atoi(value.Type)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		ScreenStrategy["productCategory"] = Category
+		recommendRate, err := strconv.ParseInt(value.RecommendRate, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		ScreenStrategy["recommendRate"] = recommendRate
 		if payload.Currency == "1" {
 			isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
 		}
 		ScreenStrategy["isCollect"] = isCollect
-		ScreenStrategy["participateNum"] = value.ParticipateNum
-		ScreenStrategy["totalYield"] = value.TotalYield
+		participateNum, err := strconv.ParseInt(value.ParticipateNum, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		ScreenStrategy["participateNum"] = participateNum
+		totalYield, err := strconv.ParseInt(value.TotalYield, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		ScreenStrategy["totalYield"] = totalYield
 		ScreenStrategy["runTime"] = value.CreateTime
 		ScreenStrategy["maxWithdrawalRate"] = value.MaxDrawDown
 		ScreenStrategy["minimumInvestmentAmount"] = value.MinInvest
