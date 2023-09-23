@@ -125,8 +125,8 @@ func (a *ApiService) fundOut(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//查询uid对应的地址--todo：有可能这个用户地址上得钱被归集走了，所以应该从平台账户？？？？？
-	fromAddr, err := db.GetUserAddr(a.dbEngine, fundOutParam.Uid, fundOutParam.Network)
+	//查询uid对应的地址--这里用平台账户的地址
+	fromAddr, err := db.GetUserAddr(a.dbEngine, "00000000", fundOutParam.Network)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -183,8 +183,7 @@ func (a *ApiService) fundOut(c *gin.Context) {
 			break
 		}
 	}
-	//todo:这里将记录插入提币记录表tx.EnergyUsed 是手续费么？？
-
+	//todo:这里将记录插入提币记录表tx.EnergyUsed 不是手续费 没找到字段
 	res := util.ResponseMsg(0, "success to send tx", "hash："+hex.EncodeToString(tx.Txid))
 	c.SecureJSON(http.StatusOK, res)
 	return
