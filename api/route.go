@@ -190,6 +190,6 @@ func (a *ApiService) Run() {
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
-		logrus.Fatalf("start http server err:%v", err)
+		logrus.Errorf("start http server err:%v", err)
 	}
 }

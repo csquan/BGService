@@ -53,7 +53,7 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
-			logrus.Fatal(err)
+			logrus.Error(err)
 		}
 	}
 	//下面更新用户资产表--todo：目前GetUserAsset只取出U得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
@@ -92,13 +92,13 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
-			logrus.Fatal(err)
+			logrus.Error(err)
 		}
 	}
 
 	err = session.Commit()
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Error(err)
 	}
 
 	res = util.ResponseMsg(0, "success", nil)
