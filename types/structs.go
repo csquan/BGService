@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type UserUpdate struct {
+	IsBindGoogle string `xorm:"f_isBindGoogle"`
+	Secret       string `xorm:"f_secret"`
+}
+
 type Users struct {
 	Uid                 string    `xorm:"f_uid"`
 	UserName            string    `xorm:"f_userName"`
@@ -12,9 +17,9 @@ type Users struct {
 	InvitationCode      string    `xorm:"f_invitationCode"`
 	MailBox             string    `xorm:"f_mailBox"`
 	CreateTime          time.Time `xorm:"f_createTime"`
-	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
+	IsBindGoogle        bool      `xorm:"f_isBindGoogle"`
 	Secret              string    `xorm:"f_secret"`
-	IsIDVerify          bool      `xorm:"f_isIDVerify "`
+	IsIDVerify          bool      `xorm:"f_isIDVerify"`
 	Mobile              string    `xorm:"f_mobile"`
 	InviteNumber        int       `xorm:"f_inviteNumber"`
 	ConcernCoinList     string    `xorm:"f_concernCoinList"`

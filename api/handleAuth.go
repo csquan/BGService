@@ -417,10 +417,11 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	}
 
 	//产生secret
-	user.Secret = GetSecret()
-	user.IsBindGoogle = true
+	var users types.UserUpdate
+	users.Secret = GetSecret()
+	users.IsBindGoogle = "t"
 
-	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
+	err = db.UpdateUserGoogle(a.dbEngine, uidFormatted, &users)
 	if err != nil {
 		res = util.ResponseMsg(-1, "update secret err", err)
 		c.SecureJSON(http.StatusOK, res)
