@@ -70,6 +70,11 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 			return
 		}
 	}
+	if fundInAmount == "0" {
+		res := util.ResponseMsg(-1, "recharge is zeor?", fundInAmount)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	//下面更新用户资产表--todo：目前GetUserAsset只取出trx得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
 	userAsset, err := db.GetUserAsset(a.dbEngine, uidFormatted)
 	if err != nil {
