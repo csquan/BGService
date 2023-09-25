@@ -549,7 +549,6 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
-
 	var payload *types.ExecuteStrategyInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)

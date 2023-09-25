@@ -284,9 +284,10 @@ type UserInput struct {
 }
 
 type ExecuteStrategyInput struct {
-	ID        string `json:"id" binding:"required"`
-	ProductId string `json:"productId" binding:"required"`
-	IsBreak   string `json:"isBreak" binding:"required"`
+	ID         string `json:"id"`
+	ProductId  string `json:"productId"`
+	BreakValue int    `json:"breakValue"`
+	IsBreak    bool   `json:"isBreak"`
 }
 
 type UserBindInfoInput struct {
