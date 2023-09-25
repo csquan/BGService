@@ -148,6 +148,13 @@ func (a *ApiService) addConcern(c *gin.Context) {
 }
 
 // 得到我得自选
+func (a *ApiService) getCoinInfo(c *gin.Context) {
+	res := util.ResponseMsg(0, "getCoinInfo nil for now", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 得到我得自选
 func (a *ApiService) getConcern(c *gin.Context) {
 	Uid, _ := c.Get("Uid")
 	// 根据uid查询用户信息
@@ -190,6 +197,8 @@ func (a *ApiService) getKlinesHistory(c *gin.Context) {
 	endTimeParam := c.Query("endTime")
 	KlineTypeParam := c.Query("KlineType")
 	symbol := c.Query("symbol")
+
+	symbol = strings.ToUpper(symbol)
 
 	startTime, err := strconv.ParseInt(startTimeParam, 10, 64)
 	if err != nil {

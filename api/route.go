@@ -113,10 +113,12 @@ func (a *ApiService) Run() {
 		v4.POST("/addConcern", authMiddleware(), a.addConcern)
 		//添加/移除自选
 		v4.GET("/getConcern", authMiddleware(), a.getConcern)
+		//得到币种信息
+		v4.GET("/getCoinInfo", authMiddleware(), a.getCoinInfo)
 		//添加/移除自选
-		v4.GET("/getKlinesHistory", authMiddleware(), a.getKlinesHistory)
+		v4.GET("/getKlinesHistory", a.getKlinesHistory)
 		//添加/移除自选
-		v4.GET("/getBinanceHighPercent", authMiddleware(), a.getBinanceHighPercent)
+		v4.GET("/getBinanceHighPercent", a.getBinanceHighPercent)
 	}
 
 	v6 := r.Group("/api/experienceActivity")
