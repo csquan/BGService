@@ -202,7 +202,13 @@ func (a *ApiService) getUserAddress(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 	}
 
-	res := util.ResponseMsg(0, "getUserAddress success", useAddr)
+	addr := types.AddrOutput{
+		Uid:     useAddr.Uid,
+		Network: useAddr.Network,
+		Addr:    useAddr.Addr,
+	}
+
+	res := util.ResponseMsg(0, "getUserAddress success", addr)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

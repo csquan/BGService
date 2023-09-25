@@ -134,6 +134,14 @@ type UserExperience struct {
 	UpdateTime     time.Time `xorm:"f_updateTime"`
 }
 
+type AddrOutput struct {
+	Uid        string    `json:"uid"`
+	Network    string    `json:"network"`
+	Addr       string    `json:"addr"`
+	CreateTime time.Time `json:"createTime"`
+	UpdateTime time.Time `json:"updateTime"`
+}
+
 type RecordOutput struct {
 	Time   string `json:"time"`
 	Addr   string `json:"addr"`
