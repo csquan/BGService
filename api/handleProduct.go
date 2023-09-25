@@ -144,20 +144,68 @@ func (a *ApiService) productList(c *gin.Context) {
 	var isCollect = false
 	for _, value := range ScreenStrategys {
 		ScreenStrategy := make(map[string]interface{})
-		ScreenStrategy["id"] = value.StrategyID
-		ScreenStrategy["name"] = value.StrategyName
-		ScreenStrategy["productCategory"] = value.Type
-		ScreenStrategy["recommendRate"] = value.RecommendRate
+		id, err := strconv.Atoi(value.StrategyID)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		Category, err := strconv.Atoi(value.Type)
+		if err != nil {
+			logrus.Error(err)
+			Category = -1
+		}
+		recommendRate, err := strconv.Atoi(value.RecommendRate)
+		if err != nil {
+			logrus.Error(err)
+			recommendRate = -1
+		}
 		if payload.Currency == "1" {
 			isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
 		}
+		participateNum, err := strconv.Atoi(value.ParticipateNum)
+		if err != nil {
+			logrus.Error(err)
+			participateNum = -1
+		}
+		totalYield, err := strconv.ParseInt(value.TotalYield, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		maxWithdrawalRate, err := strconv.ParseInt(value.MaxDrawDown, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		minimumInvestmentAmount, err := strconv.ParseInt(value.MinInvest, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		strategySource, err := strconv.Atoi(value.Source)
+		if err != nil {
+			logrus.Error(err)
+			strategySource = -1
+		}
+		ScreenStrategy["id"] = id
+		ScreenStrategy["name"] = value.StrategyName
+		ScreenStrategy["recommendRate"] = recommendRate
+		ScreenStrategy["productCategory"] = Category
 		ScreenStrategy["isCollect"] = isCollect
-		ScreenStrategy["participateNum"] = value.ParticipateNum
-		ScreenStrategy["totalYield"] = value.TotalYield
+		ScreenStrategy["participateNum"] = participateNum
+		ScreenStrategy["totalYield"] = totalYield
 		ScreenStrategy["runTime"] = value.CreateTime
-		ScreenStrategy["maxWithdrawalRate"] = value.MaxDrawDown
-		ScreenStrategy["minimumInvestmentAmount"] = value.MinInvest
-		ScreenStrategy["strategySource"] = value.Source
+		ScreenStrategy["maxWithdrawalRate"] = maxWithdrawalRate
+		ScreenStrategy["minimumInvestmentAmount"] = minimumInvestmentAmount
+		ScreenStrategy["strategySource"] = strategySource
 		ScreenStrategyList = append(ScreenStrategyList, ScreenStrategy)
 	}
 	body := make(map[string]interface{})

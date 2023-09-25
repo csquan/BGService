@@ -418,6 +418,7 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 
 	//产生secret
 	user.Secret = GetSecret()
+	user.IsBindGoogle = true
 
 	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
 	if err != nil {

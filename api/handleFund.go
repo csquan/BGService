@@ -397,7 +397,7 @@ func (a *ApiService) getUserPlatformExperience(c *gin.Context) {
 		}
 		//expRecordOutput.Amount = userExperience.ReceiverSum
 		expRecordOutput.Status = "not used"
-		expRecordOutput.Valid = userExperience.ValidStartTime + "-" + userExperience.ValidEndTime
+		expRecordOutput.Valid = userExperience.ValidStartTime.String() + "-" + userExperience.ValidEndTime.String()
 
 		expRecordOutputs = append(expRecordOutputs, expRecordOutput)
 	}
