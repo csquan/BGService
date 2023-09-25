@@ -1,5 +1,5 @@
 pgsql_config = {
-    "database": "postgres",
+    "database": "bgservice_test",
     "user": "postgres",
     "password": "12345",
     "host": "127.0.0.1",
