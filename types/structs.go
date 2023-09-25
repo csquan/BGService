@@ -270,7 +270,7 @@ type UserCodeInfos struct {
 
 type UserConcern struct {
 	CoinPair string `json:"coinPair"`
-	Method   string `json:"method"`
+	Method   int    `json:"method"`
 }
 
 type UserInput struct {

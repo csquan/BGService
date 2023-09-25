@@ -42,10 +42,10 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	}
 	uid := uidFormatted
 	coinPair := strings.ToLower(userConcern.CoinPair)
-	method := strings.ToLower(userConcern.Method)
+	method := userConcern.Method
 
 	//参数校验
-	if method != "add" && method != "remove" {
+	if method != 1 && method != 2 {
 		logrus.Info("method can not support")
 
 		res := util.ResponseMsg(-1, "method can not support", err)
@@ -83,7 +83,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 	if user.ConcernCoinList != "{}" && len(user.ConcernCoinList) != 0 {
 		concern = strings.Split(user.ConcernCoinList[1:len(user.ConcernCoinList)-1], ",")
 		logrus.Info(concern)
-		if method == "add" {
+		if method == 1 {
 			//判断，该币种列表是否已经存在
 			if strings.Contains(user.ConcernCoinList, coinPair) == true {
 				res := util.ResponseMsg(-1, "coinPair is already exist", nil)
@@ -110,7 +110,7 @@ func (a *ApiService) addConcern(c *gin.Context) {
 			}
 		}
 	} else {
-		if method == "add" {
+		if method == 1 {
 			concern = append(concern, coinPair)
 		} else {
 			res := util.ResponseMsg(-1, "null list can not remove anything", nil)
