@@ -312,6 +312,11 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 		//查询量化收益表
 		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uidFormatted, userStrategy.StrategyID)
 
+		if latestEarning == nil {
+			res := util.ResponseMsg(-1, "no earning ", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
