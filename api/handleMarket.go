@@ -276,14 +276,6 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 
-	//apiKey1 := cryptor.AesSimpleEncrypt(types.ApiKey, types.AesKey)
-	//apiSecret1 := cryptor.AesSimpleEncrypt(types.ApiSecret, types.AesKey)
-	//
-	//fmt.Println(apiKey1)
-	//fmt.Println(apiSecret1)
-	//status := c.Query("status")
-	//一期先不处理status
-
 	//由UID得到用户的APIKEY
 
 	//查询用户策略表得到用户对应得所有策略
