@@ -110,7 +110,7 @@ func (a *ApiService) Run() {
 	v4 := r.Group("/api/market")
 	{
 		//添加/移除自选
-		v4.POST("/addConcern", authMiddleware(), a.addConcern)
+		v4.POST("/changeConcern", authMiddleware(), a.addConcern)
 		//添加/移除自选
 		v4.GET("/getConcern", authMiddleware(), a.getConcern)
 		//得到币种信息
