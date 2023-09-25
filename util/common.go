@@ -79,7 +79,7 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 		}
 		userFundIn.Id = userFundIn.Id + 1
 	}
-	_, err = session.Table("userFundIn").Insert(userFundIn)
+	_, err = session.Table("fundIn").Insert(userFundIn)
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
