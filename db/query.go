@@ -146,14 +146,14 @@ func QueryInviteNumLimit(engine *xorm.Engine, InviteCode string, total int) (err
 	return nil, users
 }
 
-func QueryClaimRewardNumber(engine *xorm.Engine) (error, []types.Users) {
-	var users []types.Users
-	err := engine.Table("users").Where("`f_claimRewardNumber` > ?", 0).Desc("`f_claimRewardNumber`").Find(&users)
+func QueryClaimRewardNumber(engine *xorm.Engine) (error, []map[string]string) {
+	sql := fmt.Sprintf(`select f_uid, count("f_uid") as "countUid" from invitation GROUP BY "f_uid" ORDER BY "countUid" DESC`)
+	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
 		return err, nil
 	}
-	return nil, users
+	return nil, result
 }
 
 func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
