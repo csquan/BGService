@@ -417,11 +417,9 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	}
 
 	//产生secret
-	var users types.UserUpdate
-	users.Secret = GetSecret()
-	users.IsBindGoogle = "t"
+	user.Secret = GetSecret()
 
-	err = db.UpdateUserGoogle(a.dbEngine, uidFormatted, &users)
+	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		res = util.ResponseMsg(-1, "update secret err", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -438,7 +436,6 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 func (a *ApiService) verifyCode(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
-
 	res := types.HttpRes{}
 
 	var userCode types.UserCodeInfos
@@ -453,6 +450,12 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 
 	_, secret := db.QuerySecret(a.dbEngine, uidFormatted)
 
+	if secret == nil {
+		res = util.ResponseMsg(-1, "secret is nil", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
 	codeint, err := strconv.ParseInt(code, 10, 64)
 
 	if err != nil {
@@ -466,6 +469,17 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 	res.Code = 0
 	if isTrue {
 		res.Message = "校验成功"
+
+		var users types.UserUpdate
+		users.IsBindGoogle = "t"
+
+		err = db.UpdateUserGoogle(a.dbEngine, uidFormatted, &users)
+		if err != nil {
+			res = util.ResponseMsg(-1, "update secret err", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
 	} else {
 		res.Message = "校验失败"
 	}
