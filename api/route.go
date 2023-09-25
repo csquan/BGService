@@ -112,7 +112,7 @@ func (a *ApiService) Run() {
 		//添加/移除自选
 		v4.POST("/addConcern", authMiddleware(), a.addConcern)
 		//添加/移除自选
-		v4.GET("/getConcern", a.getConcern)
+		v4.GET("/getConcern", authMiddleware(), a.getConcern)
 		//得到币种信息
 		v4.GET("/getCoinInfo", a.getCoinInfo)
 		//添加/移除自选

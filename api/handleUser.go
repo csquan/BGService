@@ -145,8 +145,8 @@ func (a *ApiService) bindingApi(c *gin.Context) {
 		return
 	}
 
-	keyEncrypt := util.AesEncrypt(payload.ApiKey, types.AesKey)
-	secretEncrypt := util.AesEncrypt(payload.ApiSecret, types.AesKey)
+	keyEncrypt := cryptor.AesSimpleEncrypt(payload.ApiKey, types.AesKey)
+	secretEncrypt := cryptor.AesSimpleEncrypt(payload.ApiSecret, types.AesKey)
 
 	fmt.Println("keyEncrypt:", keyEncrypt)
 	fmt.Println("secretEncrypt:", secretEncrypt)
