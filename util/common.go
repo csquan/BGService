@@ -34,6 +34,12 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 		return "", err
 	}
 	balance := gjson.Get(str1, "balance")
+
+	if balance.Raw == "" {
+		logrus.Info("余额为0，没有充值")
+		return "", errors.New("余额为0，没有充值")
+	}
+
 	dec, err := decimal.NewFromString(balance.Raw) // 目前链上余额
 	if err != nil {
 		logrus.Info(err)
