@@ -100,8 +100,8 @@ type UserFundIn struct {
 // 用户提币记录表
 type UserFundOut struct {
 	Id         int64     `xorm:"f_id"`
-	FromAddr   string    `xorm:"f_fromAddr"`
-	ToAddr     string    `xorm:"f_toAddr"`
+	FromAddr   string    `xorm:"f_from"`
+	ToAddr     string    `xorm:"f_to"`
 	CoinName   string    `xorm:"f_coinName"`
 	Gas        string    `xorm:"f_gas"`
 	Amount     string    `xorm:"f_amount"`
@@ -132,6 +132,14 @@ type UserExperience struct {
 	Status         bool      `xorm:"f_status"`
 	CreateTime     time.Time `xorm:"f_createTime"`
 	UpdateTime     time.Time `xorm:"f_updateTime"`
+}
+
+type AddrOutput struct {
+	Uid        string    `json:"uid"`
+	Network    string    `json:"network"`
+	Addr       string    `json:"addr"`
+	CreateTime time.Time `json:"createTime"`
+	UpdateTime time.Time `json:"updateTime"`
 }
 
 type RecordOutput struct {
@@ -192,8 +200,9 @@ type AccountParam struct {
 }
 
 type FundInParam struct {
-	Uid     string
-	Network string
+	Currency        string `json:"currency"`
+	Network         string `json:"Network"`
+	RechargeAddress string `json:"rechargeAddress"`
 }
 
 type UserBindInfos struct {

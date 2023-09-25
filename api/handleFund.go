@@ -24,6 +24,9 @@ import (
 
 // 简单版本充值：去链上查询这个地址，获取余额和db中最新的一条比对 正规做法：需要爬快 kafka传消息-待迭代
 func (a *ApiService) haveFundIn(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	var fundInParam *types.FundInParam
 
 	err := c.BindJSON(&fundInParam)
@@ -33,9 +36,16 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		return
 	}
 
-	userAddr, err := db.GetUserAddr(a.dbEngine, fundInParam.Uid, fundInParam.Network)
+	fundInParam.Network = strings.ToLower(fundInParam.Network)
+
+	userAddr, err := db.GetUserAddr(a.dbEngine, uidFormatted, fundInParam.Network)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if userAddr == nil {
+		res := util.ResponseMsg(-1, "userAddr is null", nil)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
@@ -49,15 +59,15 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 	}
 
 	//首先插入或修改用户充值记录
-	fundInAmount, err := util.ModifyUserFundIn(session, a.dbEngine, fundInParam, userAddr)
+	fundInAmount, err := util.ModifyUserFundIn(session, a.dbEngine, fundInParam, userAddr, uidFormatted)
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
 			logrus.Error(err)
 		}
 	}
-	//下面更新用户资产表--todo：目前GetUserAsset只取出U得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
-	userAsset, err := db.GetUserAsset(a.dbEngine, fundInParam.Uid)
+	//下面更新用户资产表--todo：目前GetUserAsset只取出trx得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
+	userAsset, err := db.GetUserAsset(a.dbEngine, uidFormatted)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -72,9 +82,9 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 
 	if userAsset == nil {
 		userAsset = &types.UserAsset{
-			Uid:       fundInParam.Uid,
+			Uid:       uidFormatted,
 			Network:   fundInParam.Network,
-			CoinName:  "usdt",
+			CoinName:  "trx",
 			Available: fundInAmount,
 			Total:     fundInAmount,
 		}
@@ -194,6 +204,7 @@ func (a *ApiService) getUserAddress(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 	network := c.Query("network")
+	network = strings.ToLower(network)
 
 	useAddr, err := db.GetUserAddr(a.dbEngine, uidFormatted, strings.ToLower(network))
 	if err != nil {
@@ -201,7 +212,13 @@ func (a *ApiService) getUserAddress(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 	}
 
-	res := util.ResponseMsg(0, "getUserAddress success", useAddr)
+	addr := types.AddrOutput{
+		Uid:     useAddr.Uid,
+		Network: useAddr.Network,
+		Addr:    useAddr.Addr,
+	}
+
+	res := util.ResponseMsg(0, "getUserAddress success", addr)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

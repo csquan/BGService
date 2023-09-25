@@ -13,7 +13,7 @@ import (
 
 const base_tron_url = "https://api.trongrid.io"
 
-func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *types.FundInParam, userAddr *types.UserAddr) (string, error) {
+func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *types.FundInParam, userAddr *types.UserAddr, uidFormatted string) (string, error) {
 	//取最新余额
 	url := base_tron_url + "/wallet/getaccount"
 
@@ -40,7 +40,7 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 		return "", err
 	}
 	//取出用户最近的充值记录
-	userFundIn, err := db.GetUserFundIn(engine, fundInParam.Uid, fundInParam.Network)
+	userFundIn, err := db.GetUserFundIn(engine, uidFormatted, fundInParam.Network)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +48,7 @@ func ModifyUserFundIn(session *xorm.Session, engine *xorm.Engine, fundInParam *t
 	if userFundIn == nil { //没充过值，这里就是链上余额
 		userFundIn = &types.UserFundIn{
 			Id:           0,
-			Uid:          fundInParam.Uid,
+			Uid:          uidFormatted,
 			Network:      fundInParam.Network,
 			Addr:         userAddr.Addr,
 			FundInAmount: dec.String(),

@@ -182,7 +182,7 @@ func GetProduct(engine *xorm.Engine, productID string) (*types.Strategy, error) 
 
 func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	var userAsset types.UserAsset
-	coinName := "usdt"
+	coinName := "trx"
 	has, err := engine.Table("userAsset").Where("f_uid=? and `f_coinName`=?", uid, coinName).Get(&userAsset)
 	if err != nil {
 		return nil, err

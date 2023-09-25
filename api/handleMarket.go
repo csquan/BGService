@@ -312,6 +312,11 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 		//查询量化收益表
 		latestEarning, err := db.GetUserStrategyLatestEarnings(a.dbEngine, uidFormatted, userStrategy.StrategyID)
 
+		if latestEarning == nil {
+			res := util.ResponseMsg(-1, "no earning ", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		if err != nil {
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
@@ -325,6 +330,11 @@ func (a *ApiService) getTradeList(c *gin.Context) {
 			return
 		}
 		dec, err := decimal.NewFromString(latestEarning.TotalBenefit)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 
 		dayBefinit := cexTotalProfit.Sub(dec)
 
@@ -487,7 +497,7 @@ func (a *ApiService) getTradeDetail(c *gin.Context) {
 	tradeDetails.DividePeriod = strategyInfo.DividePeriod
 	tradeDetails.AgreementPeriod = strategyInfo.AgreementPeriod
 
-	res := util.ResponseMsg(0, "getTradeList success", tradeDetails)
+	res := util.ResponseMsg(0, "TradeDetails success", tradeDetails)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
