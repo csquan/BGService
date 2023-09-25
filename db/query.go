@@ -378,7 +378,7 @@ func GetMsg(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, Type string)
 
 func GetHotMsg(engine *xorm.Engine, total int, Type string) ([]types.News, error) {
 	var news []types.News
-	err := engine.Table("news").Where("f_type=?", Type).Limit(total).Find(&news)
+	err := engine.Table("news").Where("f_type=? and f_hotspot='t'", Type).Limit(total).Find(&news)
 	if err != nil {
 		return nil, err
 	}
