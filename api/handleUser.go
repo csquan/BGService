@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -96,7 +97,9 @@ func (a *ApiService) myApi(c *gin.Context) {
 		}
 		fmt.Println("permission:", permission)
 
-		if value.Cex == "okex" {
+		cex := strings.ToLower(value.Cex)
+
+		if cex == "okex" {
 			oneCex := make(map[string]interface{})
 			oneCex["id"] = value.ID
 			oneCex["cex"] = value.Cex
@@ -109,7 +112,7 @@ func (a *ApiService) myApi(c *gin.Context) {
 			oneCex["permission"] = permission
 			allOkCex = append(allOkCex, oneCex)
 		}
-		if value.Cex == "binance" {
+		if cex == "binance" {
 			oneCex := make(map[string]interface{})
 			oneCex["id"] = value.ID
 			oneCex["cex"] = value.Cex
