@@ -214,7 +214,7 @@ func (a *ApiService) register(c *gin.Context) {
 
 	userAddr := types.UserAddr{
 		Uid:     uid,
-		Network: "TRX",
+		Network: "tron",
 		Addr:    addr,
 	}
 

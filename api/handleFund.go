@@ -194,6 +194,7 @@ func (a *ApiService) getUserAddress(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
 	network := c.Query("network")
+	network = strings.ToLower(network)
 
 	useAddr, err := db.GetUserAddr(a.dbEngine, uidFormatted, strings.ToLower(network))
 	if err != nil {
