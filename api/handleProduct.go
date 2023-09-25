@@ -256,10 +256,33 @@ func (a *ApiService) collect(c *gin.Context) {
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		product := user.CollectStragetyList
-		oldId := fmt.Sprintf(",%s", id)
-		product = strings.Replace(product, oldId, "", -1)
-		err = db.UpdateDelCollectProduct(a.dbEngine, product, uidFormatted)
+		product := strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
+		//首先找到这个remove位置，找不到返回错误，找到按照这个位置remove
+		find := false
+		for index, value := range product {
+			if value == id {
+				product = append(product[:index], product[index+1:]...)
+				find = true
+				break
+			}
+		}
+		if find == false {
+			res := util.ResponseMsg(-1, "can not find remove record", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		productStr := "{"
+		length := len(product)
+		//再将这个数组转化为字串，更新数据库
+		for index, value := range product {
+			productStr = productStr + value
+
+			if index+1 < length {
+				productStr = productStr + ","
+			}
+		}
+		productStr = productStr + "}"
+		err = db.UpdateDelCollectProduct(a.dbEngine, productStr, uidFormatted)
 		if err != nil {
 			logrus.Info("update secret err:", err)
 			res := util.ResponseMsg(-1, "fail", err)
