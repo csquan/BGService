@@ -282,12 +282,18 @@ func (a *ApiService) inviteRanking(c *gin.Context) {
 		for i := 0; i < len(inviteUserNum); i++ {
 			value := inviteUserNum[i]
 			// 邀请到人的情况能查到排名
-			if value.Uid == uidFormatted {
+			if value["f_uid"] == uidFormatted {
 				myPlaced = i + 1
+			}
+			err, user := db.QuerySecret(a.dbEngine, value["f_uid"])
+			if err != nil {
+				res := util.ResponseMsg(-1, "fail", err)
+				c.SecureJSON(http.StatusOK, res)
+				return
 			}
 			inviteUserInfo := make(map[string]interface{})
 			inviteUserInfo["placed"] = i + 1
-			inviteUserInfo["username"] = value.UserName
+			inviteUserInfo["username"] = user.UserName
 			inviteUserList = append(inviteUserList, inviteUserInfo)
 		}
 	}
