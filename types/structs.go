@@ -200,8 +200,9 @@ type AccountParam struct {
 }
 
 type FundInParam struct {
-	Uid     string
-	Network string
+	Currency        string `json:"currency"`
+	Network         string `json:"Network"`
+	RechargeAddress string `json:"rechargeAddress"`
 }
 
 type UserBindInfos struct {
