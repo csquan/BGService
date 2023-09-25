@@ -126,12 +126,10 @@ type UserExperience struct {
 	CoinName       string    `xorm:"f_coinName"`
 	Type           string    `xorm:"f_type"`
 	ReceiveSum     int64     `xorm:"f_receiverSum"`
-	BenefitSum     string    `xorm:"f_benefitSum"`
-	BenefitRatio   string    `xorm:"f_benefitRatio"`
-	ReceiveDays    int64     `xorm:"f_receiveDays"`
-	ValidStartTime string    `xorm:"f_validStartTime"`
-	ValidEndTime   string    `xorm:"f_validEndTime"`
-	Status         string    `xorm:"f_status"`
+	ValidTime      time.Time `xorm:"f_validTime"`
+	ValidStartTime time.Time `xorm:"f_validStartTime"`
+	ValidEndTime   time.Time `xorm:"f_validEndTime"`
+	Status         bool      `xorm:"f_status"`
 	CreateTime     time.Time `xorm:"f_createTime"`
 	UpdateTime     time.Time `xorm:"f_updateTime"`
 }
