@@ -170,7 +170,7 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 
 func GetProduct(engine *xorm.Engine, productID string) (*types.Strategy, error) {
 	var strategy types.Strategy
-	has, err := engine.Where("`f_strategyID`=?", productID).Get(&strategy)
+	has, err := engine.Table("strategys").Where("`f_strategyID`=?", productID).Get(&strategy)
 	if err != nil {
 		return nil, err
 	}
