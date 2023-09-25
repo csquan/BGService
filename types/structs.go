@@ -284,10 +284,10 @@ type UserInput struct {
 }
 
 type ExecuteStrategyInput struct {
-	ID         string `json:"id"`
-	ProductId  string `json:"productId"`
-	BreakValue int    `json:"breakValue"`
-	IsBreak    bool   `json:"isBreak"`
+	ID         int  `json:"id"`
+	ProductId  int  `json:"productId"`
+	BreakValue int  `json:"breakValue"`
+	IsBreak    bool `json:"isBreak"`
 }
 
 type UserBindInfoInput struct {
