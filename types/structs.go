@@ -100,8 +100,8 @@ type UserFundIn struct {
 // 用户提币记录表
 type UserFundOut struct {
 	Id         int64     `xorm:"f_id"`
-	FromAddr   string    `xorm:"f_fromAddr"`
-	ToAddr     string    `xorm:"f_toAddr"`
+	FromAddr   string    `xorm:"f_from"`
+	ToAddr     string    `xorm:"f_to"`
 	CoinName   string    `xorm:"f_coinName"`
 	Gas        string    `xorm:"f_gas"`
 	Amount     string    `xorm:"f_amount"`
