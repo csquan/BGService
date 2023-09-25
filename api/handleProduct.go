@@ -241,10 +241,29 @@ func (a *ApiService) collect(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Error("query db error:", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user == nil {
+		logrus.Error("no user record:", uid)
+		res := util.ResponseMsg(-1, "no user record:", uid)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	if boolcollect {
+		if strings.Contains(user.CollectStragetyList, id) == true {
+			res := util.ResponseMsg(-1, "Strategy is already exist", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		err = db.UpdateAddCollectProduct(a.dbEngine, id, uidFormatted)
 		if err != nil {
-			logrus.Info("update secret err:", err)
+			logrus.Error(err)
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
