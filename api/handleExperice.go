@@ -179,7 +179,6 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	userExperience := types.UserExperience{}
 
 	userExperience.UId = uidFormatted
-	userExperience.ReceiveDays = 1
 	userExperience.ReceiveSum = TotalRevenueInfo.PerSum
 
 	_, err = session.Table("userExperience").Insert(userExperience)
