@@ -64,6 +64,10 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		err := session.Rollback()
 		if err != nil {
 			logrus.Error(err)
+
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
 		}
 	}
 	//下面更新用户资产表--todo：目前GetUserAsset只取出trx得资产，如果支持其它资产，可以取出数组，然后比对充值得资产，增加
@@ -103,12 +107,23 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		err := session.Rollback()
 		if err != nil {
 			logrus.Error(err)
+
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
 		}
 	}
 
 	err = session.Commit()
 	if err != nil {
-		logrus.Error(err)
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 	}
 
 	res = util.ResponseMsg(0, "success", nil)
