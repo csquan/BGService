@@ -33,6 +33,8 @@ func (a *ApiService) haveFundIn(c *gin.Context) {
 		return
 	}
 
+	fundInParam.Network = strings.ToLower(fundInParam.Network)
+
 	userAddr, err := db.GetUserAddr(a.dbEngine, fundInParam.Uid, fundInParam.Network)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
