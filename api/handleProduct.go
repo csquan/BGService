@@ -304,7 +304,7 @@ func (a *ApiService) productInfo(c *gin.Context) {
 	body := make(map[string]interface{})
 	isCollect := isInCollectStrategyList(id, CollectStragetyList)
 	body["id"] = strategyInfo.StrategyID
-	body["name"] = strategyInfo.StrategyID
+	body["name"] = strategyInfo.StrategyName
 	body["recommendRate"] = strategyInfo.RecommendRate
 	body["strategySource"] = strategyInfo.Source
 	body["productCategory"] = strategyInfo.Type
