@@ -141,7 +141,6 @@ type UserExpUpdate struct {
 
 // 用户体验金记录表
 type UserExperience struct {
-	Id             int64     `xorm:"f_id"`
 	UId            string    `xorm:"f_uid"`
 	CoinName       string    `xorm:"f_coinName"`
 	Type           string    `xorm:"f_type"`

@@ -124,7 +124,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 
 	experience := c.Query("type")
 	experienceType := fmt.Sprintf("%s", experience)
-	experienceType = "1"
+
 	body := make(map[string]interface{})
 	var user *types.Users
 	if experienceType == "1" {
