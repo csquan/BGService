@@ -129,7 +129,7 @@ func (a *ApiService) Run() {
 		v6.GET("/getExperienceFund", authMiddleware(), a.getExperienceFund)
 
 		//查询体验金
-		v6.GET("/getExperience", a.getExperience)
+		v6.GET("/getExperience", authMiddleware(), a.getExperience)
 		//执行系统策略
 		v6.POST("/extcuteSystemStrategy", authMiddleware(), a.extcuteSystemStrategy)
 
