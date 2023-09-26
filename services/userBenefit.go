@@ -58,8 +58,8 @@ func queryUserStrategy(db *sql.DB) []UserStrategy {
 	return StrategyidList
 }
 
-func queryUserStrategyEarnings(db *sql.DB, uid string, stragetyID string) float64 {
-	Sql := fmt.Sprintf(`SELECT "f_totalBenefit" FROM "userStrategyEarnings" WHERE f_uid = '%s' and "f_strategyID"='%s'`, uid, stragetyID)
+func queryUserStrategyEarnings(db *sql.DB, uid string, f_strategyID string, yesterday string) float64 {
+	Sql := fmt.Sprintf(`SELECT "f_totalBenefit" FROM "userStrategyEarnings" WHERE f_uid = '%s' and "f_strategyID"='%s' and "f_createTime"='%s'`, uid, f_strategyID, yesterday)
 	rows, err := db.Query(Sql)
 	if err != nil {
 		log.Fatal("Failed to execute query: ", err)
@@ -75,17 +75,25 @@ func queryUserStrategyEarnings(db *sql.DB, uid string, stragetyID string) float6
 	return totalBenefitFloat
 }
 
-func updateEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, uid string, stragetyID string) {
-	stmt, err := db.Prepare(`update "userStrategyEarnings" set "f_dayBenefit"=$1, "f_totalBenefit"=$2 where "f_uid"=$3 and "f_strategyID"=$4`)
+func insertEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, uid string, strategyID string) {
+	insertSQL := `
+		INSERT INTO "platformExperienceEarnings" ("f_strategyID", "f_dayBenefit", "f_totalBenefit", "f_uid")
+		VALUES ($1, $2, $3)
+	`
+	// 要插入的数据
+	data := []interface{}{strategyID, dayBenefit, totalBenefit, uid}
+	// 执行插入操作
+	result, err := db.Exec(insertSQL, data...)
 	if err != nil {
-		panic(err)
-	}
-	res, err := stmt.Exec(dayBenefit, totalBenefit, uid, stragetyID)
-	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	fmt.Printf("res = %d", res)
+	// 获取受影响的行数
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("rowsAffected = %d", rowsAffected)
 }
 
 func (c *UserBenefitService) Run() error {
@@ -141,12 +149,15 @@ func (c *UserBenefitService) Run() error {
 			}
 			// 累计收入
 			totalBenefit := MarginBalanceFloat - value.actualInvest
+			// 获取当前时间
+			now := time.Now()
+			// 计算昨天的时间
+			yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
 			// 查库中的累计收入
-			totalBenefitFloat := queryUserStrategyEarnings(db, value.Uid, value.Strategyid)
+			totalBenefitFloat := queryUserStrategyEarnings(db, value.Uid, value.Strategyid, yesterday)
 			// 今日收益
-
 			totalDay := totalBenefit - totalBenefitFloat
-			updateEarning(db, totalDay, totalBenefit, value.Uid, value.Strategyid)
+			insertEarning(db, totalDay, totalBenefit, value.Uid, value.Strategyid)
 		}
 
 	}
