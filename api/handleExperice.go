@@ -138,6 +138,13 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 		}
 	} else if experienceType == "2" {
 		//谷歌绑定校验
+		var err error
+		err, user = db.QuerySecret(a.dbEngine, uidFormatted)
+		if err != nil {
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		if user.IsBindGoogle == false {
 			logrus.Info("google is not bind", user.IsBindGoogle)
 			res := util.ResponseMsg(-1, "google is not bind", body)
