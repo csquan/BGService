@@ -944,9 +944,17 @@ func (a *ApiService) productChart(c *gin.Context) {
 	length := len(AllStrategy)
 	dec1 := decimal.NewFromInt32(int32(win))
 	dec2 := decimal.NewFromInt32(int32(length))
-	userBenefitNDays.WinRatio = dec1.Div(dec2).String()
+	if dec2.Sign() == 0 {
+		userBenefitNDays.WinRatio = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.WinRatio = dec1.Div(dec2).String()
+	}
 	// 收益率
-	userBenefitNDays.BenefitRatio = userBenefitNDays.BenefitSum.Div(AllInvest).String()
+	if AllInvest.Sign() == 0 {
+		userBenefitNDays.BenefitRatio = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.BenefitRatio = userBenefitNDays.BenefitSum.Div(AllInvest).String()
+	}
 	// 回撤率
 	maxDec, err := decimal.NewFromString(maxEarning)
 	minDec, err := decimal.NewFromString(minEarning)
@@ -961,7 +969,11 @@ func (a *ApiService) productChart(c *gin.Context) {
 	//净值
 	maxNetValue := decimal.Sum(AllInvest, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
-	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //最大回撤率
+	if maxNetValue.Sign() == 0 {
+		userBenefitNDays.Huiche = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //最大回撤率
+	}
 	userBenefitNDays.Benefitlist = Benefits
 
 	res := util.ResponseMsg(0, "success", userBenefitNDays)
