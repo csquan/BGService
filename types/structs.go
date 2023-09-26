@@ -130,6 +130,7 @@ type UserExperience struct {
 	UId            string    `xorm:"f_uid"`
 	CoinName       string    `xorm:"f_coinName"`
 	Type           string    `xorm:"f_type"`
+	ExpType        string    `xorm:"f_expType"`
 	ReceiveSum     int64     `xorm:"f_receiverSum"`
 	ValidTime      time.Time `xorm:"f_validTime"`
 	ValidStartTime time.Time `xorm:"f_validStartTime"`

@@ -343,16 +343,13 @@ func GetAllUserBindInfos(engine *xorm.Engine, uid string) ([]types.UserBindInfos
 	return userBindInfos, nil
 }
 
-func GetUserExperience(engine *xorm.Engine, uid string) (*types.UserExperience, error) {
-	var userExperience types.UserExperience
-	has, err := engine.Table("userExperience").Where("f_uid=?", uid).Get(&userExperience)
+func GetUserExperience(engine *xorm.Engine, uid string) ([]types.UserExperience, error) {
+	var userExperiences []types.UserExperience
+	err := engine.Table("userExperience").Where("f_uid=?", uid).Find(&userExperiences)
 	if err != nil {
 		return nil, err
 	}
-	if has {
-		return &userExperience, nil
-	}
-	return nil, nil
+	return userExperiences, nil
 }
 
 func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, error) {

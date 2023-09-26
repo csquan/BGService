@@ -21,6 +21,11 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["apiBinding"] = false
 	body["isBindGoogle"] = false
+
+	body["balance"] = 0
+	body["RegisterStatus"] = false
+	body["apiBindingStatus"] = false
+	body["isBindGoogleStatus"] = false
 	// 查询两个条件-查询数据库
 	// 谷歌绑定检查
 	user, err := db.GetUser(a.dbEngine, uidFormatted)
@@ -52,6 +57,36 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 			body["apiBinding"] = true
 		}
 	}
+	//取剩余份数
+	platformExp, err := db.GetPlatformExperience(a.dbEngine)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if platformExp != nil {
+		body["balance"] = platformExp.MaxPersons
+	}
+	//取注册领取状态
+	userExps, err := db.GetUserExperience(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	for _, userExp := range userExps {
+		switch userExp.ExpType {
+		case "1":
+			body["RegisterStatus"] = true
+		case "2":
+			body["apiBindingStatus"] = true
+		case "3":
+			body["isBindGoogleStatus"] = true
+		}
+	}
+
 	res := util.ResponseMsg(0, "checkoutQualification success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
