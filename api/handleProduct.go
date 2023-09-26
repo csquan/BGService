@@ -343,9 +343,14 @@ func (a *ApiService) productInfo(c *gin.Context) {
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
 	}
+	idInt, err := strconv.Atoi(strategyInfo.StrategyID)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
 	body := make(map[string]interface{})
 	isCollect := isInCollectStrategyList(id, CollectStragetyList)
-	body["id"] = strategyInfo.StrategyID
+	body["id"] = idInt
 	body["name"] = strategyInfo.StrategyName
 	body["recommendRate"] = strategyInfo.RecommendRate
 	body["strategySource"] = strategyInfo.Source
