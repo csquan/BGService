@@ -82,26 +82,139 @@ func (c *ActivityBenefitService) Run() error {
 		log.Fatal("Failed to open a DB connection: ", err)
 	}
 	defer db.Close()
+
 	userData, err := utils.GetBinanceUMUserData(types.ApiKeySystem, types.ApiSecretSystem)
 	if err != nil {
 		logrus.Info(err)
 	}
-	var MarginBalance string // 当天余额
+	umSum := float64(0)
 	for _, asset := range userData.Assets {
-		if asset.Asset == Asset {
-			fmt.Println("MarginBalance", asset.MarginBalance)
-			MarginBalance = asset.MarginBalance
+		MarginBalanceFloat, err := strconv.ParseFloat(asset.MarginBalance, 64)
+		if err != nil {
+			logrus.Error(err)
+		}
+		if MarginBalanceFloat > 0 {
+			price := float64(0)
+			if asset.Asset != "USDT" {
+				symbols := make([]string, 1)
+				symbols[0] = asset.Asset + "USDT"
+
+				prices, err := utils.GetBinancePrice(types.ApiKeySystem, types.ApiSecretSystem, symbols)
+				if err != nil {
+					logrus.Error(err)
+				}
+				if err != nil {
+					logrus.Error(prices)
+				}
+				price, err = strconv.ParseFloat(prices[0].Price, 64)
+				if err != nil {
+					logrus.Error(err)
+				}
+			} else {
+				price = 1
+			}
+
+			assetSum := MarginBalanceFloat * float64(price)
+			umSum = MarginBalanceFloat + float64(umSum)
+
+			logrus.Info("取出对应资产：", asset.Asset, "价格为：", price)
+			logrus.Info("该资产价值：", assetSum)
+			logrus.Info("经过计算得到U本位累加资产", umSum)
 		}
 	}
-	MarginBalanceFloat, err := strconv.ParseFloat(MarginBalance, 64)
+	logrus.Info("U本位余额为", umSum)
+
+	spotSum := float64(0)
+	userData2, err := utils.GetBinanceSpotUserData(types.ApiKeySystem, types.ApiSecretSystem)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Info(err)
 	}
+
+	for _, balance := range userData2.Balances {
+		MarginBalanceFloat, err := strconv.ParseFloat(balance.Locked, 64)
+		if err != nil {
+			logrus.Error(err)
+		}
+		if MarginBalanceFloat > 0 {
+			price := float64(0)
+			if balance.Asset != "USDT" {
+				symbols := make([]string, 1)
+				symbols[0] = balance.Asset + "USDT"
+
+				prices, err := utils.GetBinancePrice(types.ApiKeySystem, types.ApiSecretSystem, symbols)
+				if err != nil {
+					logrus.Error(err)
+				}
+				if err != nil {
+					logrus.Error(prices)
+				}
+				price, err = strconv.ParseFloat(prices[0].Price, 64)
+				if err != nil {
+					logrus.Error(err)
+				}
+			} else {
+				price = 1
+			}
+
+			assetSum := MarginBalanceFloat * float64(price)
+			spotSum = spotSum + assetSum
+
+			logrus.Info("取出对应资产：", balance.Asset, "价格为：", price)
+			logrus.Info("该资产价值：", assetSum)
+			logrus.Info("经过计算得到现货累加资产", spotSum)
+		}
+	}
+	logrus.Info("现货余额为", spotSum)
+
+	cmSum := float64(0)
+	userData3, err := utils.GetBinanceCMUserData(types.ApiKeySystem, types.ApiSecretSystem)
+	if err != nil {
+		logrus.Info(err)
+	}
+
+	for _, asset := range userData3.Assets {
+		MarginBalanceFloat, err := strconv.ParseFloat(asset.MarginBalance, 64)
+		if err != nil {
+			logrus.Error(err)
+		}
+		if MarginBalanceFloat > 0 {
+			price := float64(0)
+			if asset.Asset != "USDT" {
+				symbols := make([]string, 1)
+				symbols[0] = asset.Asset + "USDT"
+
+				prices, err := utils.GetBinancePrice(types.ApiKeySystem, types.ApiSecretSystem, symbols)
+				if err != nil {
+					logrus.Error(err)
+				}
+				if err != nil {
+					logrus.Error(prices)
+				}
+				price, err = strconv.ParseFloat(prices[0].Price, 64)
+				if err != nil {
+					logrus.Error(err)
+				}
+			} else {
+				price = 1
+			}
+
+			assetSum := MarginBalanceFloat * float64(price)
+			cmSum = cmSum + assetSum
+
+			logrus.Info("取出对应资产：", asset.Asset, "价格为：", price)
+			logrus.Info("该资产价值：", assetSum)
+			logrus.Info("经过计算得到币本位累加资产", cmSum)
+		}
+	}
+	logrus.Info("币本位余额为", cmSum)
+
+	MarginBalanceFloat := cmSum + cmSum + spotSum
+
+	logrus.Info("账户总余额为", MarginBalanceFloat)
 	// 获取当前时间
 	now := time.Now()
 	// 计算昨天的时间
 	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
-	//todo:这里得本金是从平台体验金信息表中取
 
 	// 累计收入
 	totalBenefit := MarginBalanceFloat - 2000000
@@ -109,6 +222,7 @@ func (c *ActivityBenefitService) Run() error {
 	totalBenefitFloat := queryActivityStrategyEarnings(db, "1", yesterday)
 	// 今日收益
 	totalDay := totalBenefit - totalBenefitFloat
+	logrus.Info("今日收益", totalDay)
 	insertActivityEarning(db, totalDay, totalBenefit, "1")
 	return nil
 }

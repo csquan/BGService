@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	base_future_testnet_binance_url = "https://testnet.binancefuture.com"
-	base_future_binance_url         = "https://fapi.binance.com"
+	base_future_binance_url = "https://fapi.binance.com"
 )
 
 // U本位合约--得到账户余额
@@ -35,7 +34,7 @@ func GetBinanceUMUserData(apiKey, apiSecret string) (*futures.Account, error) {
 // 币本位合约--得到账户余额
 func GetBinanceCMUserData(apiKey, apiSecret string) (*delivery.Account, error) {
 	binanceClient := delivery.NewClient(apiKey, apiSecret) // USDT-M Futures
-	binanceClient.SetApiEndpoint(base_future_testnet_binance_url)
+	binanceClient.SetApiEndpoint("https://dapi.binance.com")
 
 	ret, err := binanceClient.NewGetAccountService().Do(context.Background())
 
@@ -48,11 +47,25 @@ func GetBinanceCMUserData(apiKey, apiSecret string) (*delivery.Account, error) {
 }
 
 // 现货--得到账户余额
-func GetBinanceSpotUserData(apiKey, apiSecret string) ([]*binance.CoinInfo, error) {
+func GetBinanceSpotUserData(apiKey, apiSecret string) (*binance.Account, error) {
 	client := binance.NewClient(apiKey, apiSecret)
 	client.SetApiEndpoint(types.Base_binance_url)
 
-	ret, err := client.NewGetAllCoinsInfoService().Do(context.Background())
+	ret, err := client.NewGetAccountService().Do(context.Background())
+
+	if err != nil {
+		logrus.Info(err)
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func GetBinancePrice(apiKey, apiSecret string, symbols []string) ([]*binance.SymbolPrice, error) {
+	client := binance.NewClient(apiKey, apiSecret)
+	client.SetApiEndpoint(types.Base_binance_url)
+
+	ret, err := client.NewListPricesService().Symbols(symbols).Do(context.Background())
 
 	if err != nil {
 		logrus.Info(err)

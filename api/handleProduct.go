@@ -534,11 +534,7 @@ func (a *ApiService) invest(c *gin.Context) {
 			}
 			userData, err = util.GetBinanceSpotUserData(apiKey, apiSecret)
 		}
-		for _, data := range userData {
-			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
-				balance = data.Free
-			}
-		}
+		fmt.Println(userData)
 	case "CM":
 		//取币本位余额
 		userData, err := util.GetBinanceCMUserData(apiKey, apiSecret)
@@ -643,11 +639,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 			}
 			userData, err = util.GetBinanceSpotUserData(apiKey, apiSecret)
 		}
-		for _, data := range userData {
-			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
-				balance = data.Free
-			}
-		}
+		fmt.Println(userData)
 	case "CM":
 		//取币本位余额
 		userData, err := util.GetBinanceCMUserData(apiKey, apiSecret)
