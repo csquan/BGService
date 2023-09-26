@@ -124,6 +124,10 @@ type UserShare struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+type UserExpUpdate struct {
+	Status string `xorm:"f_status"`
+}
+
 // 用户体验金记录表
 type UserExperience struct {
 	Id             int64     `xorm:"f_id"`

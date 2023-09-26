@@ -251,6 +251,83 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	return
 }
 
+// 执行系统策略-1.将平台剩余份数--2.将用户表的使用状态更新过来
+func (a *ApiService) extcuteSystemStrategy(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
+
+	if err != nil {
+		logrus.Info("query db error", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if TotalRevenueInfo == nil {
+		logrus.Info("platform exp info not exist")
+
+		res := util.ResponseMsg(-1, "platform exp info not exist", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	session := a.dbEngine.NewSession()
+	err = session.Begin()
+	if err != nil {
+		logrus.Info(err)
+
+		res := util.ResponseMsg(-1, "session Begin error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	TotalRevenueInfo.MaxPersons = TotalRevenueInfo.MaxPersons - 1
+
+	_, err = session.Table("platformExperience").Update(TotalRevenueInfo)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(0, "internal db session rollback error", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+
+	//2.将用户表的使用状态更新过来
+	userExpUpdate := types.UserExpUpdate{}
+	userExpUpdate.Status = "t"
+
+	_, err = session.Table("userExperience").Where("f_uid=?", uidFormatted).Update(userExpUpdate)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(0, "internal db session rollback error", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(0, "internal db session commit  error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(0, "UpdatePlatformExp success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
 func (a *ApiService) getUserExperienceRatio(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
