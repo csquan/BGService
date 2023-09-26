@@ -81,9 +81,9 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 		case "1":
 			body["RegisterStatus"] = true
 		case "2":
-			body["apiBindingStatus"] = true
-		case "3":
 			body["isBindGoogleStatus"] = true
+		case "3":
+			body["apiBindingStatus"] = true
 		}
 	}
 
@@ -176,41 +176,41 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	//平台体验金资金池减少相应的数额
-	TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
-
-	if err != nil {
-		logrus.Info("query db error", err)
-
-		res := util.ResponseMsg(-1, "query db error", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	if TotalRevenueInfo == nil {
-		logrus.Info("platform exp info not exist")
-
-		res := util.ResponseMsg(-1, "platform exp info not exist", nil)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-
-	//总金额减少
-	TotalRevenueInfo.TotalSum = TotalRevenueInfo.TotalSum - sum
-	//接收人数+1
-	TotalRevenueInfo.ReceivePersons = TotalRevenueInfo.ReceivePersons + 1
-	//更新
-	_, err = session.Table("platformExperience").Update(TotalRevenueInfo)
-	if err != nil {
-		err := session.Rollback()
-		if err != nil {
-			logrus.Error(err)
-
-			res := util.ResponseMsg(0, "internal db session rollback error", err)
-			c.SecureJSON(http.StatusOK, res)
-			return
-		}
-	}
+	////平台体验金资金池减少相应的数额
+	//TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
+	//
+	//if err != nil {
+	//	logrus.Info("query db error", err)
+	//
+	//	res := util.ResponseMsg(-1, "query db error", err)
+	//	c.SecureJSON(http.StatusOK, res)
+	//	return
+	//}
+	//
+	//if TotalRevenueInfo == nil {
+	//	logrus.Info("platform exp info not exist")
+	//
+	//	res := util.ResponseMsg(-1, "platform exp info not exist", nil)
+	//	c.SecureJSON(http.StatusOK, res)
+	//	return
+	//}
+	//
+	////总金额减少
+	//TotalRevenueInfo.TotalSum = TotalRevenueInfo.TotalSum - sum
+	////接收人数+1
+	//TotalRevenueInfo.ReceivePersons = TotalRevenueInfo.ReceivePersons + 1
+	////更新
+	//_, err = session.Table("platformExperience").Update(TotalRevenueInfo)
+	//if err != nil {
+	//	err := session.Rollback()
+	//	if err != nil {
+	//		logrus.Error(err)
+	//
+	//		res := util.ResponseMsg(0, "internal db session rollback error", err)
+	//		c.SecureJSON(http.StatusOK, res)
+	//		return
+	//	}
+	//}
 
 	//首先用户体验金增加一条记录
 	userExperience := types.UserExperience{}
