@@ -35,3 +35,6 @@ var Base_binance_url = "https://api.binance.com"
 
 var ApiSecret = "ZWfi7cEzDnG6jUvk3aK9tW53WZweiHLttC4jN2ZQqo5uIklPSSLmfzuDCflUJJFM"
 var ApiKey = "CaVXeFXYYkpygoacCuQihH5QIpTP0Y00J3UdC3eEj3wrnq0s9KDBa7V6msNBI16l"
+
+var ApiSecretSystem = "1ZRVjC2iEZwGYn1LHwxHrh2JCtMQGaaKA4JpLdX0E9nv6TaDYft3VYOKcQHMMjYk"
+var ApiKeySystem = "5qHCwIt47ECcM4nzrPJvlLPhBLsz0OAdYIGMyi76NirJsA4giTewa7Qgm0IYQp1K"

@@ -1,10 +1,10 @@
 package services
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"github.com/adshao/go-binance/v2"
+	"github.com/ethereum/BGService/types"
+	utils "github.com/ethereum/BGService/util"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -34,7 +34,7 @@ const (
 
 var (
 	//activity_future_testnet_binance_url = "https://testnet.binancefuture.com"
-	activity_future_testnet_binance_url = "https://api.binance.com/api"
+	activity_future_binance_url = "https://api.binance.com/api"
 )
 
 func queryActivityStrategyEarnings(db *sql.DB, strategyID string, createTime string) float64 {
@@ -82,9 +82,7 @@ func (c *ActivityBenefitService) Run() error {
 		log.Fatal("Failed to open a DB connection: ", err)
 	}
 	defer db.Close()
-	futuresClient := binance.NewFuturesClient(activityApiKey, activityApiSecret) // USDT-M Futures
-	futuresClient.SetApiEndpoint(activity_future_testnet_binance_url)
-	userData, err := futuresClient.NewGetAccountService().Do(context.Background())
+	userData, err := utils.GetBinanceUMUserData(types.ApiKeySystem, types.ApiSecretSystem)
 	if err != nil {
 		logrus.Info(err)
 	}
@@ -103,6 +101,8 @@ func (c *ActivityBenefitService) Run() error {
 	now := time.Now()
 	// 计算昨天的时间
 	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
+	//todo:这里得本金是从平台体验金信息表中取
+
 	// 累计收入
 	totalBenefit := MarginBalanceFloat - 2000000
 	// 查库中的累计收入

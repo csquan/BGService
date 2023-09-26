@@ -271,7 +271,7 @@ func (a *ApiService) getExperience(c *gin.Context) {
 		}
 	}
 
-	res := util.ResponseMsg(0, "query exp success", userExp)
+	res := util.ResponseMsg(0, "query exp success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

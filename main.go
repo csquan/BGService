@@ -48,6 +48,9 @@ func main() {
 		return
 	}
 
+	//activityBenefitService := services.NewActivityBenefitService()
+	//activityBenefitService.Run()
+
 	gocron.Every(1).Day().At(config.Conf.Schedule.Time).Do(scheduler.Start)
 
 	apiService := api.NewApiService(dbEngine, RedisEngine, &config.Conf)
