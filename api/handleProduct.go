@@ -161,9 +161,7 @@ func (a *ApiService) productList(c *gin.Context) {
 			logrus.Error(err)
 			recommendRate = -1
 		}
-		if payload.Currency == "1" {
-			isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
-		}
+		isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
 		participateNum, err := strconv.Atoi(value.ParticipateNum)
 		if err != nil {
 			logrus.Error(err)
