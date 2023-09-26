@@ -265,13 +265,15 @@ func (a *ApiService) getExperience(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	var receiveSum int64 = 0
 	for _, userExp := range userExps {
-		if userExp.Status != true {
-
+		if userExp.Status == true {
+			receiveSum += userExp.ReceiveSum
 		}
 	}
-
-	res := util.ResponseMsg(0, "query exp success", userExp)
+	body := make(map[string]interface{})
+	body["receiveSum"] = receiveSum
+	res := util.ResponseMsg(0, "query exp success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
