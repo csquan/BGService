@@ -161,7 +161,7 @@ func (a *ApiService) productList(c *gin.Context) {
 			logrus.Error(err)
 			recommendRate = -1
 		}
-		if payload.Currency == "1" {
+		if uid != nil {
 			isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
 		}
 		participateNum, err := strconv.Atoi(value.ParticipateNum)
@@ -343,9 +343,14 @@ func (a *ApiService) productInfo(c *gin.Context) {
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
 	}
+	idInt, err := strconv.Atoi(strategyInfo.StrategyID)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
 	body := make(map[string]interface{})
 	isCollect := isInCollectStrategyList(id, CollectStragetyList)
-	body["id"] = strategyInfo.StrategyID
+	body["id"] = idInt
 	body["name"] = strategyInfo.StrategyName
 	body["recommendRate"] = strategyInfo.RecommendRate
 	body["strategySource"] = strategyInfo.Source
@@ -742,7 +747,7 @@ func ProductRevenue(a *ApiService, Revenue []map[string]string) (error, []map[st
 	var ProductRevenueList []map[string]interface{}
 	for i := 0; i < len(Revenue); i++ {
 		UserRevenue := make(map[string]interface{})
-		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_stragetyID"])
+		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_strategyID"])
 		if err != nil {
 			return err, ProductRevenueList
 		}
@@ -767,9 +772,9 @@ func ProductRevenueRatio(a *ApiService, AllRevenue []map[string]string, AllInves
 	var RevenueRatioRanking []map[string]interface{}
 	for _, RevenueValue := range AllRevenue {
 		for _, InvestValue := range AllInvest {
-			if RevenueValue["f_stragetyID"] == InvestValue["f_strategyID"] {
+			if RevenueValue["f_strategyID"] == InvestValue["f_strategyID"] {
 				RevenueRatio := make(map[string]interface{})
-				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_stragetyID"])
+				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_strategyID"])
 				if err != nil {
 					return err, RevenueRatioRanking
 				}

@@ -59,7 +59,7 @@ func queryUserStrategy(db *sql.DB) []UserStrategy {
 }
 
 func queryUserStrategyEarnings(db *sql.DB, uid string, stragetyID string) float64 {
-	Sql := fmt.Sprintf(`SELECT "f_totalBenefit" FROM "userStrategyEarnings" WHERE f_uid = '%s' and "f_stragetyID"='%s'`, uid, stragetyID)
+	Sql := fmt.Sprintf(`SELECT "f_totalBenefit" FROM "userStrategyEarnings" WHERE f_uid = '%s' and "f_strategyID"='%s'`, uid, stragetyID)
 	rows, err := db.Query(Sql)
 	if err != nil {
 		log.Fatal("Failed to execute query: ", err)
@@ -76,7 +76,7 @@ func queryUserStrategyEarnings(db *sql.DB, uid string, stragetyID string) float6
 }
 
 func updateEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, uid string, stragetyID string) {
-	stmt, err := db.Prepare(`update "userStrategyEarnings" set "f_dayBenefit"=$1, "f_totalBenefit"=$2 where "f_uid"=$3 and "f_stragetyID"=$4`)
+	stmt, err := db.Prepare(`update "userStrategyEarnings" set "f_dayBenefit"=$1, "f_totalBenefit"=$2 where "f_uid"=$3 and "f_strategyID"=$4`)
 	if err != nil {
 		panic(err)
 	}

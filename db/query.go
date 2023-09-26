@@ -59,8 +59,8 @@ func UserRevenue(engine *xorm.Engine, total int) (error, []map[string]string) {
 }
 
 func ProductRevenue(engine *xorm.Engine, total int) (error, []map[string]string) {
-	sql := fmt.Sprintf("SELECT `f_stragetyID`, SUM(`f_totalBenefit`) AS `totalBenefit` "+
-		"FROM `userStrategyEarnings` GROUP BY `f_stragetyID` ORDER BY `totalBenefit` DESC limit %d", total)
+	sql := fmt.Sprintf("SELECT `f_strategyID`, SUM(`f_totalBenefit`) AS `totalBenefit` "+
+		"FROM `userStrategyEarnings` GROUP BY `f_strategyID` ORDER BY `totalBenefit` DESC limit %d", total)
 	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
@@ -92,8 +92,8 @@ func UserAllInvest(engine *xorm.Engine) (error, []map[string]string) {
 }
 
 func ProductAllRevenue(engine *xorm.Engine) (error, []map[string]string) {
-	sql := fmt.Sprintf("SELECT `f_stragetyID`, SUM(`f_totalBenefit`) AS `totalBenefit` " +
-		"FROM `userStrategyEarnings` GROUP BY `f_stragetyID` ORDER BY `totalBenefit` DESC")
+	sql := fmt.Sprintf("SELECT `f_strategyID`, SUM(`f_totalBenefit`) AS `totalBenefit` " +
+		"FROM `userStrategyEarnings` GROUP BY `f_strategyID` ORDER BY `totalBenefit` DESC")
 	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
@@ -454,7 +454,7 @@ func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types
 // 查询天级产品总收益
 func GetAllStrategyBenefits(engine *xorm.Engine, sid string, startTime string, endTime string) ([]map[string]string, error) {
 	sql := fmt.Sprintf(`select to_char("f_createTime"::DATE, 'YYYY-MM-DD') as day, sum("f_totalBenefit")  as "f_totalBenefit"
-from "userStrategyEarnings" where "f_stragetyID"='%s' and "f_createTime">= '%s' and "f_createTime"<= '%s'  GROUP BY "day" ORDER BY "f_totalBenefit" DESC`, sid, startTime, endTime)
+from "userStrategyEarnings" where "f_strategyID"='%s' and "f_createTime">= '%s' and "f_createTime"<= '%s'  GROUP BY "day" ORDER BY "f_totalBenefit" DESC`, sid, startTime, endTime)
 	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
