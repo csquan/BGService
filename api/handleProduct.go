@@ -589,7 +589,6 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
-
 	var payload *types.ExecuteStrategyInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
@@ -597,15 +596,18 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	logrus.Info("根据用户绑定的交易所获取余额")
 	//根据用户绑定的交易所获取余额
 	balance := ""
+
 	// 根据产品属性 取响应的 现货 U本位 币本位 获取余额
-	strategy, err := db.GetProduct(a.dbEngine, payload.ProductId)
+	strategy, err := db.GetProduct(a.dbEngine, strconv.Itoa(payload.ProductId))
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	logrus.Info("查询用户策略表得到用户对应得所有策略")
 	//查询用户策略表得到用户对应得所有策略
 	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
 	if err != nil {
@@ -613,6 +615,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	logrus.Info("这里再进行解密")
 	//这里再进行解密
 	//先解密再使用
 	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
@@ -620,6 +623,8 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 
 	//还要根据策略名字解析得到具体交易币种
 	array := strings.Split(strategy.StrategyName, "/")
+
+	logrus.Info(strategy.CoinName)
 
 	switch strategy.CoinName {
 	case "SPOT":
@@ -687,7 +692,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		return
 	}
 
-	err, _, _, _, _ = a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
+	err, _, _, _, _ = a.investHandle(c, uidFormatted, strconv.Itoa(payload.ID), strconv.Itoa(payload.ProductId), balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)
@@ -704,7 +709,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	}
 	UserStrategy := types.UserStrategy{
 		Uid:          uidFormatted,
-		StrategyID:   payload.ProductId,
+		StrategyID:   strconv.Itoa(payload.ProductId),
 		JoinTime:     time.Now(), //.Format("2006-01-02"),
 		ActualInvest: actualInvest.String(),
 	}
