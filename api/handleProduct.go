@@ -747,7 +747,7 @@ func ProductRevenue(a *ApiService, Revenue []map[string]string) (error, []map[st
 	var ProductRevenueList []map[string]interface{}
 	for i := 0; i < len(Revenue); i++ {
 		UserRevenue := make(map[string]interface{})
-		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_stragetyID"])
+		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_strategyID"])
 		if err != nil {
 			return err, ProductRevenueList
 		}
@@ -772,9 +772,9 @@ func ProductRevenueRatio(a *ApiService, AllRevenue []map[string]string, AllInves
 	var RevenueRatioRanking []map[string]interface{}
 	for _, RevenueValue := range AllRevenue {
 		for _, InvestValue := range AllInvest {
-			if RevenueValue["f_stragetyID"] == InvestValue["f_strategyID"] {
+			if RevenueValue["f_strategyID"] == InvestValue["f_strategyID"] {
 				RevenueRatio := make(map[string]interface{})
-				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_stragetyID"])
+				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_strategyID"])
 				if err != nil {
 					return err, RevenueRatioRanking
 				}
