@@ -55,3 +55,12 @@ func UpdateDelCollectProduct(engine *xorm.Engine, productId string, uid string) 
 	}
 	return nil
 }
+
+func UpdatePlatformExp(engine *xorm.Engine, platExp *types.PlatformExperience) error {
+	_, err := engine.Table("platformExperience").Update(platExp)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
+	return nil
+}

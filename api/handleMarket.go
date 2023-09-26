@@ -149,7 +149,18 @@ func (a *ApiService) addConcern(c *gin.Context) {
 
 // 得到我得自选
 func (a *ApiService) getCoinInfo(c *gin.Context) {
-	res := util.ResponseMsg(0, "getCoinInfo nil for now", nil)
+	symbol := c.Query("symbol")
+
+	coinInfo, err := db.GetCoinInfo(a.dbEngine, symbol)
+	if err != nil {
+		logrus.Info("update user concern:", err)
+
+		res := util.ResponseMsg(-1, "update user concern", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(0, "getCoinInfo success", coinInfo)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }

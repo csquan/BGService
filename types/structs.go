@@ -35,6 +35,17 @@ type Invitation struct {
 	Level      string    `xorm:"f_level"`
 }
 
+type Coins struct {
+	Symbol      string `xorm:"f_symbol"`
+	MarketValue string `xorm:"f_marketValue"`
+	Circulation string `xorm:"f_circulation"`
+	MaxSupply   string `xorm:"f_maxSupply"`
+	HighPrice   string `xorm:"f_highPrice"`
+
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
 type UserStrategy struct {
 	Uid          string    `xorm:"f_uid"`
 	StrategyID   string    `xorm:"f_strategyID"`
@@ -124,12 +135,16 @@ type UserShare struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+type UserExpUpdate struct {
+	Status string `xorm:"f_status"`
+}
+
 // 用户体验金记录表
 type UserExperience struct {
-	Id             int64     `xorm:"f_id"`
 	UId            string    `xorm:"f_uid"`
 	CoinName       string    `xorm:"f_coinName"`
 	Type           string    `xorm:"f_type"`
+	ExpType        string    `xorm:"f_expType"`
 	ReceiveSum     int64     `xorm:"f_receiverSum"`
 	ValidTime      time.Time `xorm:"f_validTime"`
 	ValidStartTime time.Time `xorm:"f_validStartTime"`

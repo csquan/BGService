@@ -128,6 +128,9 @@ func (a *ApiService) Run() {
 		//领取体验金
 		v6.GET("/getExperienceFund", authMiddleware(), a.getExperienceFund)
 
+		//执行系统策略
+		v6.POST("/extcuteSystemStrategy", authMiddleware(), a.extcuteSystemStrategy)
+
 		//获得用户的体验金收益率
 		v6.GET("/getUserExperienceRatio", authMiddleware(), a.getUserExperienceRatio)
 		//获取平台的体验金收益率

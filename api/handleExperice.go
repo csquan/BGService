@@ -21,6 +21,11 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 	body := make(map[string]interface{})
 	body["apiBinding"] = false
 	body["isBindGoogle"] = false
+
+	body["balance"] = 0
+	body["RegisterStatus"] = false
+	body["apiBindingStatus"] = false
+	body["isBindGoogleStatus"] = false
 	// 查询两个条件-查询数据库
 	// 谷歌绑定检查
 	user, err := db.GetUser(a.dbEngine, uidFormatted)
@@ -52,6 +57,36 @@ func (a *ApiService) checkoutQualification(c *gin.Context) {
 			body["apiBinding"] = true
 		}
 	}
+	//取剩余份数
+	platformExp, err := db.GetPlatformExperience(a.dbEngine)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if platformExp != nil {
+		body["balance"] = platformExp.MaxPersons
+	}
+	//取注册领取状态
+	userExps, err := db.GetUserExperience(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	for _, userExp := range userExps {
+		switch userExp.ExpType {
+		case "1":
+			body["RegisterStatus"] = true
+		case "2":
+			body["apiBindingStatus"] = true
+		case "3":
+			body["isBindGoogleStatus"] = true
+		}
+	}
+
 	res := util.ResponseMsg(0, "checkoutQualification success", body)
 	c.SecureJSON(http.StatusOK, res)
 	return
@@ -89,7 +124,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 
 	experience := c.Query("type")
 	experienceType := fmt.Sprintf("%s", experience)
-	experienceType = "1"
+
 	body := make(map[string]interface{})
 	var user *types.Users
 	if experienceType == "1" {
@@ -183,6 +218,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	sevenDayAgo := timeNow.AddDate(0, 0, 7)
 	userExperience.UId = uidFormatted
 	userExperience.Type = "1" // 新人有礼
+	userExperience.ExpType = experienceType
 	userExperience.ReceiveSum = sum
 	userExperience.CoinName = "usdt"
 	userExperience.ValidTime = timeNow
@@ -212,6 +248,118 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	}
 
 	res := util.ResponseMsg(0, "get exp success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+// 执行系统策略-1.首先检查条件 2.将平台剩余份数-1 3.将用户表的使用状态更新过来
+func (a *ApiService) extcuteSystemStrategy(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user == nil {
+		logrus.Info("find no user", uid)
+		res := util.ResponseMsg(-1, "find no user", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user.IsBindGoogle == false {
+		res := util.ResponseMsg(-1, "no condition:IsBindGoogle error", user.IsBindGoogle)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// api绑定检查
+	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if userBindInfos != nil {
+		if len(userBindInfos.ApiKey) <= 0 || len(userBindInfos.ApiSecret) <= 0 {
+			res := util.ResponseMsg(-1, "no condition:BindApi error", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+	logrus.Info("meet condition")
+
+	TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
+
+	if err != nil {
+		logrus.Info("query db error", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	if TotalRevenueInfo == nil {
+		logrus.Info("platform exp info not exist")
+
+		res := util.ResponseMsg(-1, "platform exp info not exist", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	session := a.dbEngine.NewSession()
+	err = session.Begin()
+	if err != nil {
+		logrus.Info(err)
+
+		res := util.ResponseMsg(-1, "session Begin error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	TotalRevenueInfo.MaxPersons = TotalRevenueInfo.MaxPersons - 1
+
+	_, err = session.Table("platformExperience").Update(TotalRevenueInfo)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(0, "internal db session rollback error", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+
+	//2.将用户表的使用状态更新过来
+	userExpUpdate := types.UserExpUpdate{}
+	userExpUpdate.Status = "t"
+
+	_, err = session.Table("userExperience").Where("f_uid=?", uidFormatted).Update(userExpUpdate)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+
+			res := util.ResponseMsg(0, "internal db session rollback error", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+
+	err = session.Commit()
+	if err != nil {
+		logrus.Error(err)
+
+		res := util.ResponseMsg(0, "internal db session commit  error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+
+	res := util.ResponseMsg(0, "UpdatePlatformExp success", nil)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
