@@ -251,10 +251,45 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	return
 }
 
-// 执行系统策略-1.将平台剩余份数--2.将用户表的使用状态更新过来
+// 执行系统策略-1.首先检查条件 2.将平台剩余份数-1 3.将用户表的使用状态更新过来
 func (a *ApiService) extcuteSystemStrategy(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	uidFormatted := fmt.Sprintf("%s", uid)
+
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user == nil {
+		logrus.Info("find no user", uid)
+		res := util.ResponseMsg(-1, "find no user", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user.IsBindGoogle == false {
+		res := util.ResponseMsg(-1, "no condition:IsBindGoogle error", user.IsBindGoogle)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	// api绑定检查
+	userBindInfos, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Info("query db error", err)
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if userBindInfos != nil {
+		if len(userBindInfos.ApiKey) <= 0 || len(userBindInfos.ApiSecret) <= 0 {
+			res := util.ResponseMsg(-1, "no condition:BindApi error", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+	logrus.Info("meet condition")
 
 	TotalRevenueInfo, err := db.GetPlatformExperience(a.dbEngine)
 
