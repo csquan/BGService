@@ -267,8 +267,9 @@ func (a *ApiService) getExperience(c *gin.Context) {
 	}
 	var receiveSum int64 = 0
 	for _, userExp := range userExps {
-		if userExp.Status == true {
-			receiveSum += userExp.ReceiveSum
+		now := time.Now()
+		if userExp.Status == false && now.Before(userExp.ValidEndTime) {
+			receiveSum = receiveSum + userExp.ReceiveSum
 		}
 	}
 	body := make(map[string]interface{})
