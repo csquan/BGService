@@ -224,7 +224,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	userExperience.ValidTime = timeNow
 	userExperience.ValidStartTime = timeNow
 	userExperience.ValidStartTime = sevenDayAgo
-	userExperience.Status = true
+	userExperience.Status = false
 
 	_, err = session.Table("userExperience").Insert(userExperience)
 	if err != nil {
@@ -248,6 +248,30 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	}
 
 	res := util.ResponseMsg(0, "get exp success", nil)
+	c.SecureJSON(http.StatusOK, res)
+	return
+}
+
+func (a *ApiService) getExperience(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
+	userExps, err := db.GetUserExperience(a.dbEngine, uidFormatted)
+
+	if err != nil {
+		logrus.Info("query db error", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	for _, userExp := range userExps {
+		if userExp.Status != true {
+
+		}
+	}
+
+	res := util.ResponseMsg(0, "query exp success", userExp)
 	c.SecureJSON(http.StatusOK, res)
 	return
 }
