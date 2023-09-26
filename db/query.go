@@ -364,6 +364,18 @@ func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, erro
 	return nil, nil
 }
 
+func GetCoinInfo(engine *xorm.Engine, symbol string) (*types.Coins, error) {
+	var coinInfo types.Coins
+	has, err := engine.Table("coins").Where("f_symbol=?", symbol).Get(&coinInfo)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &coinInfo, nil
+	}
+	return nil, nil
+}
+
 func GetMsg(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, Type string) ([]types.News, error) {
 	var news []types.News
 	err := engine.Table("news").Where("f_type=?", Type).Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&news)
