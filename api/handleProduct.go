@@ -944,7 +944,11 @@ func (a *ApiService) productChart(c *gin.Context) {
 	length := len(AllStrategy)
 	dec1 := decimal.NewFromInt32(int32(win))
 	dec2 := decimal.NewFromInt32(int32(length))
-	userBenefitNDays.WinRatio = dec1.Div(dec2).String()
+	if dec2.Sign() == 0 {
+		userBenefitNDays.WinRatio = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.WinRatio = dec1.Div(dec2).String()
+	}
 	// 收益率
 	userBenefitNDays.BenefitRatio = userBenefitNDays.BenefitSum.Div(AllInvest).String()
 	// 回撤率
