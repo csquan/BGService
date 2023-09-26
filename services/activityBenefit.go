@@ -2,7 +2,11 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/delivery"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/ethereum/BGService/types"
 	utils "github.com/ethereum/BGService/util"
 	_ "github.com/lib/pq"
@@ -83,9 +87,16 @@ func (c *ActivityBenefitService) Run() error {
 	}
 	defer db.Close()
 
-	userData, err := utils.GetBinanceUMUserData(types.ApiKeySystem, types.ApiSecretSystem)
-	if err != nil {
-		logrus.Info(err)
+	err1 := errors.New("init error")
+	var userData *futures.Account
+	for {
+		userData, err1 = utils.GetBinanceUMUserData(types.ApiKeySystem, types.ApiSecretSystem)
+		if err1 != nil {
+			logrus.Info(err1)
+		} else {
+			logrus.Info("成功请求到币安U本位接口")
+			break
+		}
 	}
 	umSum := float64(0)
 	for _, asset := range userData.Assets {
@@ -125,11 +136,17 @@ func (c *ActivityBenefitService) Run() error {
 	logrus.Info("U本位余额为", umSum)
 
 	spotSum := float64(0)
-	userData2, err := utils.GetBinanceSpotUserData(types.ApiKeySystem, types.ApiSecretSystem)
-	if err != nil {
-		logrus.Info(err)
+	err2 := errors.New("init error")
+	var userData2 *binance.Account
+	for {
+		userData2, err2 = utils.GetBinanceSpotUserData(types.ApiKeySystem, types.ApiSecretSystem)
+		if err2 != nil {
+			logrus.Info(err2)
+		} else {
+			logrus.Info("成功请求到币安现货接口")
+			break
+		}
 	}
-
 	for _, balance := range userData2.Balances {
 		MarginBalanceFloat, err := strconv.ParseFloat(balance.Locked, 64)
 		if err != nil {
@@ -167,11 +184,17 @@ func (c *ActivityBenefitService) Run() error {
 	logrus.Info("现货余额为", spotSum)
 
 	cmSum := float64(0)
-	userData3, err := utils.GetBinanceCMUserData(types.ApiKeySystem, types.ApiSecretSystem)
-	if err != nil {
-		logrus.Info(err)
+	err3 := errors.New("init error")
+	var userData3 *delivery.Account
+	for {
+		userData3, err3 = utils.GetBinanceCMUserData(types.ApiKeySystem, types.ApiSecretSystem)
+		if err3 != nil {
+			logrus.Info(err3)
+		} else {
+			logrus.Info("成功请求到币安币本位接口")
+			break
+		}
 	}
-
 	for _, asset := range userData3.Assets {
 		MarginBalanceFloat, err := strconv.ParseFloat(asset.MarginBalance, 64)
 		if err != nil {
