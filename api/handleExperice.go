@@ -218,6 +218,7 @@ func (a *ApiService) getExperienceFund(c *gin.Context) {
 	sevenDayAgo := timeNow.AddDate(0, 0, 7)
 	userExperience.UId = uidFormatted
 	userExperience.Type = "1" // 新人有礼
+	userExperience.ExpType = experienceType
 	userExperience.ReceiveSum = sum
 	userExperience.CoinName = "usdt"
 	userExperience.ValidTime = timeNow
