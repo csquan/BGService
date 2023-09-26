@@ -332,7 +332,7 @@ type ForgotPasswordInput struct {
 // 平台体验金信息
 type PlatformExperience struct {
 	TotalSum       int64 `xorm:"f_totalSum"`
-	PerSum         int64 `xorm:"f_perSum"`
+	MaxPersons     int64 `xorm:"f_maxPersons"`
 	ReceivePersons int64 `xorm:"f_receivePersons"`
 	RecyclePersons int64 `xorm:"f_recyclePersons"`
 }
