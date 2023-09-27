@@ -109,13 +109,13 @@ func (c *UserBenefitService) Run() error {
 		fmt.Println(Sql)
 		rows, err := db.Query(Sql)
 		if err != nil {
-			log.Fatal("Failed to execute query: ", err)
+			log.Error("Failed to execute query: ", err)
 		}
 		StrategySql := `SELECT "f_coinName" FROM "strategys" WHERE "f_strategyID" = $1`
 		fmt.Println(StrategySql, value.Strategyid)
 		Strategyrows, err := db.Query(StrategySql, value.Strategyid)
 		if err != nil {
-			log.Fatal("Failed to execute query: ", err)
+			log.Error("Failed to execute query: ", err)
 		}
 		var apiKey string
 		var apiSecret string
@@ -137,6 +137,10 @@ func (c *UserBenefitService) Run() error {
 				logrus.Info(err)
 			}
 			var MarginBalance string
+			if userData == nil {
+				logrus.Info("userData is null")
+				return nil
+			}
 			for _, asset := range userData.Assets {
 				if asset.Asset == Asset {
 					fmt.Println("MarginBalance", asset.MarginBalance)

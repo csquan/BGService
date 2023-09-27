@@ -8,9 +8,10 @@ import (
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/log"
 	"github.com/ethereum/BGService/services"
-	"github.com/jasonlvhit/gocron"
+	"github.com/go-co-op/gocron"
 	"github.com/sirupsen/logrus"
 	"os"
+	"time"
 )
 
 const CONTRACTLEN = 42
@@ -51,7 +52,10 @@ func main() {
 	//activityBenefitService := services.NewActivityBenefitService()
 	//activityBenefitService.Run()
 
-	gocron.Every(1).Day().At(config.Conf.Schedule.Time).Do(scheduler.Start)
+	timezone, _ := time.LoadLocation("Asia/Shanghai")
+	s := gocron.NewScheduler(timezone)
+	s.Every(1).Day().At(config.Conf.Schedule.Time).Do(scheduler.Start)
+	s.StartBlocking()
 
 	apiService := api.NewApiService(dbEngine, RedisEngine, &config.Conf)
 	go apiService.Run()
