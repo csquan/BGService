@@ -1,12 +1,13 @@
 package services
 
 import (
-	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
-	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/ethereum/BGService/types"
+	utils "github.com/ethereum/BGService/util"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -64,45 +65,53 @@ func queryUserStrategyEarnings(db *sql.DB, uid string, f_strategyID string, yest
 	Sql := fmt.Sprintf(`SELECT "f_totalBenefit" FROM "userStrategyEarnings" WHERE f_uid = '%s' and "f_strategyID"='%s' and "f_createTime"='%s'`, uid, f_strategyID, yesterday)
 	rows, err := db.Query(Sql)
 	if err != nil {
-		log.Fatal("Failed to execute query: ", err)
+		logrus.Error("Failed to execute query: ", err)
 	}
 	var totalBenefit string
 	for rows.Next() {
 		err = rows.Scan(&totalBenefit)
 	}
-	totalBenefitFloat, err := strconv.ParseFloat(totalBenefit, 64)
-	if err != nil {
-		logrus.Error(err)
+	totalBenefitFloat := float64(0)
+	if totalBenefit != "" {
+		totalBenefitFloat, err = strconv.ParseFloat(totalBenefit, 64)
+		if err != nil {
+			logrus.Error(err)
+		}
 	}
+
 	return totalBenefitFloat
 }
 
 func insertEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, uid string, strategyID string) {
 	insertSQL := `
-		INSERT INTO "platformExperienceEarnings" ("f_strategyID", "f_dayBenefit", "f_totalBenefit", "f_uid")
-		VALUES ($1, $2, $3)
+		INSERT INTO "userStrategyEarnings" ("f_strategyID", "f_dayBenefit", "f_totalBenefit", "f_uid")
+		VALUES ($1, $2, $3,$4)
 	`
 	// 要插入的数据
 	data := []interface{}{strategyID, dayBenefit, totalBenefit, uid}
 	// 执行插入操作
 	result, err := db.Exec(insertSQL, data...)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Error(err)
+		return
 	}
 
 	// 获取受影响的行数
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Error(err)
+		return
 	}
 	fmt.Printf("rowsAffected = %d", rowsAffected)
 }
 
 func (c *UserBenefitService) Run() error {
+	logrus.Info("***************************开始每日任务：用户每日投资收益统计***************************")
 	// Create DB pool
 	db, err := sql.Open("postgres", DB_DSN)
 	if err != nil {
-		log.Fatal("Failed to open a DB connection: ", err)
+		logrus.Error("Failed to open a DB connection: ", err)
+		return err
 	}
 	defer db.Close()
 	StrategyidList := queryUserStrategy(db)
@@ -111,13 +120,15 @@ func (c *UserBenefitService) Run() error {
 		fmt.Println(Sql)
 		rows, err := db.Query(Sql)
 		if err != nil {
-			log.Error("Failed to execute query: ", err)
+			logrus.Error("Failed to execute query: ", err)
+			return err
 		}
 		StrategySql := `SELECT "f_coinName" FROM "strategys" WHERE "f_strategyID" = $1`
 		fmt.Println(StrategySql, value.Strategyid)
 		Strategyrows, err := db.Query(StrategySql, value.Strategyid)
 		if err != nil {
-			log.Error("Failed to execute query: ", err)
+			logrus.Error("Failed to execute query: ", err)
+			return err
 		}
 		var apiKey string
 		var apiSecret string
@@ -126,38 +137,70 @@ func (c *UserBenefitService) Run() error {
 			err = rows.Scan(&apiKey, &apiSecret)
 		}
 		api := fmt.Sprintf("apikey:%s, apisecret:%s", apiKey, apiSecret)
-		fmt.Println(api)
+		logrus.Info(api)
 		if apiKey != "" && apiSecret != "" {
 			for Strategyrows.Next() {
 				err = Strategyrows.Scan(&Asset)
 			}
-			fmt.Println("Asset:", Asset)
+			logrus.Info("Asset:", Asset)
 			// 解密
 			apiKey = cryptor.AesSimpleDecrypt(apiKey, types.AesKey)
 			apiSecret = cryptor.AesSimpleDecrypt(apiSecret, types.AesKey)
-			futuresClient := binance.NewFuturesClient(apiKey, apiSecret) // USDT-M Futures
-			futuresClient.SetApiEndpoint(base_future_testnet_binance_url)
-			userData, err := futuresClient.NewGetAccountService().Do(context.Background())
-			if err != nil {
-				logrus.Info(err)
+
+			err1 := errors.New("init error")
+			var userData *futures.Account
+			for {
+				userData, err1 = utils.GetBinanceUMUserData(apiKey, apiSecret)
+				if err1 != nil {
+					logrus.Info(err1)
+				} else {
+					logrus.Info("成功请求到币安UM接口")
+					break
+				}
 			}
-			var MarginBalance string
+
 			if userData == nil {
 				logrus.Info("userData is null")
 				return nil
 			}
+
+			umSum := float64(0)
+
 			for _, asset := range userData.Assets {
-				if asset.Asset == Asset {
-					fmt.Println("MarginBalance", asset.MarginBalance)
-					MarginBalance = asset.MarginBalance
+				MarginBalanceFloat, err := strconv.ParseFloat(asset.MarginBalance, 64)
+				if err != nil {
+					logrus.Error(err)
+					return err
+				}
+				if MarginBalanceFloat > 0 {
+					price := float64(0)
+					if asset.Asset != "USDT" {
+						symbols := make([]string, 1)
+						symbols[0] = asset.Asset + "USDT"
+
+						prices, err := utils.GetBinancePrice(types.ApiKeySystem, types.ApiSecretSystem, symbols)
+						if err != nil {
+							logrus.Error(err)
+							return err
+						}
+						if err != nil {
+							logrus.Error(prices)
+							return err
+						}
+						price, err = strconv.ParseFloat(prices[0].Price, 64)
+						if err != nil {
+							logrus.Error(err)
+							return err
+						}
+					} else {
+						price = 1
+					}
+					assetSum := MarginBalanceFloat * float64(price)
+					umSum = assetSum + float64(umSum)
 				}
 			}
-			MarginBalanceFloat, err := strconv.ParseFloat(MarginBalance, 64)
-			if err != nil {
-				logrus.Error(err)
-			}
 			// 累计收入
-			totalBenefit := MarginBalanceFloat - value.actualInvest
+			totalBenefit := umSum - value.actualInvest
 			// 获取当前时间
 			now := time.Now()
 			// 计算昨天的时间

@@ -32,4 +32,4 @@ Redis:
 Endpoint:
   Trx: "grpc.trongrid.io:50051" #"grpc.shasta.trongrid.io:50051"
 Schedule:
-  time : "10:52"
+  time : "23:59"

@@ -33,7 +33,6 @@ const (
 	activityDbDSN     = "postgres://postgres:12345@127.0.0.1:5432/postgres?sslmode=disable"
 	activityApiKey    = "Xq2vyva4DUxw1EqywIHHZa8RDFIitXraDexa1LVONe3reuPNUEFuDYDs7JYjMY86"
 	activityApiSecret = "reLDM7CYMHVPlw6FodmQvYpU9zRdndQ5NUlRFswKT6leKzcKl2BeP3tycqEaLBRZ"
-	Asset             = "USDT"
 )
 
 var (
@@ -51,10 +50,14 @@ func queryActivityStrategyEarnings(db *sql.DB, strategyID string, createTime str
 	for rows.Next() {
 		err = rows.Scan(&totalBenefit)
 	}
-	totalBenefitFloat, err := strconv.ParseFloat(totalBenefit, 64)
-	if err != nil {
-		logrus.Error(err)
+	totalBenefitFloat := float64(0)
+	if totalBenefit != "" {
+		totalBenefitFloat, err = strconv.ParseFloat(totalBenefit, 64)
+		if err != nil {
+			logrus.Error(err)
+		}
 	}
+
 	return totalBenefitFloat
 }
 
@@ -80,6 +83,7 @@ func insertActivityEarning(db *sql.DB, dayBenefit float64, totalBenefit float64,
 }
 
 func (c *ActivityBenefitService) Run() error {
+	logrus.Info("***************************开始每日任务：系统200万投资收益统计***************************")
 	// Create DB pool
 	db, err := sql.Open("postgres", activityDbDSN)
 	if err != nil {
