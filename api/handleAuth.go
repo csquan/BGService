@@ -32,7 +32,7 @@ func (a *ApiService) email(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	err = a.RedisEngine.Set(c, email, verifyCode, 3*time.Minute).Err()
+	err = a.RedisEngine.Set(c, email, verifyCode, 10*time.Minute).Err()
 	if err != nil {
 		logrus.Error("设置值失败:", err)
 		res := util.ResponseMsg(-1, "fail", err)
