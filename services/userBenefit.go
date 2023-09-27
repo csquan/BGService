@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/adshao/go-binance/v2"
+	"github.com/ethereum/BGService/types"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -130,6 +132,9 @@ func (c *UserBenefitService) Run() error {
 				err = Strategyrows.Scan(&Asset)
 			}
 			fmt.Println("Asset:", Asset)
+			// 解密
+			apiKey = cryptor.AesSimpleDecrypt(apiKey, types.AesKey)
+			apiSecret = cryptor.AesSimpleDecrypt(apiSecret, types.AesKey)
 			futuresClient := binance.NewFuturesClient(apiKey, apiSecret) // USDT-M Futures
 			futuresClient.SetApiEndpoint(base_future_testnet_binance_url)
 			userData, err := futuresClient.NewGetAccountService().Do(context.Background())
