@@ -57,11 +57,11 @@ func main() {
 	timezone, _ := time.LoadLocation("Asia/Shanghai")
 	s := gocron.NewScheduler(timezone)
 	s.Every(1).Day().At(config.Conf.Schedule.Time).Do(scheduler.Start)
-	s.StartBlocking()
 
 	apiService := api.NewApiService(dbEngine, RedisEngine, &config.Conf)
 	go apiService.Run()
 
+	s.StartBlocking()
 	//listen kill signal
 	closeCh := make(chan os.Signal, 1)
 
