@@ -25,7 +25,7 @@ func (a *ApiService) email(c *gin.Context) {
 	to := []string{email}
 	subject := "BG 認証コード"
 	verifyCode := util.GenerateCode(6)
-	sendBody := fmt.Sprintf("ユーザー %s 様<br/> こんにちは！<br/> BG をご利用いただきありがとうございます。認証コードを入力して認証を完了してください。<br/> 認証コード：%s<br/> 有効期限は 3 分間です。公開しないでください。", email, verifyCode)
+	sendBody := fmt.Sprintf("ユーザー %s 様<br/> こんにちは！<br/> BG をご利用いただきありがとうございます。認証コードを入力して認証を完了してください。<br/> 認証コード：%s<br/> 有効期限は 10 分間です。公開しないでください。", email, verifyCode)
 	err := util.SendEmail(a.config, to, subject, sendBody)
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
