@@ -51,6 +51,8 @@ func main() {
 
 	//activityBenefitService := services.NewActivityBenefitService()
 	//activityBenefitService.Run()
+	//UserBenefit := services.NewUserBenefitService()
+	//UserBenefit.Run()
 
 	timezone, _ := time.LoadLocation("Asia/Shanghai")
 	s := gocron.NewScheduler(timezone)
