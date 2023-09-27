@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import json
 import requests
 from config import pgsql_config
 from pgsql_util import PGDB
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     url = "https://www.techflowpost.com/ashx/newflash_index.ashx"
     response = open_url(url, 20, 1)
     if response.status_code == 200:
-        news_flash = del_news_flash(response.json())
+        news_flash = del_news_flash(json.loads(response.content.decode("utf-8")))
         pgdb = PGDB(pgsql_config)
         for key, value in news_flash.items():
             pgdb.insert_new(key, value, "news", "2")

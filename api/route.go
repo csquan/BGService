@@ -31,21 +31,21 @@ func NewApiService(dbEngine *xorm.Engine, RedisEngine db.CustomizedRedis, cfg *c
 
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//session := sessions.Default(c)
-		//Uid := session.Get("Uid")
-		//body := make(map[string]interface{})
-		//if Uid == nil {
-		//	res := util.ResponseMsg(-1, "Unauthorized", body)
-		//	c.SecureJSON(http.StatusOK, res)
-		//	c.Abort()
-		//	return
-		//}
-		//invitationCode := session.Get("invitationCode")
-		//// 用户已登录，将用户 ID 传递给后续的处理函数
-		//c.Set("Uid", Uid)
-		//c.Set("invitationCode", invitationCode)
-		c.Set("Uid", "24670980929080")
-		c.Set("invitationCode", "VCZ34Z71")
+		session := sessions.Default(c)
+		Uid := session.Get("Uid")
+		if Uid == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			c.Abort()
+			return
+		}
+		invitationCode := session.Get("invitationCode")
+		// 用户已登录，将用户 ID 传递给后续的处理函数
+		c.Set("Uid", Uid)
+		c.Set("invitationCode", invitationCode)
+		//c.Set("Uid", "24670980929080")
+		//c.Set("invitationCode", "VCZ34Z71")
 		c.Next()
 	}
 }
@@ -85,7 +85,7 @@ func (a *ApiService) Run() {
 		v1.POST("/forgotPassword", a.forgotPassword)
 		v1.POST("/resetPassword", authMiddleware(), a.resetPassword)
 		v1.GET("/generateSecret", authMiddleware(), a.generateSecret)
-		v1.POST("/verifyCode", a.verifyCode)
+		v1.POST("/verifyCode", authMiddleware(), a.verifyCode)
 	}
 	v2 := r.Group("/api/user")
 	{
@@ -109,9 +109,16 @@ func (a *ApiService) Run() {
 
 	v4 := r.Group("/api/market")
 	{
-		v4.GET("/getBinancePrice", a.getBinancePrice)
 		//添加/移除自选
-		v4.POST("/addConcern", a.addConcern)
+		v4.POST("/changeConcern", authMiddleware(), a.addConcern)
+		//添加/移除自选
+		v4.GET("/getConcern", authMiddleware(), a.getConcern)
+		//得到币种信息
+		v4.GET("/getCoinInfo", a.getCoinInfo)
+		//添加/移除自选
+		v4.GET("/getKlinesHistory", a.getKlinesHistory)
+		//添加/移除自选
+		v4.GET("/getBinanceHighPercent", a.getBinanceHighPercent)
 	}
 
 	v6 := r.Group("/api/experienceActivity")
@@ -121,10 +128,15 @@ func (a *ApiService) Run() {
 		//领取体验金
 		v6.GET("/getExperienceFund", authMiddleware(), a.getExperienceFund)
 
-		////获得用户的体验金收益率
-		//v6.GET("/getUserExperienceRatio", authMiddleware(), a.getUserExperienceRatio)
-		////获取平台的体验金收益率
-		//v6.GET("/getPlatformExperienceRatio", authMiddleware(), a.getPlatformExperienceRatio)
+		//查询体验金
+		v6.GET("/getExperience", authMiddleware(), a.getExperience)
+		//执行系统策略
+		v6.POST("/extcuteSystemStrategy", authMiddleware(), a.extcuteSystemStrategy)
+
+		//获得用户的体验金收益率
+		v6.GET("/getUserExperienceRatio", authMiddleware(), a.getUserExperienceRatio)
+		//获取平台的体验金收益率
+		v6.GET("/getPlatformExperienceRatio", authMiddleware(), a.getPlatformExperienceRatio)
 	}
 
 	v7 := r.Group("/api/wallet")
@@ -150,9 +162,9 @@ func (a *ApiService) Run() {
 		v7.POST("/fundOut", authMiddleware(), a.fundOut)
 
 		//得到用户的体验金
-		v6.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
+		v7.GET("/getUserExperience", authMiddleware(), a.getUserExperience)
 		//得到用户的佣金
-		v6.GET("/getUserShare", authMiddleware(), a.getUserShare)
+		v7.GET("/getUserShare", authMiddleware(), a.getUserShare)
 
 		//财务日志-得到充值记录表
 		v7.GET("/getUserPlatformFundIn", authMiddleware(), a.getUserPlatformFundIn)
@@ -162,6 +174,10 @@ func (a *ApiService) Run() {
 		v7.GET("/getUserPlatformShare", authMiddleware(), a.getUserPlatformShare)
 		//财务日志-得到体验金记录表
 		v7.GET("/getUserPlatformExperience", authMiddleware(), a.getUserPlatformExperience)
+
+		//得到用户资金信息
+		v7.GET("/getUserAsset", authMiddleware(), a.getUserAsset)
+
 	}
 
 	v8 := r.Group("/api/product")
@@ -172,7 +188,7 @@ func (a *ApiService) Run() {
 		v8.GET("/info", a.productInfo)
 		v8.GET("/transactionRecords", a.transactionRecords)
 		v8.GET("/invest", authMiddleware(), a.invest)
-		v8.GET("/executeStrategy", authMiddleware(), a.executeStrategy)
+		v8.POST("/executeStrategy", authMiddleware(), a.executeStrategy)
 		v8.GET("/ranking", authMiddleware(), a.productRanking)
 		v8.GET("/chart", authMiddleware(), a.productChart)
 	}
@@ -181,6 +197,6 @@ func (a *ApiService) Run() {
 
 	err := r.Run(fmt.Sprintf(":%s", a.config.Server.Port))
 	if err != nil {
-		logrus.Fatalf("start http server err:%v", err)
+		logrus.Errorf("start http server err:%v", err)
 	}
 }

@@ -1,4 +1,5 @@
 import requests
+import json
 from config import pgsql_config
 from pgsql_util import PGDB
 
@@ -32,7 +33,7 @@ def main():
     response = open_url(url, "", 10)
     if response.status_code != 200:
         print(f"error:{response}")
-    news_flash = del_news_flash(response.json())
+    news_flash = del_news_flash(json.loads(response.content.decode("utf-8")))
     pgdb = PGDB(pgsql_config)
 
     for key, value in news_flash.items():

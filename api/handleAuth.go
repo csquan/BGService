@@ -178,9 +178,13 @@ func (a *ApiService) register(c *gin.Context) {
 		return
 	}
 	if _, err := session.Insert(newUser); err != nil {
-		res := util.ResponseMsg(-1, "fail", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 	}
 
 	//下面私钥加密存储
@@ -201,18 +205,30 @@ func (a *ApiService) register(c *gin.Context) {
 	if err != nil {
 		err := session.Rollback()
 		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		logrus.Fatal(err)
 	}
 
 	userAddr := types.UserAddr{
 		Uid:     uid,
-		Network: "TRX",
+		Network: "tron",
 		Addr:    addr,
 	}
 
 	_, err = session.Table("userAddr").Insert(userAddr)
+	if err != nil {
+		err := session.Rollback()
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+	}
+	err = session.Commit()
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -236,6 +252,7 @@ func (a *ApiService) login(c *gin.Context) {
 	// 获取数据库中的密码
 	err, has := db.QueryEmail(a.dbEngine, payload.Email)
 	if err != nil {
+		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", "User does not exist.")
 		c.SecureJSON(http.StatusOK, res)
 		return
@@ -376,11 +393,13 @@ func (a *ApiService) resetPassword(c *gin.Context) {
 
 // 引导下载google时调用，产生secret，保存进db
 func (a *ApiService) generateSecret(c *gin.Context) {
-	uid := c.Query("uid")
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
+
 	res := types.HttpRes{}
 
 	//首先查询出这个用户
-	user, err := db.GetUser(a.dbEngine, uid)
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
 
 	if err != nil {
 		logrus.Info(err)
@@ -400,7 +419,7 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 	//产生secret
 	user.Secret = GetSecret()
 
-	err = db.UpdateUser(a.dbEngine, uid, user)
+	err = db.UpdateUser(a.dbEngine, uidFormatted, user)
 	if err != nil {
 		res = util.ResponseMsg(-1, "update secret err", err)
 		c.SecureJSON(http.StatusOK, res)
@@ -415,6 +434,8 @@ func (a *ApiService) generateSecret(c *gin.Context) {
 
 // 输入google验证码，确认后触发后端验证
 func (a *ApiService) verifyCode(c *gin.Context) {
+	uid, _ := c.Get("Uid")
+	uidFormatted := fmt.Sprintf("%s", uid)
 	res := types.HttpRes{}
 
 	var userCode types.UserCodeInfos
@@ -425,10 +446,15 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	uid := userCode.Uid
 	code := userCode.Code
 
-	_, secret := db.QuerySecret(a.dbEngine, uid)
+	_, secret := db.QuerySecret(a.dbEngine, uidFormatted)
+
+	if secret == nil {
+		res = util.ResponseMsg(-1, "secret is nil", nil)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 
 	codeint, err := strconv.ParseInt(code, 10, 64)
 
@@ -443,6 +469,17 @@ func (a *ApiService) verifyCode(c *gin.Context) {
 	res.Code = 0
 	if isTrue {
 		res.Message = "校验成功"
+
+		var users types.UserUpdate
+		users.IsBindGoogle = "t"
+
+		err = db.UpdateUserGoogle(a.dbEngine, uidFormatted, &users)
+		if err != nil {
+			res = util.ResponseMsg(-1, "update secret err", err)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+
 	} else {
 		res.Message = "校验失败"
 	}

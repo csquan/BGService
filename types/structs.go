@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type UserUpdate struct {
+	IsBindGoogle string `xorm:"f_isBindGoogle"`
+	Secret       string `xorm:"f_secret"`
+}
+
 type Users struct {
 	Uid                 string    `xorm:"f_uid"`
 	UserName            string    `xorm:"f_userName"`
@@ -12,9 +17,9 @@ type Users struct {
 	InvitationCode      string    `xorm:"f_invitationCode"`
 	MailBox             string    `xorm:"f_mailBox"`
 	CreateTime          time.Time `xorm:"f_createTime"`
-	IsBindGoogle        bool      `xorm:"f_isBindGoogle "`
+	IsBindGoogle        bool      `xorm:"f_isBindGoogle"`
 	Secret              string    `xorm:"f_secret"`
-	IsIDVerify          bool      `xorm:"f_isIDVerify "`
+	IsIDVerify          bool      `xorm:"f_isIDVerify"`
 	Mobile              string    `xorm:"f_mobile"`
 	InviteNumber        int       `xorm:"f_inviteNumber"`
 	ConcernCoinList     string    `xorm:"f_concernCoinList"`
@@ -30,6 +35,17 @@ type Invitation struct {
 	Level      string    `xorm:"f_level"`
 }
 
+type Coins struct {
+	Symbol      string `xorm:"f_symbol"`
+	MarketValue string `xorm:"f_marketValue"`
+	Circulation string `xorm:"f_circulation"`
+	MaxSupply   string `xorm:"f_maxSupply"`
+	HighPrice   string `xorm:"f_highPrice"`
+
+	CreateTime time.Time `xorm:"f_createTime"`
+	UpdateTime time.Time `xorm:"f_updateTime"`
+}
+
 type UserStrategy struct {
 	Uid          string    `xorm:"f_uid"`
 	StrategyID   string    `xorm:"f_strategyID"`
@@ -42,7 +58,7 @@ type UserStrategy struct {
 type UserStrategyEarnings struct {
 	Id           string    `xorm:"f_id"`
 	Uid          string    `xorm:"f_uid"`
-	StrategyID   string    `xorm:"f_stragetyID"`
+	StrategyID   string    `xorm:"f_strategyID"`
 	DayBenefit   string    `xorm:"f_dayBenefit"`
 	DayRatio     string    `xorm:"f_dayRatio"`
 	TotalBenefit string    `xorm:"f_totalBenefit"`
@@ -56,6 +72,7 @@ type UserAsset struct {
 	Network    string    `xorm:"f_network"`
 	CoinName   string    `xorm:"f_coinName"`
 	Available  string    `xorm:"f_available"`
+	Lock       string    `xorm:"f_lock"`
 	Total      string    `xorm:"f_total"`
 	CreateTime time.Time `xorm:"f_createTime"`
 	UpdateTime time.Time `xorm:"f_updateTime"`
@@ -99,8 +116,8 @@ type UserFundIn struct {
 // 用户提币记录表
 type UserFundOut struct {
 	Id         int64     `xorm:"f_id"`
-	FromAddr   string    `xorm:"f_fromAddr"`
-	ToAddr     string    `xorm:"f_toAddr"`
+	FromAddr   string    `xorm:"f_from"`
+	ToAddr     string    `xorm:"f_to"`
 	CoinName   string    `xorm:"f_coinName"`
 	Gas        string    `xorm:"f_gas"`
 	Amount     string    `xorm:"f_amount"`
@@ -118,19 +135,31 @@ type UserShare struct {
 	UpdateTime time.Time `xorm:"f_updateTime"`
 }
 
+type UserExpUpdate struct {
+	Status string `xorm:"f_status"`
+}
+
 // 用户体验金记录表
 type UserExperience struct {
-	Id             int64     `xorm:"f_id"`
 	UId            string    `xorm:"f_uid"`
 	CoinName       string    `xorm:"f_coinName"`
 	Type           string    `xorm:"f_type"`
-	ReceiveSum     string    `xorm:"f_receiverSum"`
+	ExpType        string    `xorm:"f_expType"`
+	ReceiveSum     int64     `xorm:"f_receiverSum"`
 	ValidTime      time.Time `xorm:"f_validTime"`
 	ValidStartTime time.Time `xorm:"f_validStartTime"`
 	ValidEndTime   time.Time `xorm:"f_validEndTime"`
 	Status         bool      `xorm:"f_status"`
 	CreateTime     time.Time `xorm:"f_createTime"`
 	UpdateTime     time.Time `xorm:"f_updateTime"`
+}
+
+type AddrOutput struct {
+	Uid        string    `json:"uid"`
+	Network    string    `json:"network"`
+	Addr       string    `json:"addr"`
+	CreateTime time.Time `json:"createTime"`
+	UpdateTime time.Time `json:"updateTime"`
 }
 
 type RecordOutput struct {
@@ -161,10 +190,20 @@ type ExpRecordOutput struct {
 	Status string `json:"status"`
 }
 
+type UserAssetOutput struct {
+	Uid       string `json:"uid"`
+	Network   string `json:"network"`
+	CoinName  string `json:"coinName"`
+	Available string `json:"available"`
+	Lock      string `json:"lock"`
+	Total     string `json:"total"`
+}
+
 type FundOutParam struct {
-	Uid    string
-	ToAddr string
-	Amount string
+	Uid     string
+	ToAddr  string
+	Amount  string
+	Network string
 }
 
 type AccountIdentifier struct {
@@ -181,8 +220,9 @@ type AccountParam struct {
 }
 
 type FundInParam struct {
-	Uid     string
-	Network string
+	Currency        string `json:"currency"`
+	Network         string `json:"Network"`
+	RechargeAddress string `json:"rechargeAddress"`
 }
 
 type UserBindInfos struct {
@@ -225,16 +265,16 @@ type InsertUserBindInfo struct {
 }
 
 type StrategyInput struct {
-	PageSize             string `json:"pageSize" binding:"required"`
-	PageIndex            string `json:"pageIndex" binding:"required"`
-	Strategy             string `json:"strategy"`
+	PageSize             int    `json:"pageSize" binding:"required"`
+	PageIndex            int    `json:"pageIndex" binding:"required"`
+	Strategy             int    `json:"strategy"`
 	Currency             string `json:"currency"`
-	StrategySource       string `json:"strategySource"`
-	ProductCategory      string `json:"productCategory"`
-	RunTime              string `json:"runTime"`
-	ExpectedYield        string `json:"expectedYield"`
-	MaxWithdrawalRate    string `json:"maxWithdrawalRate"`
-	ComprehensiveSorting string `json:"comprehensiveSorting"`
+	StrategySource       int    `json:"strategySource"`
+	ProductCategory      int    `json:"productCategory"`
+	RunTime              int    `json:"runTime"`
+	ExpectedYield        int    `json:"expectedYield"`
+	MaxWithdrawalRate    int    `json:"maxWithdrawalRate"`
+	ComprehensiveSorting int    `json:"comprehensiveSorting"`
 	Keywords             string `json:"keywords"`
 }
 
@@ -244,9 +284,8 @@ type UserCodeInfos struct {
 }
 
 type UserConcern struct {
-	Uid      string `json:"uid"`
 	CoinPair string `json:"coinPair"`
-	Method   string `json:"method"`
+	Method   int    `json:"method"`
 }
 
 type UserInput struct {
@@ -260,9 +299,10 @@ type UserInput struct {
 }
 
 type ExecuteStrategyInput struct {
-	ID        string `json:"id" binding:"required"`
-	ProductId string `json:"productId" binding:"required"`
-	IsBreak   string `json:"isBreak" binding:"required"`
+	ID         int  `json:"id"`
+	ProductId  int  `json:"productId"`
+	BreakValue int  `json:"breakValue"`
+	IsBreak    bool `json:"isBreak"`
 }
 
 type UserBindInfoInput struct {
@@ -307,7 +347,7 @@ type ForgotPasswordInput struct {
 // 平台体验金信息
 type PlatformExperience struct {
 	TotalSum       int64 `xorm:"f_totalSum"`
-	PerSum         int64 `xorm:"f_perSum"`
+	MaxPersons     int64 `xorm:"f_maxPersons"`
 	ReceivePersons int64 `xorm:"f_receivePersons"`
 	RecyclePersons int64 `xorm:"f_recyclePersons"`
 }
@@ -388,18 +428,18 @@ type TransactionTask struct {
 }
 
 type TradeDetails struct {
-	AccountTotalAssets map[string]string `json:"accountTotalAssets"`
-	InitAssets         map[string]string `json:"initAssets"`
-	CurBenefit         map[string]string `json:"curBenefit"`
-	WithdrawalSum      map[string]string `json:"withdrawalSum"`
-	InDays             string            `json:"inDays"`
-	Source             string            `json:"source"`
-	Type               string            `json:"type"`
-	ShareRatio         string            `json:"shareRatio"`
-	DividePeriod       string            `json:"dividePeriod"`
-	AgreementPeriod    string            `json:"agreementPeriod"`
-	ProductID          string            `json:"productID"`
-	Name               string            `json:"name"`
+	AccountTotalAssets string `json:"accountTotalAssets"`
+	InitAssets         string `json:"initAssets"`
+	CurBenefit         string `json:"curBenefit"`
+	WithdrawalSum      string `json:"withdrawalSum"`
+	InDays             string `json:"inDays"`
+	Source             string `json:"source"`
+	Type               string `json:"type"`
+	ShareRatio         string `json:"shareRatio"`
+	DividePeriod       string `json:"dividePeriod"`
+	AgreementPeriod    string `json:"agreementPeriod"`
+	ProductID          string `json:"productID"`
+	Name               string `json:"name"`
 }
 
 type StrategyStats struct {
@@ -425,4 +465,50 @@ type HttpRes struct {
 	Code    int         `json:"code"`
 	Message string      `json:"msg"`
 	Data    interface{} `json:"body"`
+}
+
+// 涨幅榜结果
+type CoinStats struct {
+	Symbol  string `json:"symbol"`
+	Percent string `json:"percent"`
+}
+
+// PriceChangeStats define price change stats
+type PriceChangeStats struct {
+	Symbol             string          `json:"symbol"`
+	PriceChange        string          `json:"priceChange"`
+	PriceChangePercent decimal.Decimal `json:"priceChangePercent"`
+	WeightedAvgPrice   string          `json:"weightedAvgPrice"`
+	PrevClosePrice     string          `json:"prevClosePrice"`
+	LastPrice          string          `json:"lastPrice"`
+	LastQty            string          `json:"lastQty"`
+	BidPrice           string          `json:"bidPrice"`
+	BidQty             string          `json:"bidQty"`
+	AskPrice           string          `json:"askPrice"`
+	AskQty             string          `json:"askQty"`
+	OpenPrice          string          `json:"openPrice"`
+	HighPrice          string          `json:"highPrice"`
+	LowPrice           string          `json:"lowPrice"`
+	Volume             string          `json:"volume"`
+	QuoteVolume        string          `json:"quoteVolume"`
+	OpenTime           int64           `json:"openTime"`
+	CloseTime          int64           `json:"closeTime"`
+	FristID            int64           `json:"firstId"`
+	LastID             int64           `json:"lastId"`
+	Count              int64           `json:"count"`
+}
+
+type PriceChangeStatss []PriceChangeStats
+
+func (s PriceChangeStatss) Len() int {
+	return len(s)
+}
+
+func (s PriceChangeStatss) Less(i, j int) bool {
+	return s[i].PriceChangePercent.GreaterThan(s[j].PriceChangePercent)
+}
+
+// Swap()
+func (s PriceChangeStatss) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }

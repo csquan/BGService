@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/adshao/go-binance/v2"
 	"github.com/ethereum/BGService/db"
 	"github.com/ethereum/BGService/types"
@@ -109,7 +110,7 @@ func (a *ApiService) productList(c *gin.Context) {
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
 		CollectStragetyListInt = strToInt(CollectStragetyList)
-	} else if payload.Strategy == "1" {
+	} else if payload.Strategy == 1 {
 		res := util.ResponseMsg(-1, "fail", "Please log in")
 		c.SecureJSON(http.StatusOK, res)
 		return
@@ -143,20 +144,68 @@ func (a *ApiService) productList(c *gin.Context) {
 	var isCollect = false
 	for _, value := range ScreenStrategys {
 		ScreenStrategy := make(map[string]interface{})
-		ScreenStrategy["id"] = value.StrategyID
-		ScreenStrategy["name"] = value.StrategyName
-		ScreenStrategy["productCategory"] = value.Type
-		ScreenStrategy["recommendRate"] = value.RecommendRate
-		if payload.Currency == "1" {
+		id, err := strconv.Atoi(value.StrategyID)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		Category, err := strconv.Atoi(value.Type)
+		if err != nil {
+			logrus.Error(err)
+			Category = -1
+		}
+		recommendRate, err := strconv.Atoi(value.RecommendRate)
+		if err != nil {
+			logrus.Error(err)
+			recommendRate = -1
+		}
+		if uid != nil {
 			isCollect = isInCollectStrategyList(value.StrategyID, CollectStragetyList)
 		}
+		participateNum, err := strconv.Atoi(value.ParticipateNum)
+		if err != nil {
+			logrus.Error(err)
+			participateNum = -1
+		}
+		totalYield, err := strconv.ParseInt(value.TotalYield, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		maxWithdrawalRate, err := strconv.ParseInt(value.MaxDrawDown, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		minimumInvestmentAmount, err := strconv.ParseInt(value.MinInvest, 10, 64)
+		if err != nil {
+			logrus.Error(err)
+			res := util.ResponseMsg(-1, "fail", err.Error())
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		strategySource, err := strconv.Atoi(value.Source)
+		if err != nil {
+			logrus.Error(err)
+			strategySource = -1
+		}
+		ScreenStrategy["id"] = id
+		ScreenStrategy["name"] = value.StrategyName
+		ScreenStrategy["recommendRate"] = recommendRate
+		ScreenStrategy["productCategory"] = Category
 		ScreenStrategy["isCollect"] = isCollect
-		ScreenStrategy["participateNum"] = value.ParticipateNum
-		ScreenStrategy["totalYield"] = value.TotalYield
+		ScreenStrategy["participateNum"] = participateNum
+		ScreenStrategy["totalYield"] = totalYield
 		ScreenStrategy["runTime"] = value.CreateTime
-		ScreenStrategy["maxWithdrawalRate"] = value.MaxDrawDown
-		ScreenStrategy["minimumInvestmentAmount"] = value.MinInvest
-		ScreenStrategy["strategySource"] = value.Source
+		ScreenStrategy["maxWithdrawalRate"] = maxWithdrawalRate
+		ScreenStrategy["minimumInvestmentAmount"] = minimumInvestmentAmount
+		ScreenStrategy["strategySource"] = strategySource
 		ScreenStrategyList = append(ScreenStrategyList, ScreenStrategy)
 	}
 	body := make(map[string]interface{})
@@ -192,10 +241,29 @@ func (a *ApiService) collect(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	user, err := db.GetUser(a.dbEngine, uidFormatted)
+	if err != nil {
+		logrus.Error("query db error:", err)
+
+		res := util.ResponseMsg(-1, "query db error", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	if user == nil {
+		logrus.Error("no user record:", uid)
+		res := util.ResponseMsg(-1, "no user record:", uid)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
 	if boolcollect {
+		if strings.Contains(user.CollectStragetyList, id) == true {
+			res := util.ResponseMsg(-1, "Strategy is already exist", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
 		err = db.UpdateAddCollectProduct(a.dbEngine, id, uidFormatted)
 		if err != nil {
-			logrus.Info("update secret err:", err)
+			logrus.Error(err)
 			res := util.ResponseMsg(-1, "fail", err)
 			c.SecureJSON(http.StatusOK, res)
 			return
@@ -207,10 +275,33 @@ func (a *ApiService) collect(c *gin.Context) {
 			c.SecureJSON(http.StatusOK, res)
 			return
 		}
-		product := user.CollectStragetyList
-		oldId := fmt.Sprintf(",%s", id)
-		product = strings.Replace(product, oldId, "", -1)
-		err = db.UpdateDelCollectProduct(a.dbEngine, product, uidFormatted)
+		product := strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
+		//首先找到这个remove位置，找不到返回错误，找到按照这个位置remove
+		find := false
+		for index, value := range product {
+			if value == id {
+				product = append(product[:index], product[index+1:]...)
+				find = true
+				break
+			}
+		}
+		if find == false {
+			res := util.ResponseMsg(-1, "can not find remove record", nil)
+			c.SecureJSON(http.StatusOK, res)
+			return
+		}
+		productStr := "{"
+		length := len(product)
+		//再将这个数组转化为字串，更新数据库
+		for index, value := range product {
+			productStr = productStr + value
+
+			if index+1 < length {
+				productStr = productStr + ","
+			}
+		}
+		productStr = productStr + "}"
+		err = db.UpdateDelCollectProduct(a.dbEngine, productStr, uidFormatted)
 		if err != nil {
 			logrus.Info("update secret err:", err)
 			res := util.ResponseMsg(-1, "fail", err)
@@ -252,10 +343,15 @@ func (a *ApiService) productInfo(c *gin.Context) {
 		}
 		CollectStragetyList = strings.Split(user.CollectStragetyList[1:len(user.CollectStragetyList)-1], ",")
 	}
+	idInt, err := strconv.Atoi(strategyInfo.StrategyID)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
 	body := make(map[string]interface{})
 	isCollect := isInCollectStrategyList(id, CollectStragetyList)
-	body["id"] = strategyInfo.StrategyID
-	body["name"] = strategyInfo.StrategyID
+	body["id"] = idInt
+	body["name"] = strategyInfo.StrategyName
 	body["recommendRate"] = strategyInfo.RecommendRate
 	body["strategySource"] = strategyInfo.Source
 	body["productCategory"] = strategyInfo.Type
@@ -412,32 +508,41 @@ func (a *ApiService) invest(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+
+	//查询用户策略表得到用户对应得所有策略
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	//这里再进行解密
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
+
 	//还要根据策略名字解析得到具体交易币种
 	array := strings.Split(strategy.StrategyName, "/")
 
 	switch strategy.CoinName {
 	case "SPOT":
 		//取现货余额
-		userData, err := util.GetBinanceSpotUserData()
+		userData, err := util.GetBinanceSpotUserData(apiKey, apiSecret)
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceSpotUserData()
+			userData, err = util.GetBinanceSpotUserData(apiKey, apiSecret)
 		}
-		for _, data := range userData {
-			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
-				balance = data.Free
-			}
-		}
+		fmt.Println(userData)
 	case "CM":
 		//取币本位余额
-		userData, err := util.GetBinanceCMUserData()
+		userData, err := util.GetBinanceCMUserData(apiKey, apiSecret)
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceCMUserData()
+			userData, err = util.GetBinanceCMUserData(apiKey, apiSecret)
 		}
 
 		for _, asset := range userData.Assets {
@@ -447,12 +552,12 @@ func (a *ApiService) invest(c *gin.Context) {
 		}
 	case "UM":
 		//取U本位余额
-		userData, err := util.GetBinanceUMUserData()
+		userData, err := util.GetBinanceUMUserData(apiKey, apiSecret)
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceUMUserData()
+			userData, err = util.GetBinanceUMUserData(apiKey, apiSecret)
 		}
 		for _, asset := range userData.Assets {
 			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
@@ -487,7 +592,6 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	uid, _ := c.Get("Uid")
 	// 根据uid查询用户信息
 	uidFormatted := fmt.Sprintf("%s", uid)
-
 	var payload *types.ExecuteStrategyInput
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		logrus.Error(err)
@@ -495,41 +599,55 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	logrus.Info("根据用户绑定的交易所获取余额")
 	//根据用户绑定的交易所获取余额
 	balance := ""
+
 	// 根据产品属性 取响应的 现货 U本位 币本位 获取余额
-	strategy, err := db.GetProduct(a.dbEngine, payload.ProductId)
+	strategy, err := db.GetProduct(a.dbEngine, strconv.Itoa(payload.ProductId))
 	if err != nil {
 		res := util.ResponseMsg(-1, "fail", err)
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
+	logrus.Info("查询用户策略表得到用户对应得所有策略")
+	//查询用户策略表得到用户对应得所有策略
+	userBind, err := db.GetUserBindInfos(a.dbEngine, uidFormatted)
+	if err != nil {
+		res := util.ResponseMsg(-1, "fail", err)
+		c.SecureJSON(http.StatusOK, res)
+		return
+	}
+	logrus.Info("这里再进行解密")
+	//这里再进行解密
+	//先解密再使用
+	apiKey := cryptor.AesSimpleDecrypt(userBind.ApiKey, types.AesKey)
+	apiSecret := cryptor.AesSimpleDecrypt(userBind.ApiSecret, types.AesKey)
+
 	//还要根据策略名字解析得到具体交易币种
 	array := strings.Split(strategy.StrategyName, "/")
+
+	logrus.Info(strategy.CoinName)
 
 	switch strategy.CoinName {
 	case "SPOT":
 		//取现货余额
-		userData, err := util.GetBinanceSpotUserData()
+		userData, err := util.GetBinanceSpotUserData(apiKey, apiSecret)
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceSpotUserData()
+			userData, err = util.GetBinanceSpotUserData(apiKey, apiSecret)
 		}
-		for _, data := range userData {
-			if strings.ToLower(data.Coin) == strings.ToLower(array[1]) {
-				balance = data.Free
-			}
-		}
+		fmt.Println(userData)
 	case "CM":
 		//取币本位余额
-		userData, err := util.GetBinanceCMUserData()
+		userData, err := util.GetBinanceCMUserData(apiKey, apiSecret)
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceCMUserData()
+			userData, err = util.GetBinanceCMUserData(apiKey, apiSecret)
 		}
 
 		for _, asset := range userData.Assets {
@@ -539,12 +657,12 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		}
 	case "UM":
 		//取U本位余额
-		userData, err := util.GetBinanceUMUserData()
+		userData, err := util.GetBinanceUMUserData(apiKey, apiSecret)
 		for {
 			if err == nil {
 				break
 			}
-			userData, err = util.GetBinanceUMUserData()
+			userData, err = util.GetBinanceUMUserData(apiKey, apiSecret)
 		}
 		for _, asset := range userData.Assets {
 			if strings.ToLower(asset.Asset) == strings.ToLower(array[1]) {
@@ -553,18 +671,6 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		}
 	}
 
-	// 这里判断权限-目前一期一个交易所只绑定一个，后期可能绑定多个，让用户选
-	bindInfo, err := db.GetUserBindInfoByUidCex(a.dbEngine, uidFormatted, "binance")
-	if err != nil {
-		logrus.Error("no found apikey:", err)
-
-		res := util.ResponseMsg(-1, "no found apikey:", err)
-		c.SecureJSON(http.StatusOK, res)
-		return
-	}
-	//先解密再使用
-	apiKey := util.AesDecrypt(bindInfo.ApiKey, types.AesKey)
-	apiSecret := util.AesDecrypt(bindInfo.ApiSecret, types.AesKey)
 	// 查询此apikey交易权限--目前只有币安
 	client := binance.NewClient(apiKey, apiSecret)
 	client.SetApiEndpoint(base_binance_url)
@@ -585,7 +691,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		return
 	}
 
-	err, _, _, _, _ = a.investHandle(c, uidFormatted, payload.ID, payload.ProductId, balance)
+	err, _, _, _, _ = a.investHandle(c, uidFormatted, strconv.Itoa(payload.ID), strconv.Itoa(payload.ProductId), balance)
 	if err != nil {
 		logrus.Error(err)
 		res := util.ResponseMsg(-1, "fail", err)
@@ -602,7 +708,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 	}
 	UserStrategy := types.UserStrategy{
 		Uid:          uidFormatted,
-		StrategyID:   payload.ProductId,
+		StrategyID:   strconv.Itoa(payload.ProductId),
 		JoinTime:     time.Now(), //.Format("2006-01-02"),
 		ActualInvest: actualInvest.String(),
 	}
@@ -633,7 +739,7 @@ func ProductRevenue(a *ApiService, Revenue []map[string]string) (error, []map[st
 	var ProductRevenueList []map[string]interface{}
 	for i := 0; i < len(Revenue); i++ {
 		UserRevenue := make(map[string]interface{})
-		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_stragetyID"])
+		strategy, err := db.GetStrategy(a.dbEngine, Revenue[i]["f_strategyID"])
 		if err != nil {
 			return err, ProductRevenueList
 		}
@@ -658,9 +764,9 @@ func ProductRevenueRatio(a *ApiService, AllRevenue []map[string]string, AllInves
 	var RevenueRatioRanking []map[string]interface{}
 	for _, RevenueValue := range AllRevenue {
 		for _, InvestValue := range AllInvest {
-			if RevenueValue["f_stragetyID"] == InvestValue["f_strategyID"] {
+			if RevenueValue["f_strategyID"] == InvestValue["f_strategyID"] {
 				RevenueRatio := make(map[string]interface{})
-				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_stragetyID"])
+				strategy, err := db.GetStrategy(a.dbEngine, RevenueValue["f_strategyID"])
 				if err != nil {
 					return err, RevenueRatioRanking
 				}
@@ -830,9 +936,17 @@ func (a *ApiService) productChart(c *gin.Context) {
 	length := len(AllStrategy)
 	dec1 := decimal.NewFromInt32(int32(win))
 	dec2 := decimal.NewFromInt32(int32(length))
-	userBenefitNDays.WinRatio = dec1.Div(dec2).String()
+	if dec2.Sign() == 0 {
+		userBenefitNDays.WinRatio = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.WinRatio = dec1.Div(dec2).String()
+	}
 	// 收益率
-	userBenefitNDays.BenefitRatio = userBenefitNDays.BenefitSum.Div(AllInvest).String()
+	if AllInvest.Sign() == 0 {
+		userBenefitNDays.BenefitRatio = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.BenefitRatio = userBenefitNDays.BenefitSum.Div(AllInvest).String()
+	}
 	// 回撤率
 	maxDec, err := decimal.NewFromString(maxEarning)
 	minDec, err := decimal.NewFromString(minEarning)
@@ -847,7 +961,11 @@ func (a *ApiService) productChart(c *gin.Context) {
 	//净值
 	maxNetValue := decimal.Sum(AllInvest, maxDec)
 	//计算回撤率：(最大收益-最小收益)/净值
-	userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //最大回撤率
+	if maxNetValue.Sign() == 0 {
+		userBenefitNDays.Huiche = "0" // 设置默认值为0
+	} else {
+		userBenefitNDays.Huiche = maxDec.Sub(minDec).Div(maxNetValue).String() //最大回撤率
+	}
 	userBenefitNDays.Benefitlist = Benefits
 
 	res := util.ResponseMsg(0, "success", userBenefitNDays)

@@ -1,8 +1,8 @@
 pgsql_config = {
-    "database": "postgres",
+    "database": "bgservice_test",
     "user": "postgres",
-    "password": "12345",
-    "host": "127.0.0.1",
+    "password": "1q2w3e4r5t",
+    "host": "database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com",
     "port": "5432"
 }
 

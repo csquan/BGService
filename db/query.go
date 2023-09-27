@@ -5,7 +5,6 @@ import (
 	"github.com/ethereum/BGService/types"
 	"github.com/go-xorm/xorm"
 	"github.com/sirupsen/logrus"
-	"strconv"
 	"time"
 )
 
@@ -60,8 +59,8 @@ func UserRevenue(engine *xorm.Engine, total int) (error, []map[string]string) {
 }
 
 func ProductRevenue(engine *xorm.Engine, total int) (error, []map[string]string) {
-	sql := fmt.Sprintf("SELECT `f_stragetyID`, SUM(`f_totalBenefit`) AS `totalBenefit` "+
-		"FROM `userStrategyEarnings` GROUP BY `f_stragetyID` ORDER BY `totalBenefit` DESC limit %d", total)
+	sql := fmt.Sprintf("SELECT `f_strategyID`, SUM(`f_totalBenefit`) AS `totalBenefit` "+
+		"FROM `userStrategyEarnings` GROUP BY `f_strategyID` ORDER BY `totalBenefit` DESC limit %d", total)
 	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
@@ -93,8 +92,8 @@ func UserAllInvest(engine *xorm.Engine) (error, []map[string]string) {
 }
 
 func ProductAllRevenue(engine *xorm.Engine) (error, []map[string]string) {
-	sql := fmt.Sprintf("SELECT `f_stragetyID`, SUM(`f_totalBenefit`) AS `totalBenefit` " +
-		"FROM `userStrategyEarnings` GROUP BY `f_stragetyID` ORDER BY `totalBenefit` DESC")
+	sql := fmt.Sprintf("SELECT `f_strategyID`, SUM(`f_totalBenefit`) AS `totalBenefit` " +
+		"FROM `userStrategyEarnings` GROUP BY `f_strategyID` ORDER BY `totalBenefit` DESC")
 	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
@@ -127,14 +126,14 @@ func QueryInviteCode(engine *xorm.Engine, InviteCode string) (error, *types.User
 	return nil, nil
 }
 
-func QueryInviteNum(engine *xorm.Engine, InviteCode string) (error, []types.Users) {
-	var users []types.Users
-	err := engine.Table("users").Where("`f_invitatedCode`=?", InviteCode).Find(&users)
+func QueryInviteNum(engine *xorm.Engine, InviteCode string) (error, []types.Invitation) {
+	var invitation []types.Invitation
+	err := engine.Table("invitation").Where("`f_uid`=?", InviteCode).Find(&invitation)
 	if err != nil {
 		logrus.Error(err)
 		return err, nil
 	}
-	return nil, users
+	return nil, invitation
 }
 
 func QueryInviteNumLimit(engine *xorm.Engine, InviteCode string, total int) (error, []types.Users) {
@@ -147,14 +146,14 @@ func QueryInviteNumLimit(engine *xorm.Engine, InviteCode string, total int) (err
 	return nil, users
 }
 
-func QueryClaimRewardNumber(engine *xorm.Engine) (error, []types.Users) {
-	var users []types.Users
-	err := engine.Table("users").Where("`f_claimRewardNumber` > ?", 0).Desc("`f_claimRewardNumber`").Find(&users)
+func QueryClaimRewardNumber(engine *xorm.Engine) (error, []map[string]string) {
+	sql := fmt.Sprintf(`select f_uid, count("f_uid") as "countUid" from invitation GROUP BY "f_uid" ORDER BY "countUid" DESC`)
+	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
 		return err, nil
 	}
-	return nil, users
+	return nil, result
 }
 
 func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
@@ -171,7 +170,7 @@ func GetUser(engine *xorm.Engine, uid string) (*types.Users, error) {
 
 func GetProduct(engine *xorm.Engine, productID string) (*types.Strategy, error) {
 	var strategy types.Strategy
-	has, err := engine.Where("`f_strategyID`=?", productID).Get(&strategy)
+	has, err := engine.Table("strategys").Where("`f_strategyID`=?", productID).Get(&strategy)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +182,7 @@ func GetProduct(engine *xorm.Engine, productID string) (*types.Strategy, error) 
 
 func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	var userAsset types.UserAsset
-	coinName := "usdt"
+	coinName := "trx"
 	has, err := engine.Table("userAsset").Where("f_uid=? and `f_coinName`=?", uid, coinName).Get(&userAsset)
 	if err != nil {
 		return nil, err
@@ -194,9 +193,29 @@ func GetUserAsset(engine *xorm.Engine, uid string) (*types.UserAsset, error) {
 	return nil, nil
 }
 
-func GetUserAddr(engine *xorm.Engine, uid string) (*types.UserAddr, error) {
+func GetUserAllAsset(engine *xorm.Engine, uid string) (error, []types.UserAsset) {
+	var userAssets []types.UserAsset
+	err := engine.Table("userAsset").Where("`f_uid`=?", uid).Find(&userAssets)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, userAssets
+}
+
+func GetUserAddrs(engine *xorm.Engine, uid string) (error, []types.UserAddr) {
+	var userAddrs []types.UserAddr
+	err := engine.Table("userAddr").Where("f_uid=?", uid).Find(&userAddrs)
+	if err != nil {
+		logrus.Error(err)
+		return err, nil
+	}
+	return nil, userAddrs
+}
+
+func GetUserAddr(engine *xorm.Engine, uid string, network string) (*types.UserAddr, error) {
 	var userAddr types.UserAddr
-	has, err := engine.Table("userAddr").Where("f_uid=?", uid).Get(&userAddr)
+	has, err := engine.Table("userAddr").Where("f_uid=? and f_network=?", uid, network).Get(&userAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -324,16 +343,13 @@ func GetAllUserBindInfos(engine *xorm.Engine, uid string) ([]types.UserBindInfos
 	return userBindInfos, nil
 }
 
-func GetUserExperience(engine *xorm.Engine, uid string) (*types.UserExperience, error) {
-	var userExperience types.UserExperience
-	has, err := engine.Table("userExperience").Where("f_uid=?", uid).Get(&userExperience)
+func GetUserExperience(engine *xorm.Engine, uid string) ([]types.UserExperience, error) {
+	var userExperiences []types.UserExperience
+	err := engine.Table("userExperience").Where("f_uid=?", uid).Find(&userExperiences)
 	if err != nil {
 		return nil, err
 	}
-	if has {
-		return &userExperience, nil
-	}
-	return nil, nil
+	return userExperiences, nil
 }
 
 func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, error) {
@@ -344,6 +360,18 @@ func GetPlatformExperience(engine *xorm.Engine) (*types.PlatformExperience, erro
 	}
 	if has {
 		return &platformExperience, nil
+	}
+	return nil, nil
+}
+
+func GetCoinInfo(engine *xorm.Engine, symbol string) (*types.Coins, error) {
+	var coinInfo types.Coins
+	has, err := engine.Table("coins").Where("f_symbol=?", symbol).Get(&coinInfo)
+	if err != nil {
+		return nil, err
+	}
+	if has {
+		return &coinInfo, nil
 	}
 	return nil, nil
 }
@@ -359,7 +387,7 @@ func GetMsg(engine *xorm.Engine, pageSizeInt int, pageIndexInt int, Type string)
 
 func GetHotMsg(engine *xorm.Engine, total int, Type string) ([]types.News, error) {
 	var news []types.News
-	err := engine.Table("news").Where("f_type=?", Type).Limit(total).Find(&news)
+	err := engine.Table("news").Where("f_type=? and f_hotspot='t'", Type).Limit(total).Find(&news)
 	if err != nil {
 		return nil, err
 	}
@@ -435,7 +463,7 @@ func GetExactlyUserStrategy(engine *xorm.Engine, uid string, sid string) (*types
 // 查询天级产品总收益
 func GetAllStrategyBenefits(engine *xorm.Engine, sid string, startTime string, endTime string) ([]map[string]string, error) {
 	sql := fmt.Sprintf(`select to_char("f_createTime"::DATE, 'YYYY-MM-DD') as day, sum("f_totalBenefit")  as "f_totalBenefit"
-from "userStrategyEarnings" where "f_stragetyID"='%s' and "f_createTime">= '%s' and "f_createTime"<= '%s'  GROUP BY "day" ORDER BY "f_totalBenefit" DESC`, sid, startTime, endTime)
+from "userStrategyEarnings" where "f_strategyID"='%s' and "f_createTime">= '%s' and "f_createTime"<= '%s'  GROUP BY "day" ORDER BY "f_totalBenefit" DESC`, sid, startTime, endTime)
 	result, err := engine.QueryString(sql)
 	if err != nil {
 		logrus.Error(err)
@@ -489,16 +517,6 @@ func GetStrategyTotalBenefits(engine *xorm.Engine, sid string) (float64, error) 
 		return 0, err
 	}
 	return total, nil
-}
-
-func GetStrategyBenefits1(engine *xorm.Engine) ([]*types.UserStrategyEarnings, error) {
-	var userStrategyEarnings []*types.UserStrategyEarnings
-	start := "2023-08-12 16:26:02"
-	err := engine.Table("userStrategyEarnings").Where("`f_createTime`<= ?", start).Find(&userStrategyEarnings)
-	if err != nil {
-		return nil, err
-	}
-	return userStrategyEarnings, nil
 }
 
 func GetStrategyBenefits(engine *xorm.Engine, sid, uid string, startTime string, endTime string) ([]*types.UserStrategyEarnings, error) {
@@ -558,7 +576,7 @@ func GetUserIncome(engine *xorm.Engine) (float64, error) {
 	return total, nil
 }
 
-func timeFmt(timeCycle string) (string, string) {
+func timeFmt(timeCycle int) (string, string) {
 	// 1:0~6个月  2:6~12个月 3:12~36个月 4:36个月以上
 	var startTime string
 	var endTime string
@@ -566,16 +584,16 @@ func timeFmt(timeCycle string) (string, string) {
 	sixMonthsAgo := timeNow.AddDate(0, -6, 0).Format("2006-01-02")
 	twelveMonthsAgo := timeNow.AddDate(-1, 0, 0).Format("2006-01-02")
 	thirtySixMonthsAgo := timeNow.AddDate(-3, 0, 0).Format("2006-01-02")
-	if timeCycle == "1" {
+	if timeCycle == 1 {
 		startTime = sixMonthsAgo
 		endTime = timeNow.Format("2006-01-02")
-	} else if timeCycle == "2" {
+	} else if timeCycle == 2 {
 		startTime = twelveMonthsAgo
 		endTime = sixMonthsAgo
-	} else if timeCycle == "3" {
+	} else if timeCycle == 3 {
 		startTime = thirtySixMonthsAgo
 		endTime = twelveMonthsAgo
-	} else if timeCycle == "4" {
+	} else if timeCycle == 4 {
 		startTime = "2006-01-02"
 		endTime = thirtySixMonthsAgo
 	} else {
@@ -585,17 +603,17 @@ func timeFmt(timeCycle string) (string, string) {
 	return startTime, endTime
 }
 
-func ExpectedYieldFmt(ExpectedYield string) (string, string) {
+func ExpectedYieldFmt(ExpectedYield int) (string, string) {
 	// '预期收益率' -1全部 1:0~50%  2:50%~100% 3:100%~300%
 	var startExpected string
 	var endExpected string
-	if ExpectedYield == "1" {
+	if ExpectedYield == 1 {
 		startExpected = "0"
 		endExpected = "50"
-	} else if ExpectedYield == "2" {
+	} else if ExpectedYield == 2 {
 		startExpected = "50"
 		endExpected = "100"
-	} else if ExpectedYield == "3" {
+	} else if ExpectedYield == 3 {
 		startExpected = "100"
 		endExpected = "300"
 	} else {
@@ -605,17 +623,17 @@ func ExpectedYieldFmt(ExpectedYield string) (string, string) {
 	return startExpected, endExpected
 }
 
-func WithdrawalRateFmt(WithdrawalRate string) (string, string) {
+func WithdrawalRateFmt(WithdrawalRate int) (string, string) {
 	// '最大回撤率' -1全部 1:0~20%  2:20%~40% 3:40%~60%
 	var startWithdrawalRate string
 	var endWithdrawalRate string
-	if WithdrawalRate == "1" {
+	if WithdrawalRate == 1 {
 		startWithdrawalRate = "0"
 		endWithdrawalRate = "20"
-	} else if WithdrawalRate == "2" {
+	} else if WithdrawalRate == 2 {
 		startWithdrawalRate = "20"
 		endWithdrawalRate = "40"
-	} else if WithdrawalRate == "3" {
+	} else if WithdrawalRate == 3 {
 		startWithdrawalRate = "40"
 		endWithdrawalRate = "60"
 	} else {
@@ -627,15 +645,15 @@ func WithdrawalRateFmt(WithdrawalRate string) (string, string) {
 
 func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, CollectStragety []int) ([]types.Strategy, error) {
 	var strategy []types.Strategy
-	sortMap := map[string]string{
-		"1": "f_totalYield",
-		"2": "f_totalRevenue",
-		"3": "f_participateNum",
-		"4": "f_maxDrawDown",
+	sortMap := map[int]string{
+		1: "f_totalYield",
+		2: "f_totalRevenue",
+		3: "f_participateNum",
+		4: "f_maxDrawDown",
 	}
 	sessionSql := engine.Table("strategys").Where("`f_isValid`=?", true)
 	// 我的收藏
-	if payload.Strategy == "1" {
+	if payload.Strategy == 1 {
 		sessionSql = sessionSql.In("`f_strategyID`", CollectStragety)
 	}
 	// 币种
@@ -643,44 +661,36 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 		sessionSql = sessionSql.Where("`f_coinName` = ?", payload.Currency)
 	}
 	// 产品来源
-	if payload.StrategySource != "" && payload.StrategySource != "-1" {
+	if payload.StrategySource != 0 && payload.StrategySource != -1 {
 		sessionSql = sessionSql.Where("`f_source` = ?", payload.StrategySource)
 	}
 	// 产品类别
-	if payload.ProductCategory != "" && payload.ProductCategory != "-1" {
+	if payload.ProductCategory != 0 && payload.ProductCategory != -1 {
 		sessionSql = sessionSql.Where("`f_type` = ?", payload.ProductCategory)
 	}
 	// 时间
-	if payload.RunTime != "" && payload.RunTime != "-1" {
+	if payload.RunTime != 0 && payload.RunTime != -1 {
 		startTime, endTime := timeFmt(payload.RunTime)
 		sessionSql = sessionSql.Where("?<=`f_createTime`<?", startTime, endTime)
 	}
 	// 预期收益率
-	if payload.ExpectedYield != "" && payload.ExpectedYield != "-1" {
+	if payload.ExpectedYield != 0 && payload.ExpectedYield != -1 {
 		startExpected, endExpected := ExpectedYieldFmt(payload.ExpectedYield)
 		sessionSql = sessionSql.Where("?<=`f_expectedBefenit`<?", startExpected, endExpected)
 	}
 	// 最大回撤率
-	if payload.MaxWithdrawalRate != "" && payload.MaxWithdrawalRate != "-1" {
+	if payload.MaxWithdrawalRate != 0 && payload.MaxWithdrawalRate != -1 {
 		startExpected, endExpected := WithdrawalRateFmt(payload.ExpectedYield)
 		sessionSql = sessionSql.Where("?<=`f_maxDrawDown`<?", startExpected, endExpected)
 	}
 	// 排序
-	if payload.ComprehensiveSorting != "" && payload.ComprehensiveSorting != "-1" {
+	if payload.ComprehensiveSorting != 0 && payload.ComprehensiveSorting != -1 {
 		filed := sortMap[payload.ComprehensiveSorting]
 		sessionSql = sessionSql.Desc("`?`", filed)
 	} else {
 		sessionSql = sessionSql.Desc("`f_participateNum`").Desc("`f_createTime`").Desc("`f_recommendRate`")
 	}
-	pageIndexInt, err := strconv.Atoi(payload.PageIndex)
-	if err != nil {
-		logrus.Error(err)
-	}
-	pageSizeInt, err := strconv.Atoi(payload.PageSize)
-	if err != nil {
-		logrus.Error(err)
-	}
-	err = sessionSql.Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&strategy)
+	err := sessionSql.Limit(payload.PageSize, (payload.PageIndex-1)*payload.PageIndex).Find(&strategy)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -690,34 +700,26 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 
 func GetSearchScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, CollectStragety []int) ([]types.Strategy, error) {
 	var strategy []types.Strategy
-	sortMap := map[string]string{
-		"1": "f_totalYield",
-		"2": "f_totalRevenue",
-		"3": "f_participateNum",
-		"4": "f_maxDrawDown",
+	sortMap := map[int]string{
+		1: "f_totalYield",
+		2: "f_totalRevenue",
+		3: "f_participateNum",
+		4: "f_maxDrawDown",
 	}
 	sessionSql := engine.Table("strategys").Where("`f_isValid`=?", true)
 	// 我的收藏
-	if payload.Strategy == "1" {
+	if payload.Strategy == 1 {
 		sessionSql = sessionSql.In("`f_strategyID`", CollectStragety)
 	}
 	sessionSql.Where(fmt.Sprintf("`f_strategyName` like '%s' ", "%"+payload.Keywords+"%"))
 	// 排序
-	if payload.ComprehensiveSorting != "" && payload.ComprehensiveSorting != "-1" {
+	if payload.ComprehensiveSorting != 0 && payload.ComprehensiveSorting != -1 {
 		filed := sortMap[payload.ComprehensiveSorting]
 		sessionSql = sessionSql.Desc("`?`", filed)
 	} else {
 		sessionSql = sessionSql.Desc("`f_participateNum`").Desc("`f_createTime`").Desc("`f_recommendRate`")
 	}
-	pageIndexInt, err := strconv.Atoi(payload.PageIndex)
-	if err != nil {
-		logrus.Error(err)
-	}
-	pageSizeInt, err := strconv.Atoi(payload.PageSize)
-	if err != nil {
-		logrus.Error(err)
-	}
-	err = sessionSql.Limit(pageSizeInt, (pageIndexInt-1)*pageSizeInt).Find(&strategy)
+	err := sessionSql.Limit(payload.PageSize, (payload.PageIndex-1)*payload.PageSize).Find(&strategy)
 	if err != nil {
 		return nil, err
 	}
