@@ -671,17 +671,17 @@ func GetScreenStrategy(engine *xorm.Engine, payload *types.StrategyInput, Collec
 	// 时间
 	if payload.RunTime != 0 && payload.RunTime != -1 {
 		startTime, endTime := timeFmt(payload.RunTime)
-		sessionSql = sessionSql.Where("?<=`f_createTime`<?", startTime, endTime)
+		sessionSql = sessionSql.Where("?<=`f_createTime` and `f_createTime`<?", startTime, endTime)
 	}
 	// 预期收益率
 	if payload.ExpectedYield != 0 && payload.ExpectedYield != -1 {
 		startExpected, endExpected := ExpectedYieldFmt(payload.ExpectedYield)
-		sessionSql = sessionSql.Where("?<=`f_expectedBefenit`<?", startExpected, endExpected)
+		sessionSql = sessionSql.Where("?<=`f_expectedBefenit` and `f_expectedBefenit`<?", startExpected, endExpected)
 	}
 	// 最大回撤率
 	if payload.MaxWithdrawalRate != 0 && payload.MaxWithdrawalRate != -1 {
 		startExpected, endExpected := WithdrawalRateFmt(payload.ExpectedYield)
-		sessionSql = sessionSql.Where("?<=`f_maxDrawDown`<?", startExpected, endExpected)
+		sessionSql = sessionSql.Where("?<=`f_maxDrawDown` and `f_maxDrawDown`<?", startExpected, endExpected)
 	}
 	// 排序
 	if payload.ComprehensiveSorting != 0 && payload.ComprehensiveSorting != -1 {
