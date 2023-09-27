@@ -7,8 +7,10 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/ethereum/BGService/types"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -181,8 +183,9 @@ func (c *UserTxRecordService) Run() error {
 			continue
 		}
 		// 解密
-		apiKey = AesDecrypt(apiKey, AesKey)
-		apiSecret = AesDecrypt(apiSecret, AesKey)
+		apiKey = cryptor.AesSimpleDecrypt(apiKey, types.AesKey)
+		apiSecret = cryptor.AesSimpleDecrypt(apiSecret, types.AesKey)
+
 		// 交易历史
 		symbol := strings.Replace(strategyName, "/", "", 1)
 		history, err := GetBinanceUMUserTxHistory(symbol, 1000, apiKey, apiSecret)
