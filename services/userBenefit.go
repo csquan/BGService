@@ -26,7 +26,7 @@ func (c *UserBenefitService) Name() string {
 }
 
 const (
-	DB_DSN = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/postgres?sslmode=disable"
+	DB_DSN = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/bgservice?sslmode=disable"
 )
 
 var (

@@ -11,7 +11,6 @@ import (
 	utils "github.com/ethereum/BGService/util"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"log"
 	"strconv"
 	"time"
 	//_ "github.com/bmizerany/pq"
@@ -30,7 +29,7 @@ func (c *ActivityBenefitService) Name() string {
 }
 
 const (
-	activityDbDSN     = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/postgres?sslmode=disable"
+	activityDbDSN     = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/bgservice?sslmode=disable"
 	activityApiKey    = "Xq2vyva4DUxw1EqywIHHZa8RDFIitXraDexa1LVONe3reuPNUEFuDYDs7JYjMY86"
 	activityApiSecret = "reLDM7CYMHVPlw6FodmQvYpU9zRdndQ5NUlRFswKT6leKzcKl2BeP3tycqEaLBRZ"
 )
@@ -39,11 +38,12 @@ var (
 	activity_future_binance_url = "https://api.binance.com/api"
 )
 
-func queryActivityStrategyEarnings(db *sql.DB, strategyID string, createTime string) float64 {
+func queryActivityStrategyEarnings(db *sql.DB, strategyID string, createTime string) (float64, error) {
 	Sql := fmt.Sprintf(`SELECT "f_totalBenefit" FROM "platformExperienceEarnings" WHERE  "f_strategyID"='%s' and "f_createTime"='%s'`, strategyID, createTime)
 	rows, err := db.Query(Sql)
 	if err != nil {
-		log.Fatal("Failed to execute query: ", err)
+		logrus.Error("Failed to execute query: ", err)
+		return 0, err
 	}
 	var totalBenefit string
 	for rows.Next() {
@@ -54,13 +54,14 @@ func queryActivityStrategyEarnings(db *sql.DB, strategyID string, createTime str
 		totalBenefitFloat, err = strconv.ParseFloat(totalBenefit, 64)
 		if err != nil {
 			logrus.Error(err)
+			return 0, err
 		}
 	}
 
-	return totalBenefitFloat
+	return totalBenefitFloat, nil
 }
 
-func insertActivityEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, strategyID string) {
+func insertActivityEarning(db *sql.DB, dayBenefit float64, totalBenefit float64, strategyID string) error {
 	insertSQL := `
 		INSERT INTO "platformExperienceEarnings" ("f_strategyID", "f_dayBenefit", "f_totalBenefit")
 		VALUES ($1, $2, $3)
@@ -70,15 +71,18 @@ func insertActivityEarning(db *sql.DB, dayBenefit float64, totalBenefit float64,
 	// 执行插入操作
 	result, err := db.Exec(insertSQL, data...)
 	if err != nil {
-		log.Fatal(err)
+		logrus.Error(err)
+		return err
 	}
 
 	// 获取受影响的行数
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Error(err)
+		return err
 	}
-	fmt.Printf("rowsAffected = %d", rowsAffected)
+	logrus.Info("rowsAffected = %d", rowsAffected)
+	return nil
 }
 
 func (c *ActivityBenefitService) Run() error {
@@ -86,7 +90,8 @@ func (c *ActivityBenefitService) Run() error {
 	// Create DB pool
 	db, err := sql.Open("postgres", activityDbDSN)
 	if err != nil {
-		log.Fatal("Failed to open a DB connection: ", err)
+		logrus.Error("Failed to open a DB connection: ", err)
+		return err
 	}
 	defer db.Close()
 
@@ -245,10 +250,14 @@ func (c *ActivityBenefitService) Run() error {
 	// 累计收入
 	totalBenefit := MarginBalanceFloat - 2000000
 	// 查库中的累计收入
-	totalBenefitFloat := queryActivityStrategyEarnings(db, "1", yesterday)
+	totalBenefitFloat, err := queryActivityStrategyEarnings(db, "1", yesterday)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
 	// 今日收益
 	totalDay := totalBenefit - totalBenefitFloat
 	logrus.Info("今日收益", totalDay)
-	insertActivityEarning(db, totalDay, totalBenefit, "1")
-	return nil
+	err = insertActivityEarning(db, totalDay, totalBenefit, "1")
+	return err
 }

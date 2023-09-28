@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/BGService/types"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +30,7 @@ func (c *UserTxRecordService) Name() string {
 }
 
 const (
-	DbDsn                       = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/postgres?sslmode=disable"
+	DbDsn                       = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/bgservice?sslmode=disable"
 	AesKey                      = "cure-d111y=1ziukr07k*!r$q=zcgto%" //AES密钥
 	baseFutureTestnetBinanceUrl = "https://fapi.binance.com"
 )
@@ -44,11 +43,12 @@ type RUserStrategy struct {
 	apiId        string
 }
 
-func RQueryUserStrategy(db *sql.DB) []RUserStrategy {
+func RQueryUserStrategy(db *sql.DB) ([]RUserStrategy, error) {
 	UserStrategySql := `SELECT "f_uid", "f_joinTime", "f_strategyID", "f_actualInvest", "f_apiId" FROM "userStrategy" WHERE "f_isValid"='t'`
 	rows, err := db.Query(UserStrategySql)
 	if err != nil {
-		log.Fatal("Failed to execute query: ", err)
+		logrus.Error("Failed to execute query: ", err)
+		return nil, err
 	}
 
 	var StrategyidList []RUserStrategy
@@ -59,31 +59,33 @@ func RQueryUserStrategy(db *sql.DB) []RUserStrategy {
 		err = rows.Scan(&UserStrategynew.Uid, &UserStrategynew.joinTime, &UserStrategynew.Strategyid, &UserStrategynew.actualInvest, &UserStrategynew.apiId)
 		StrategyidList = append(StrategyidList, UserStrategynew)
 	}
-	return StrategyidList
+	return StrategyidList, nil
 }
 
-func strategy(db *sql.DB, Strategyid string) (string, string) {
+func strategy(db *sql.DB, Strategyid string) (string, string, error) {
 	// 策略数据查询
 	StrategySql := `SELECT "f_coinName", "f_strategyName" FROM "strategys" WHERE "f_strategyID" = $1`
 	fmt.Println(StrategySql, Strategyid)
 	Strategyrows, err := db.Query(StrategySql, Strategyid)
 	if err != nil {
-		log.Fatal("Failed to execute query: ", err)
+		logrus.Error("Failed to execute query: ", err)
+		return "", "", err
 	}
 	var coinName string
 	var strategyName string
 	for Strategyrows.Next() {
 		err = Strategyrows.Scan(&coinName, &strategyName)
 	}
-	return coinName, strategyName
+	return coinName, strategyName, nil
 }
 
-func userBindInfo(db *sql.DB, apiId string) (string, string) {
+func userBindInfo(db *sql.DB, apiId string) (string, string, error) {
 	Sql := fmt.Sprintf(`SELECT "f_apiKey", "f_apiSecret" FROM "userBindInfos" WHERE f_id = %s`, apiId)
 	fmt.Println(Sql)
 	rows, err := db.Query(Sql)
 	if err != nil {
-		log.Fatal("Failed to execute query: ", err)
+		logrus.Error("Failed to execute query: ", err)
+		return "", "", err
 	}
 	var apiKey string
 	var apiSecret string
@@ -91,8 +93,8 @@ func userBindInfo(db *sql.DB, apiId string) (string, string) {
 		err = rows.Scan(&apiKey, &apiSecret)
 	}
 	api := fmt.Sprintf("apikey:%s, apisecret:%s", apiKey, apiSecret)
-	fmt.Println(api)
-	return apiKey, apiSecret
+	logrus.Info(api)
+	return apiKey, apiSecret, nil
 }
 
 // 去码
@@ -164,21 +166,34 @@ func (c *UserTxRecordService) Run() error {
 	//Create DB pool
 	db, err := sql.Open("postgres", DbDsn)
 	if err != nil {
-		log.Fatal("Failed to open a DB connection: ", err)
+		logrus.Error("Failed to open a DB connection: ", err)
+		return err
 	}
 	defer db.Close()
 	// 用户策略查询
-	StrategyidList := RQueryUserStrategy(db)
+	StrategyidList, err := RQueryUserStrategy(db)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
 	for _, value := range StrategyidList {
 		// 策略信息查询
 		// coinName币种、strategyName交易对
 		// 一期只做U本位合约
-		_, strategyName := strategy(db, value.Strategyid)
+		_, strategyName, err := strategy(db, value.Strategyid)
+		if err != nil {
+			logrus.Error(err)
+			return err
+		}
 		if value.apiId == "" {
 			continue
 		}
 		// 用户api查询,查到的key是加密的需要解密
-		apiKey, apiSecret := userBindInfo(db, value.apiId)
+		apiKey, apiSecret, err := userBindInfo(db, value.apiId)
+		if err != nil {
+			logrus.Error(err)
+			return err
+		}
 		if apiKey == "" && apiSecret == "" {
 			continue
 		}
