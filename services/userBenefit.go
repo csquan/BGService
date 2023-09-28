@@ -10,7 +10,6 @@ import (
 	utils "github.com/ethereum/BGService/util"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"log"
 	"strconv"
 	"time"
 	//_ "github.com/bmizerany/pq"
@@ -47,7 +46,7 @@ func queryUserStrategy(db *sql.DB) []UserStrategy {
 	UserStrategySql := `SELECT "f_uid", "f_joinTime", "f_strategyID", "f_actualInvest", "f_apiId" FROM "userStrategy" WHERE "f_isValid"='t'`
 	rows, err := db.Query(UserStrategySql)
 	if err != nil {
-		log.Fatal("Failed to execute query: ", err)
+		logrus.Error("Failed to execute query: ", err)
 	}
 
 	var StrategyidList []UserStrategy
