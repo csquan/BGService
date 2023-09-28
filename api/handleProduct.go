@@ -599,7 +599,7 @@ func (a *ApiService) executeStrategy(c *gin.Context) {
 		c.SecureJSON(http.StatusOK, res)
 		return
 	}
-	logrus.Info("根据用户绑定的交易所获取余额")
+	logrus.Info("首先根据用户绑定的交易所获取余额")
 	//根据用户绑定的交易所获取余额
 	balance := ""
 
