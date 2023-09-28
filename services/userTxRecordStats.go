@@ -31,9 +31,9 @@ func (c *UserTxRecordService) Name() string {
 }
 
 const (
-	DbDsn                       = "postgres://postgres:12345@127.0.0.1:5432/postgres?sslmode=disable"
+	DbDsn                       = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/postgres?sslmode=disable"
 	AesKey                      = "cure-d111y=1ziukr07k*!r$q=zcgto%" //AES密钥
-	baseFutureTestnetBinanceUrl = "https://testnet.binancefuture.com"
+	baseFutureTestnetBinanceUrl = "https://fapi.binance.com"
 )
 
 type RUserStrategy struct {

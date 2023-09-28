@@ -26,7 +26,7 @@ func (c *UserBenefitService) Name() string {
 }
 
 const (
-	DB_DSN = "postgres://postgres:12345@127.0.0.1:5432/postgres?sslmode=disable"
+	DB_DSN = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/postgres?sslmode=disable"
 )
 
 var (
@@ -42,11 +42,12 @@ type UserStrategy struct {
 	apiId        string
 }
 
-func queryUserStrategy(db *sql.DB) []UserStrategy {
+func queryUserStrategy(db *sql.DB) ([]UserStrategy, error) {
 	UserStrategySql := `SELECT "f_uid", "f_joinTime", "f_strategyID", "f_actualInvest", "f_apiId" FROM "userStrategy" WHERE "f_isValid"='t'`
 	rows, err := db.Query(UserStrategySql)
 	if err != nil {
 		logrus.Error("Failed to execute query: ", err)
+		return nil, err
 	}
 
 	var StrategyidList []UserStrategy
@@ -55,9 +56,14 @@ func queryUserStrategy(db *sql.DB) []UserStrategy {
 		var UserStrategynew UserStrategy
 
 		err = rows.Scan(&UserStrategynew.Uid, &UserStrategynew.joinTime, &UserStrategynew.Strategyid, &UserStrategynew.actualInvest, &UserStrategynew.apiId)
+		if err != nil {
+			logrus.Error("Failed to Scan query: ", err)
+			return nil, err
+		}
+
 		StrategyidList = append(StrategyidList, UserStrategynew)
 	}
-	return StrategyidList
+	return StrategyidList, nil
 }
 
 func queryUserStrategyEarnings(db *sql.DB, uid string, f_strategyID string, yesterday string) float64 {
@@ -113,7 +119,11 @@ func (c *UserBenefitService) Run() error {
 		return err
 	}
 	defer db.Close()
-	StrategyidList := queryUserStrategy(db)
+	StrategyidList, err := queryUserStrategy(db)
+	if err != nil {
+		logrus.Error(err)
+		return err
+	}
 	for _, value := range StrategyidList {
 		Sql := fmt.Sprintf(`SELECT "f_apiKey", "f_apiSecret" FROM "userBindInfos" WHERE f_id = %s`, value.apiId)
 		fmt.Println(Sql)
