@@ -29,11 +29,6 @@ const (
 	DB_DSN = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/bgservice?sslmode=disable"
 )
 
-var (
-	base_future_testnet_binance_url = "https://testnet.binancefuture.com"
-	//base_future_testnet_binance_url = "https://api.binance.com/api"
-)
-
 type UserStrategy struct {
 	Strategyid   string
 	Uid          string
@@ -133,7 +128,7 @@ func (c *UserBenefitService) Run() error {
 			return err
 		}
 		StrategySql := `SELECT "f_coinName" FROM "strategys" WHERE "f_strategyID" = $1`
-		fmt.Println(StrategySql, value.Strategyid)
+		logrus.Info(StrategySql, value.Strategyid)
 		Strategyrows, err := db.Query(StrategySql, value.Strategyid)
 		if err != nil {
 			logrus.Error("Failed to execute query: ", err)

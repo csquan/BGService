@@ -2,10 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
 	"database/sql"
-	"encoding/base64"
 	"fmt"
 	"github.com/LinkinStars/go-scaffold/contrib/cryptor"
 	"github.com/adshao/go-binance/v2"
@@ -30,9 +27,8 @@ func (c *UserTxRecordService) Name() string {
 }
 
 const (
-	DbDsn                       = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/bgservice?sslmode=disable"
-	AesKey                      = "cure-d111y=1ziukr07k*!r$q=zcgto%" //AES密钥
-	baseFutureTestnetBinanceUrl = "https://fapi.binance.com"
+	DbDsn                = "postgres://postgres:1q2w3e4r5t@database-2.cxeu3qor02qq.ap-northeast-1.rds.amazonaws.com:5432/bgservice?sslmode=disable"
+	baseFutureBinanceUrl = "https://fapi.binance.com"
 )
 
 type RUserStrategy struct {
@@ -97,43 +93,10 @@ func userBindInfo(db *sql.DB, apiId string) (string, string, error) {
 	return apiKey, apiSecret, nil
 }
 
-// 去码
-func PKCS7UnPadding(origData []byte) []byte {
-	length := len(origData)
-	unpadding := int(origData[length-1])
-	return origData[:(length - unpadding)]
-}
-
-// AES 解密
-func AesDecrypt(cryted string, key string) string {
-	// cryted需要解密的字符串，key加密密钥
-	//使用RawURLEncoding 不要使用StdEncoding
-	//不要使用StdEncoding  放在url参数中回导致错误
-	crytedByte, _ := base64.RawURLEncoding.DecodeString(cryted)
-	k := []byte(key)
-
-	// 分组秘钥
-	block, err := aes.NewCipher(k)
-	if err != nil {
-		panic(fmt.Sprintf("key 长度必须 16/24/32长度: %s", err.Error()))
-	}
-	// 获取秘钥块的长度
-	blockSize := block.BlockSize()
-	// 加密模式
-	blockMode := cipher.NewCBCDecrypter(block, k[:blockSize])
-	// 创建数组
-	orig := make([]byte, len(crytedByte))
-	// 解密
-	blockMode.CryptBlocks(orig, crytedByte)
-	// 去补全码
-	orig = PKCS7UnPadding(orig)
-	return string(orig)
-}
-
 // U本位合约--交易历史
 func GetBinanceUMUserTxHistory(symbol string, limit int, apiKey string, secretKey string) ([]*futures.AccountTrade, error) {
 	futuresClient := binance.NewFuturesClient(apiKey, secretKey) // USDT-M Futures
-	futuresClient.SetApiEndpoint(baseFutureTestnetBinanceUrl)
+	futuresClient.SetApiEndpoint(baseFutureBinanceUrl)
 
 	listAccountTrades, err := futuresClient.NewListAccountTradeService().Symbol(symbol).Limit(limit).Do(context.Background())
 
@@ -163,6 +126,7 @@ func insertRecords(db *sql.DB, orderId string, Uid string, address string, Strat
 }
 
 func (c *UserTxRecordService) Run() error {
+	logrus.Info("*************************开始统计用户交易记录**********************")
 	//Create DB pool
 	db, err := sql.Open("postgres", DbDsn)
 	if err != nil {
@@ -207,7 +171,7 @@ func (c *UserTxRecordService) Run() error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(history)
+		logrus.Info(history)
 		for _, historyvalue := range history {
 			timestamp := historyvalue.Time
 			t := time.Unix(timestamp/1000, 0)
@@ -221,7 +185,7 @@ func (c *UserTxRecordService) Run() error {
 			timeNow := time.Now()
 			yesterday := timeNow.AddDate(0, 0, -1)
 			if yesterday.Unix() < t.Unix() && t.Unix() < timeNow.Unix() {
-				fmt.Println(behavior)
+				logrus.Info(behavior)
 				str := strconv.FormatInt(timestamp, 10)
 				strorderId := strconv.FormatInt(orderId, 10)
 				err := insertRecords(db, strorderId+str, value.Uid, "binance", value.Strategyid, string(side), behavior, t.String())
