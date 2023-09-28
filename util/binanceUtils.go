@@ -99,7 +99,7 @@ func GetBinanceKlinesHistory(interval string, startTime int64, endTime int64, Kl
 		return nil, err
 	}
 	var klines []*binance.Kline
-	client := binance.NewClient(types.ApiKey, types.ApiSecret)
+	client := binance.NewClient(types.ApiKeySystem, types.ApiSecretSystem)
 	switch KlineType {
 	case 1:
 		//1D 5分钟--288
@@ -124,7 +124,7 @@ func GetBinanceKlinesHistory(interval string, startTime int64, endTime int64, Kl
 
 // 获取涨幅榜
 func GetBinanceHighPercent() ([]types.CoinStats, error) {
-	client := binance.NewClient(types.ApiKey, types.ApiSecret)
+	client := binance.NewClient(types.ApiKeySystem, types.ApiSecretSystem)
 	res, err := client.NewListPriceChangeStatsService().Do(context.Background())
 	if err != nil {
 		fmt.Println(err)
